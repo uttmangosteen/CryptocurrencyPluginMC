@@ -1,0 +1,6 @@
+name: CryptocurrencyPluginMC
+version: '${version}'
+
+main: io.github.uttmangosteen.cryptocurrencyPluginMC.Main
+api-version: '1.21.8'
+load: POSTWORLD

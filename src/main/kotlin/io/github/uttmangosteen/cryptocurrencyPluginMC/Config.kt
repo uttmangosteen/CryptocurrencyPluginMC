@@ -1,0 +1,60 @@
+package io.github.uttmangosteen.cryptocurrencyPluginMC
+
+import org.bukkit.configuration.file.FileConfiguration
+
+data class Config(
+    val mongodbConnectionString: String,
+    val mongodbDatabase: String,
+
+    val verboseLogging: Boolean,
+
+    val blockchainDifficulty: Int,
+    val miningReward: Long,
+    val mempoolLimitPerBlock: Int,
+
+    val miningMachineMiningDelayTicks: Int,
+    val miningMachineSaveIntervalMillis: Int,
+) {
+    companion object {
+        private const val DEFAULT_MONGODB_CONNECTION_STRING = "mongodb://127.0.0.1:27017/?replicaSet=rs0"
+        private const val DEFAULT_MONGODB_DATABASE = "cryptocurrency"
+
+        private const val DEFAULT_VERBOSE_LOGGING = false
+
+        private const val DEFAULT_BLOCKCHAIN_DIFFICULTY = 4
+        private const val DEFAULT_MINING_REWARD = 100000L
+        private const val DEFAULT_MEMPOOL_LIMIT_PER_BLOCK = 100
+
+        private const val DEFAULT_MINING_MACHINE_DELAY_TICKS = 20
+        private const val DEFAULT_MINING_MACHINE_SAVE_INTERVAL_MILLIS = 10000
+
+        fun load(config: FileConfiguration): Config {
+            return Config(
+                mongodbConnectionString = config.safeString("mongodb.connection-string", DEFAULT_MONGODB_CONNECTION_STRING) ?: DEFAULT_MONGODB_CONNECTION_STRING,
+                mongodbDatabase = config.safeString("mongodb.database", DEFAULT_MONGODB_DATABASE) ?: DEFAULT_MONGODB_DATABASE,
+
+                verboseLogging = config.getBoolean("logging.verbose", DEFAULT_VERBOSE_LOGGING),
+
+                blockchainDifficulty = config.safeInt("blockchain.difficulty", DEFAULT_BLOCKCHAIN_DIFFICULTY),
+                miningReward = config.safeLong("blockchain.mining-reward", DEFAULT_MINING_REWARD),
+                mempoolLimitPerBlock = config.safeInt("blockchain.mempool-limit-per-block", DEFAULT_MEMPOOL_LIMIT_PER_BLOCK),
+
+                miningMachineMiningDelayTicks = config.safeInt("mining-machine.mining-delay-ticks", DEFAULT_MINING_MACHINE_DELAY_TICKS),
+                miningMachineSaveIntervalMillis = config.safeInt("mining-machine.save-interval-millis", DEFAULT_MINING_MACHINE_SAVE_INTERVAL_MILLIS)
+            )
+        }
+
+        //安全読み取り用
+        private fun FileConfiguration.safeString(path: String, default: String): String {
+            return getString(path, default)?.takeIf { it.isNotBlank() } ?: default
+        }
+
+        private fun FileConfiguration.safeInt(path: String, default: Int): Int {
+            return getInt(path, default).coerceIn(0, Integer.MAX_VALUE)
+        }
+
+        private fun FileConfiguration.safeLong(path: String, default: Long): Long {
+            return getLong(path, default).coerceIn(0L, Long.MAX_VALUE)
+        }
+    }
+}

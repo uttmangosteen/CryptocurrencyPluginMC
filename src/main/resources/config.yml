@@ -1,0 +1,15 @@
+mongodb:
+  connection-string: "mongodb://127.0.0.1:27017/?replicaSet=rs0"
+  database: "cryptocurrency"
+
+debug:
+  verbose-logging: false
+
+blockchain:
+  difficulty: 4
+  mining-reward: 100000
+  mempool-limit-per-block: 100
+
+mining-machine:
+  delay-ticks: 20
+  save-interval-millis: 10000

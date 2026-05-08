@@ -2,5 +2,84 @@ name: CryptocurrencyPluginMC
 version: '${version}'
 
 main: io.github.uttmangosteen.cryptocurrencyPluginMC.Main
-api-version: '1.21.8'
+api-version: '1.21'
 load: POSTWORLD
+
+commands:
+  cryptocurrency:
+    aliases: [ cc ] #CryptoCurrency
+    usage: |
+      §d===== Cryptocurrency help =====
+      §f/cc help §7- /cc のヘルプ表示
+      
+      §f/cc wallet §7- 自分の財布を開く
+      
+      §f/cc account create §7- 新しい口座を作成、財布に登録
+      §f/cc account delete <index> §7- 財布から口座を削除(一生触れなくなるので注意)
+      §f/cc account list §7- 財布に登録されている口座リスト
+      §f/cc account main <index> §7- メイン口座を口座リストの中から切り替え
+      §f/cc account item §7- メイン口座への送金用アイテムを取得、他の人に渡せば自分がofflineでも送金が可能
+      
+      §f/cc balance §7- メイン口座の通貨状況を確認
+      
+      §f/cc send <amount> [name] §7- メイン口座から[name]の今のメイン口座への送金を一つ作成 [name]省略時は手に持ったpubKeyItemから送金先を取得
+      §f/cc send list §7- 作成中の送金リスト
+      §f/cc send delete <index|all> §7- 送金リストからいらない送金を削除
+      §f/cc send create <fee> [memo]§7- いまの送金リストをまとめてマイナー報酬を設定の上取引を作成 mempoolに登録 メモは48Byte(全角なら16文字) 超過分はカット
+      
+      f/cc info blockchain §7- blockchainの状況を確認
+      §f/cc info mempool §7- mempoolの状況を確認
+      §d===============================
+    permission: cryptocurrency.user
+  cryptocurrencymachine:
+    aliases: [ ccmcn ] #CryptoCurrencyMaChiNe
+    usage: |
+      §d===== Cryptocurrency Machine help =====
+      §f/ccmcn help §7- /ccmcn のヘルプ表示
+      
+      §f/ccmcn create §7- 採掘機を作成
+      §f/ccmcn remove <machineId> §7- 採掘機を撤去
+      §f/ccmcn open <machineId> §7- 採掘機を開く
+      §f/ccmcn <set|take> <machineId> <slot> §7- 採掘機のGPU設置/取り外し
+      §f/ccmcn <adduser|deleteuser> <machineId> <name> §7- 採掘機に触れるユーザーの追加/削除
+      §f/ccmcn <run|halt> <machineId> §7- 採掘機の電源切り替え
+      
+      §f/ccmcn fuel <machineId> §7- 採掘機の燃料投入口を開く
+      
+      §f/ccmcn block <machineId> memo [memo] §7- 採掘ブロックのメモを設定
+      §f/ccmcn transaction <machineId> §7- 採掘ブロックのトランザクションの集め方設定画面を開く
+      §f/ccmcn reblock <machineId> §7- 採掘ブロックの再構築
+      §d=======================================
+    permission: cryptocurrency.miner
+  cryptocurrencyadmin:
+    aliases: [ ccop ]
+    usage: |
+      §d===== Cryptocurrency Admin help =====
+      §f/ccop help §7- /ccop のヘルプ表示
+      
+      §f/ccop <run|halt> §7- プラグインの全体停止/再開
+      §f/ccop machine <run|halt> §7- 採掘機の全体停止/再開
+      
+      §f/ccop database reconnection §7- データベース再接続
+      
+      §f/ccop getgpu <gpuId> §7- GPUアイテム取得
+
+      §f/ccop blockchain verify §7- Blockコレクションから全データベースの再作成(mempoolは消えます)
+      §f/ccop blockchain rollback <height> §7- Blockchainを指定のブロックまで戻す(復元不可能なので注意)
+      §d=====================================
+    permission: cryptocurrency.admin
+
+permissions:
+  cryptocurrency.user:
+    description: ユーザー用
+    default: op
+  cryptocurrency.miner:
+    description: 採掘者用
+    default: op
+    children:
+      cryptocurrency.user: true
+  cryptocurrency.admin:
+    description: OP用
+    default: op
+    children:
+      cryptocurrency.miner: true

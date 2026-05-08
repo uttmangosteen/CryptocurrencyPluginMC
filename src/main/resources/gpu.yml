@@ -1,0 +1,13 @@
+gpu:
+  test_normal:
+    material: IRON_INGOT
+    custom-model-data: 0
+    life: 100
+    break-chance: 0.01
+    power: 1
+  test_op:
+    material: GOLD_INGOT
+    custom-model-data: 0
+    life: 10000
+    break-chance: 0.001
+    power: 10

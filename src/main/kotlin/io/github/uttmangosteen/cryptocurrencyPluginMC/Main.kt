@@ -10,9 +10,9 @@ class Main : JavaPlugin() {
     override fun onEnable() {
 
 
-        getCommand("cryptocurrency")?.setExecutor(UserCommand(this@Main))
-        getCommand("cryptocurrencymachine")?.setExecutor(MinerCommand(this@Main))
-        getCommand("cryptocurrencyadmin")?.setExecutor(AdminCommand(this@Main))
+        getCommand("cc")?.setExecutor(UserCommand(this@Main))
+        getCommand("ccmcn")?.setExecutor(MinerCommand(this@Main))
+        getCommand("ccop")?.setExecutor(AdminCommand(this@Main))
     }
 
     override fun onDisable() {

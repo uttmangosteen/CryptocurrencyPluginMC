@@ -15,7 +15,7 @@ class MinerCommand(private val plugin: Main) : CommandExecutor {
         if (!sender.hasPermission("cryptocurrency.miner")) return true
         if (args.isEmpty()) return false
 
-        when (args[0].lowercase()) {
+        when (args[0]) {
             else -> return true
         }
     }

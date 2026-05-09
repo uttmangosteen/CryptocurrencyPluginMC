@@ -1,6 +1,6 @@
 gpus:
   test_normal:
-    name: "§lTEST_GPU"
+    name: "§r§lTEST_GPU"
     description: "§7デバック用GPU"
     material: IRON_INGOT
     custom-model-data: 0
@@ -11,7 +11,7 @@ gpus:
 
 
   test_advance:
-    name: "§lTEST-GPU-ADVANCE"
+    name: "§r§lTEST-GPU-ADVANCE"
     description: "§7デバック用GPU"
     material: GOLD_INGOT
     custom-model-data: 0

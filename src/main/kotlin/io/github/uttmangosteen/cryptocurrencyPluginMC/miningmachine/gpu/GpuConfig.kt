@@ -20,11 +20,7 @@ class GpuConfig(
     companion object {
         fun load(plugin: JavaPlugin): GpuConfig {
             val file = File(plugin.dataFolder, "gpu.yml")
-
-            if (!file.exists()) {
-                plugin.saveResource("gpu.yml", false)
-            }
-
+            if (!file.exists()) plugin.saveResource("gpu.yml", false)
             val config = YamlConfiguration.loadConfiguration(file)
             val section = config.getConfigurationSection("gpus") ?: return GpuConfig(emptyMap())
 
@@ -37,10 +33,10 @@ class GpuConfig(
                     ?: Material.NETHER_STAR.name
                 val material = Material.matchMaterial(materialName) ?: return@mapNotNull null
                 val customModelData = config.getInt("$path.custom-model-data", 0)
-                val description = config.getString("$path.description", "") ?: return@mapNotNull null
+                val description = config.getString("$path.description", "§c§l名称未設定") ?: return@mapNotNull null
                 val life = config.getInt("$path.life", -1)
                 val breakChance = config.getDouble("$path.break-chance", 0.0)
-                val power = config.getInt("$path.power", -1)
+                val power = config.getInt("$path.power", 0)
 
                 // 不正な値の GPU は登録しない
                 if (key.isBlank()) return@mapNotNull null

@@ -15,7 +15,7 @@ class UserCommand(private val plugin: Main) : CommandExecutor {
         if (!sender.hasPermission("cryptocurrency.user")) return true
         if (args.isEmpty()) return false
 
-        when (args[0].lowercase()) {
+        when (args[0]) {
             else -> return true
         }
     }

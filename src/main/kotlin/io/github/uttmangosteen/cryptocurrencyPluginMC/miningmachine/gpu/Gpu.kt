@@ -1,6 +1,7 @@
 package io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.gpu
 
 import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.inventory.ItemStack
@@ -9,30 +10,22 @@ import org.bukkit.plugin.java.JavaPlugin
 import java.util.concurrent.ThreadLocalRandom
 
 data class Gpu(
-    var gpuName: String, // GPU名 gpu.ymlのnameの部分、null = 空スロット
+    var gpuName: String, // GPU名 gpu.ymlのnameの部分
     var material: String,
     var customModelData: Int = 0,
     var description: String,
     var life: Int, // 耐久値 (0=寿命切れ、-1=壊れた)
-    var breakChance: Double, // 耐久値 0 のときにほるたび壊れる確率 (0.0〜1.0)
-    var power: Int, // このGPUがひとほりで回せるnonce数
+    var breakChance: Double, // 耐久値が0のときに掘って壊れる確率 (0.0〜1.0)
+    var power: Int, // このGPUが掘る度回せるnonce数
 ) {
-    // GPU が壊れているか
-    fun isBroken(): Boolean {
-        return life < 0
-    }
+    private val legacySerializer = LegacyComponentSerializer.legacySection()
 
-    // GPU が寿命ギリギリか(life0でもほれるが確率で壊れる)
-    fun isEndOfLife(): Boolean {
-        return life == 0
-    }
-
-    // GPUがアクティブか(セットされていて、壊れてなくて、powerが1以上であること)
+    // GPU が採掘可能か
     fun isActive(): Boolean {
-        return life >= 0 && power > 0
+        return life >= 0
     }
 
-    // ほるたびに呼ばれる耐久値の消費処理
+    // 掘る度呼ばれる耐久値の消費処理
     fun consumeLife() {
         if (!isActive()) return
         if (life != 0) {
@@ -47,7 +40,7 @@ data class Gpu(
         val material = Material.matchMaterial(material) ?: Material.IRON_INGOT
         return ItemStack(material).apply {
             editMeta { meta ->
-                meta.displayName(Component.text(gpuName))
+                meta.displayName(legacySerializer.deserialize(gpuName))
                 //TODO:MachineGUI作成時要調整
             }
         }
@@ -62,10 +55,10 @@ data class Gpu(
         val material = Material.matchMaterial(material) ?: Material.IRON_INGOT
         return ItemStack(material).apply {
             editMeta { meta ->
-                meta.displayName(Component.text(gpuName))
+                meta.displayName(legacySerializer.deserialize(gpuName))
 
                 //TODO: アイテムのロア清書
-                meta.lore(listOf(Component.text(description)))
+                meta.lore(listOf(legacySerializer.deserialize(description)))
 
                 @Suppress("DEPRECATION")
                 meta.setCustomModelData(customModelData)
@@ -92,11 +85,13 @@ data class Gpu(
         val breakChance = container.get(breakChanceKey, PersistentDataType.DOUBLE) ?: return null
         val power = container.get(powerKey, PersistentDataType.INTEGER) ?: return null
 
-        @Suppress("DEPRECATION")
-        val gpuName = meta.displayName
+        val gpuName = meta.displayName()?.let {
+            legacySerializer.serialize(it)
+        } ?: "§c§l名称未設定"
 
-        @Suppress("DEPRECATION")
-        val description = meta.lore?.firstOrNull() ?: ""
+        val description = meta.lore()?.firstOrNull()?.let {
+            legacySerializer.serialize(it)
+        } ?: "§c§l説明未設定"
 
         @Suppress("DEPRECATION")
         val customModelData = if (meta.hasCustomModelData()) meta.customModelData else 0

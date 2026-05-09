@@ -52,14 +52,13 @@ commands:
     aliases: [ ccop ]
     usage: |
       §d===== Cryptocurrency Admin help =====
-      §f/ccop <run|halt> §7- プラグインの全体停止/再開
+      §f/ccop <run|halt> §7- ccopコマンド以外の停止/再開
       §f/ccop machine <run|halt> §7- 採掘機の全体停止/再開
       
-      §f/ccop database reconnection §7- データベース再接続
-      
       §f/ccop getgpu <gpuId> §7- GPUアイテム取得
-
-      §f/ccop blockchain verify §7- Blockコレクションからデータベース(utxo,history等)の再作成(mempoolは消えます)
+    
+      §f/ccop database reconnection §7- データベース再接続
+      §f/ccop database verify §7- Blockコレクションからデータベース(utxo,history等)の再作成(mempoolは消えます)
       §d=====================================
     permission: cryptocurrency.admin
 

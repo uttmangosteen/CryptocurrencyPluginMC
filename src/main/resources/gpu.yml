@@ -7,9 +7,6 @@ gpus:
     life: 100
     break-chance: 0.01
     power: 1
-
-
-
   test_advance:
     name: "§r§lTEST-GPU-ADVANCE"
     description: "§7デバック用GPU"

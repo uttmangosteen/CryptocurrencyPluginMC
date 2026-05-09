@@ -30,8 +30,8 @@ data class Config(
 
         fun load(config: FileConfiguration): Config {
             return Config(
-                mongodbConnectionString = config.safeString("mongodb.connection-string", DEFAULT_MONGODB_CONNECTION_STRING) ?: DEFAULT_MONGODB_CONNECTION_STRING,
-                mongodbDatabase = config.safeString("mongodb.database", DEFAULT_MONGODB_DATABASE) ?: DEFAULT_MONGODB_DATABASE,
+                mongodbConnectionString = config.safeString("mongodb.connection-string", DEFAULT_MONGODB_CONNECTION_STRING),
+                mongodbDatabase = config.safeString("mongodb.database", DEFAULT_MONGODB_DATABASE),
 
                 verboseLogging = config.getBoolean("logging.verbose", DEFAULT_VERBOSE_LOGGING),
 

@@ -6,6 +6,7 @@ data class Config(
     val mongodbConnectionString: String,
     val mongodbDatabase: String,
 
+    var enable: Boolean,
     val verboseLogging: Boolean,
 
     val blockchainDifficulty: Int,
@@ -19,6 +20,7 @@ data class Config(
         private const val DEFAULT_MONGODB_CONNECTION_STRING = "mongodb://127.0.0.1:27017/?replicaSet=rs0"
         private const val DEFAULT_MONGODB_DATABASE = "cryptocurrency"
 
+        private const val DEFAULT_ENABLE = true
         private const val DEFAULT_VERBOSE_LOGGING = false
 
         private const val DEFAULT_BLOCKCHAIN_DIFFICULTY = 4
@@ -33,7 +35,8 @@ data class Config(
                 mongodbConnectionString = config.safeString("mongodb.connection-string", DEFAULT_MONGODB_CONNECTION_STRING),
                 mongodbDatabase = config.safeString("mongodb.database", DEFAULT_MONGODB_DATABASE),
 
-                verboseLogging = config.getBoolean("logging.verbose", DEFAULT_VERBOSE_LOGGING),
+                enable = config.getBoolean("debug.enable", DEFAULT_ENABLE),
+                verboseLogging = config.getBoolean("debug.verbose-logging", DEFAULT_VERBOSE_LOGGING),
 
                 blockchainDifficulty = config.safeInt("blockchain.difficulty", DEFAULT_BLOCKCHAIN_DIFFICULTY),
                 miningReward = config.safeLong("blockchain.mining-reward", DEFAULT_MINING_REWARD),

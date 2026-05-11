@@ -3,6 +3,7 @@ mongodb:
   database: "cryptocurrency"
 
 debug:
+  enable: true
   verbose-logging: false
 
 blockchain:

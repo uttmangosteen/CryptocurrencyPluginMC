@@ -11,7 +11,7 @@ import java.util.concurrent.ThreadLocalRandom
 data class Gpu(
     var gpuName: String, // GPU名 gpu.ymlのnameの部分
     var material: String,
-    var customModelData: Int = 0,
+    var customModelData: Float = 0f,
     var description: String,
     var life: Int, // 耐久値 (0=寿命切れ、-1=壊れた)
     var breakChance: Double, // 耐久値が0のときに掘って壊れる確率 (0.0〜1.0)
@@ -46,21 +46,26 @@ data class Gpu(
     }
 
     //アイテム化
+    @Suppress("UnstableApiUsage")
     fun createItem(plugin: JavaPlugin): ItemStack {
         val lifeKey = NamespacedKey(plugin, "gpu_life")
         val breakChanceKey = NamespacedKey(plugin, "gpu_break_chance")
         val powerKey = NamespacedKey(plugin, "gpu_power")
 
         val material = Material.matchMaterial(material) ?: Material.IRON_INGOT
+
         return ItemStack(material).apply {
             editMeta { meta ->
                 meta.displayName(legacySerializer.deserialize(gpuName))
 
-                //TODO: アイテムのロア清書
+                //TODO: ロア清書
                 meta.lore(listOf(legacySerializer.deserialize(description)))
 
-                @Suppress("DEPRECATION")
-                meta.setCustomModelData(customModelData)
+                if (customModelData != 0f) {
+                    val customModelDataComponent = meta.customModelDataComponent
+                    customModelDataComponent.floats = listOf(customModelData)
+                    meta.setCustomModelDataComponent(customModelDataComponent)
+                }
 
                 meta.persistentDataContainer.set(lifeKey, PersistentDataType.INTEGER, life)
                 meta.persistentDataContainer.set(breakChanceKey, PersistentDataType.DOUBLE, breakChance)
@@ -70,6 +75,7 @@ data class Gpu(
     }
 
     //Machineに差し込むとき用
+    @Suppress("UnstableApiUsage")
     fun createGpu(item: ItemStack?, plugin: JavaPlugin): Gpu? {
         if (item == null || item.type.isAir) return null
         val meta = item.itemMeta ?: return null
@@ -92,8 +98,7 @@ data class Gpu(
             legacySerializer.serialize(it)
         } ?: "§c§l説明未設定"
 
-        @Suppress("DEPRECATION")
-        val customModelData = if (meta.hasCustomModelData()) meta.customModelData else 0
+        val customModelData = meta.customModelDataComponent.floats.firstOrNull() ?: 0f
 
         return Gpu(
             gpuName = gpuName,

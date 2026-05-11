@@ -14,6 +14,6 @@ class GetGpuCommand(
         val gpu = gpuConfig.getGpu(args[1]) ?: run { return }
         val item = gpu.createItem(plugin)
         sender.inventory.addItem(item)
-        sender.sendMessage("§a${gpu.gpuName} §r§aを取得")
+        sender.sendMessage("§a${gpu.gpuName}§r§aを取得しました")
     }
 }

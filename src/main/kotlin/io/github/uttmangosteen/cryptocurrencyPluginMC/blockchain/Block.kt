@@ -12,7 +12,7 @@ data class Block(
     val transactions: List<Transaction>,
     val transactionsRoot: ByteArray = calculateTransactionsRoot(transactions),
     val timestamp: Long,
-    val memo: String?,
+    val memo: String = "",
     val difficulty: Int,
     var nonce: Long = 0,
     var hash: ByteArray? = null
@@ -48,7 +48,7 @@ data class Block(
 
     fun prepareMining(): MessageDigest = sha256Digest().apply {
         val memoBytes = ByteArray(MEMO_SIZE) { SPACE_BYTE }
-        memo?.toByteArray(Charsets.UTF_8)?.let { rawMemo ->
+        memo.toByteArray(Charsets.UTF_8).let { rawMemo ->
             System.arraycopy(rawMemo, 0, memoBytes, 0, minOf(rawMemo.size, MEMO_SIZE))
         }
         val fixedData = ByteBuffer.allocate(80 + MEMO_SIZE)
@@ -109,7 +109,7 @@ data class Block(
         result = 31 * result + previousHash.contentHashCode()
         result = 31 * result + transactions.hashCode()
         result = 31 * result + transactionsRoot.contentHashCode()
-        result = 31 * result + (memo?.hashCode() ?: 0)
+        result = 31 * result + memo.hashCode()
         result = 31 * result + (hash?.contentHashCode() ?: 0)
         return result
     }

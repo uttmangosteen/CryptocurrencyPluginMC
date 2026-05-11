@@ -9,6 +9,7 @@ import java.util.logging.Logger
 enum class LogComponent(val label: String) {
     DATABASE("Database"),
     MINING_MACHINE_REPOSITORY("MiningMachineRepository"),
+    MEMPOOL_REPOSITORY("MempoolRepository"),
 }
 
 private val verboseEnabled: MutableSet<Logger> = Collections.newSetFromMap(WeakHashMap())
@@ -31,6 +32,16 @@ fun Logger.ccInfo(
 }
 
 //エラー
+fun Logger.ccWarning(
+    component: LogComponent,
+    message: String,
+    cause: Throwable,
+    vararg params: Pair<String, Any?>
+) {
+    ccLog(Level.WARNING, component, message, cause, *params)
+}
+
+//重大エラー
 fun Logger.ccSevere(
     component: LogComponent,
     message: String,

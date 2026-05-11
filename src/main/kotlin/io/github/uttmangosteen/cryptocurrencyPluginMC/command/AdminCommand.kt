@@ -1,5 +1,7 @@
 package io.github.uttmangosteen.cryptocurrencyPluginMC.command
 
+import io.github.uttmangosteen.cryptocurrencyPluginMC.Config
+import io.github.uttmangosteen.cryptocurrencyPluginMC.command.admin.EnableCommand
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.admin.GetGpuCommand
 import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.gpu.GpuConfig
 import org.bukkit.command.Command
@@ -10,6 +12,7 @@ import org.bukkit.plugin.java.JavaPlugin
 
 class AdminCommand(
     private val plugin: JavaPlugin,
+    private val config: Config,
     private val gpuConfig: GpuConfig
 ) : CommandExecutor, TabCompleter {
     override fun onCommand(
@@ -23,28 +26,29 @@ class AdminCommand(
 
         when (args[0]) {
             "run", "halt" -> {
-                //TODO:cc、ccmcnコマンドのonoff切り替え
+                EnableCommand(plugin, config).execute(sender, args)
             }
+
             "getGpu" -> {
                 GetGpuCommand(plugin, gpuConfig).execute(sender, args)
             }
-            "machine" -> {
-                when (args[1]) {
-                    "run" ,"halt"-> {
-                        //TODO:全マシン稼働管理
-                    }
-                }
-            }
+
             "database" -> {
                 when (args[1]) {
-                    "reconnection" -> {
-                        //TODO:DB再接続
+                    "connect" -> {
+                        //TODO:
                     }
-                    "verify" -> {
-                        //TODO:Blocksから他コレクションを計算する
+
+                    "reflash" -> {
+                        //TODO:
+                    }
+
+                    "recalculate" -> {
+                        //TODO:
                     }
                 }
             }
+
             else -> return true
         }
         return true
@@ -78,8 +82,9 @@ class AdminCommand(
                 "getGpu" -> gpuConfig.getTypes().filter { it.startsWith(args[1]) }
 
                 "database" -> listOf(
-                    "reconnection",
-                    "verify"
+                    "connect",
+                    "reflash",
+                    "recalculate",
                 ).filter { it.startsWith(args[1]) }
 
                 else -> emptyList()

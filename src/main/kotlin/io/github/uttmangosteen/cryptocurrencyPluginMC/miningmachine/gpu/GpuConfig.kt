@@ -32,7 +32,7 @@ class GpuConfig(
                     ?.uppercase()
                     ?: Material.NETHER_STAR.name
                 val material = Material.matchMaterial(materialName) ?: return@mapNotNull null
-                val customModelData = config.getInt("$path.custom-model-data", 0)
+                val customModelData: Float = config.getDouble("$path.custom-model-data", 0.0).toFloat()
                 val description = config.getString("$path.description", "§c§l名称未設定") ?: return@mapNotNull null
                 val life = config.getInt("$path.life", -1)
                 val breakChance = config.getDouble("$path.break-chance", 0.0)

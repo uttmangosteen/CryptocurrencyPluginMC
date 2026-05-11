@@ -4,12 +4,9 @@ import com.mongodb.client.model.Filters
 import com.mongodb.client.model.Indexes
 import com.mongodb.client.model.Sorts
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
-import io.github.uttmangosteen.cryptocurrencyPluginMC.Config
 import io.github.uttmangosteen.cryptocurrencyPluginMC.LogComponent
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.Block
-import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.transaction.Transaction
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccInfo
-import io.github.uttmangosteen.cryptocurrencyPluginMC.ccSevere
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccWarning
 import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.CreateBlockMode
 import io.github.uttmangosteen.cryptocurrencyPluginMC.util.toHex

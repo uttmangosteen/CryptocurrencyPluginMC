@@ -5,7 +5,6 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.command.MinerCommand
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.UserCommand
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.MongoDatabaseProvider
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.MongoRepositories
-import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.MiningMachineService
 import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.gpu.GpuConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

@@ -15,19 +15,23 @@ import org.bukkit.plugin.java.JavaPlugin
 class Main : JavaPlugin() {
 
     lateinit var mongoDatabaseProvider: MongoDatabaseProvider
+        private set
+
+    lateinit var pluginConfig: PluginConfig
+        private set
 
     private val pluginScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     override fun onEnable() {
         saveDefaultConfig()
-        val config = Config.load(config)
+        pluginConfig = PluginConfig.load(config)
         val gpuConfig = GpuConfig.load(this)
 
-        logger.setVerbose(config.verboseLogging)
+        logger.setVerbose(pluginConfig.verboseLogging)
 
         mongoDatabaseProvider = MongoDatabaseProvider(
-            config.mongodbConnectionString,
-            config.mongodbDatabase
+            pluginConfig.mongodbConnectionString,
+            pluginConfig.mongodbDatabase
         )
         val repositories = MongoRepositories(mongoDatabaseProvider, logger)
 
@@ -44,10 +48,10 @@ class Main : JavaPlugin() {
             }
         }
 
-        getCommand("cc")?.setExecutor(UserCommand(this@Main, config))
-        getCommand("ccmcn")?.setExecutor(MinerCommand(this@Main, config))
+        getCommand("cc")?.setExecutor(UserCommand(this@Main))
+        getCommand("ccmcn")?.setExecutor(MinerCommand(this@Main))
 
-        val adminCommand = AdminCommand(this@Main, config, gpuConfig)
+        val adminCommand = AdminCommand(this@Main, gpuConfig)
         getCommand("ccop")?.setExecutor(adminCommand)
         getCommand("ccop")?.tabCompleter = adminCommand
     }

@@ -1,30 +1,29 @@
 package io.github.uttmangosteen.cryptocurrencyPluginMC.command.admin
 
-import io.github.uttmangosteen.cryptocurrencyPluginMC.Config
+import io.github.uttmangosteen.cryptocurrencyPluginMC.Main
 import org.bukkit.command.CommandSender
-import org.bukkit.plugin.java.JavaPlugin
 
 class EnableCommand(
-    private val plugin: JavaPlugin,
-    private val config: Config
+    private val plugin: Main,
 ) {
     fun execute(sender: CommandSender, args: Array<out String>) {
         if (args.isEmpty()) return
 
         when (args[0]) {
             "run" -> {
-                plugin.config.set("debug.enable", true)
+                plugin.config.set("plugin.enable", true)
                 plugin.saveConfig()
-                config.enable = true
-                sender.sendMessage("§a仮想通貨を再開しました")
+                plugin.pluginConfig.enable = true
+                sender.sendMessage(plugin.pluginConfig.prefix + "§a仮想通貨を再開しました")
             }
 
             "halt" -> {
-                plugin.config.set("debug.enable", false)
+                plugin.config.set("plugin.enable", false)
                 plugin.saveConfig()
-                config.enable = false
-                sender.sendMessage("§c仮想通貨を停止しました")
+                plugin.pluginConfig.enable = false
+                sender.sendMessage(plugin.pluginConfig.prefix + "§c仮想通貨を停止しました")
             }
+
             else -> return
         }
     }

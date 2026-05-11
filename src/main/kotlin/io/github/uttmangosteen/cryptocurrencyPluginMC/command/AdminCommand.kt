@@ -1,18 +1,16 @@
 package io.github.uttmangosteen.cryptocurrencyPluginMC.command
 
-import io.github.uttmangosteen.cryptocurrencyPluginMC.Config
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.admin.EnableCommand
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.admin.GetGpuCommand
+import io.github.uttmangosteen.cryptocurrencyPluginMC.Main
 import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.gpu.GpuConfig
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
-import org.bukkit.plugin.java.JavaPlugin
 
 class AdminCommand(
-    private val plugin: JavaPlugin,
-    private val config: Config,
+    private val plugin: Main,
     private val gpuConfig: GpuConfig
 ) : CommandExecutor, TabCompleter {
     override fun onCommand(
@@ -26,7 +24,7 @@ class AdminCommand(
 
         when (args[0]) {
             "run", "halt" -> {
-                EnableCommand(plugin, config).execute(sender, args)
+                EnableCommand(plugin).execute(sender, args)
             }
 
             "getGpu" -> {

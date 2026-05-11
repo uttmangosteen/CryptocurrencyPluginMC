@@ -2,7 +2,8 @@ mongodb:
   connection-string: "mongodb://127.0.0.1:27017/?replicaSet=rs0"
   database: "cryptocurrency"
 
-debug:
+plugin:
+  prefix: "§f§l[§7§lC§8§lC§f§ll] "
   enable: true
   verbose-logging: false
 

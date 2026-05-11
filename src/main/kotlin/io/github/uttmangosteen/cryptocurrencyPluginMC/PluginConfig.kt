@@ -2,10 +2,11 @@ package io.github.uttmangosteen.cryptocurrencyPluginMC
 
 import org.bukkit.configuration.file.FileConfiguration
 
-data class Config(
+data class PluginConfig(
     val mongodbConnectionString: String,
     val mongodbDatabase: String,
 
+    val prefix: String,
     var enable: Boolean,
     val verboseLogging: Boolean,
 
@@ -20,6 +21,7 @@ data class Config(
         private const val DEFAULT_MONGODB_CONNECTION_STRING = "mongodb://127.0.0.1:27017/?replicaSet=rs0"
         private const val DEFAULT_MONGODB_DATABASE = "cryptocurrency"
 
+        private const val DEFAULT_PREFIX = "§f[§aCryptocurrency§f] "
         private const val DEFAULT_ENABLE = true
         private const val DEFAULT_VERBOSE_LOGGING = false
 
@@ -30,13 +32,14 @@ data class Config(
         private const val DEFAULT_MINING_MACHINE_DELAY_TICKS = 20
         private const val DEFAULT_MINING_MACHINE_SAVE_INTERVAL_MILLIS = 10000
 
-        fun load(config: FileConfiguration): Config {
-            return Config(
+        fun load(config: FileConfiguration): PluginConfig {
+            return PluginConfig(
                 mongodbConnectionString = config.safeString("mongodb.connection-string", DEFAULT_MONGODB_CONNECTION_STRING),
                 mongodbDatabase = config.safeString("mongodb.database", DEFAULT_MONGODB_DATABASE),
 
-                enable = config.getBoolean("debug.enable", DEFAULT_ENABLE),
-                verboseLogging = config.getBoolean("debug.verbose-logging", DEFAULT_VERBOSE_LOGGING),
+                prefix = config.safeString("plugin.prefix", DEFAULT_PREFIX),
+                enable = config.getBoolean("plugin.enable", DEFAULT_ENABLE),
+                verboseLogging = config.getBoolean("plugin.verbose-logging", DEFAULT_VERBOSE_LOGGING),
 
                 blockchainDifficulty = config.safeInt("blockchain.difficulty", DEFAULT_BLOCKCHAIN_DIFFICULTY),
                 miningReward = config.safeLong("blockchain.mining-reward", DEFAULT_MINING_REWARD),

@@ -33,15 +33,15 @@ class AdminCommand(
 
             "database" -> {
                 when (args[1]) {
-                    "connect" -> {
+                    "reconnect" -> {
                         //TODO:
                     }
 
-                    "reflash" -> {
+                    "flush" -> {
                         //TODO:
                     }
 
-                    "recalculate" -> {
+                    "rebuild" -> {
                         //TODO:
                     }
                 }
@@ -61,28 +61,21 @@ class AdminCommand(
         if (command.name != "cryptocurrencyadmin") return emptyList()
         if (!sender.hasPermission("cryptocurrency.admin")) return emptyList()
 
-        // args.size == 1 は「第1引数 (/ccop [ここ])」の入力中
         return when (args.size) {
             1 -> listOf(
                 "run",
                 "halt",
-                "machine",
                 "getGpu",
                 "database"
             ).filter { it.startsWith(args[0]) }
 
             2 -> when (args[0]) {
-                "machine" -> listOf(
-                    "run",
-                    "halt"
-                ).filter { it.startsWith(args[1]) }
-
                 "getGpu" -> gpuConfig.getTypes().filter { it.startsWith(args[1]) }
 
                 "database" -> listOf(
-                    "connect",
-                    "reflash",
-                    "recalculate",
+                    "reconnect",
+                    "flush",
+                    "rebuild",
                 ).filter { it.startsWith(args[1]) }
 
                 else -> emptyList()

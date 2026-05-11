@@ -9,61 +9,62 @@ commands:
   cryptocurrency:
     aliases: [ cc ] #CryptoCurrency
     usage: |
-      §d===== Cryptocurrency help =====
-      §f/cc wallet §7- 自分の財布を開く
+      §f§l=============== §8§lCryptocurrency help §f§l===============
+      §c§l× §f/cc wallet §7- 自分の財布を開く(GUI)
       
-      §f/cc account create §7- 新しい口座を作成、財布に登録
-      §f/cc account delete <index> §7- 財布から口座を削除(一生触れなくなるが、他者からの送金は通ってしまうので注意)
-      §f/cc account list §7- 財布に登録されている口座リスト
-      §f/cc account main <index> §7- メイン口座を口座リストの中から切り替え
-      §f/cc account key [memo] §7- メイン口座への公開鍵アイテムを取得、公開鍵指定用の補助アイテム
+      §c§l× §f/cc account create §7- 口座作成、財布に登録
+      §c§l× §f/cc account delete <index> §7- 財布から口座を削除(一生触れなくなるが、他者からの送金は通ってしまうので注意)
+      §c§l× §f/cc account list §7- 財布に登録されている口座リスト
+      §c§l× §f/cc account main <index> §7- メイン口座を口座リストの中から切り替え
+      §c§l× §f/cc account getPubKeyItem [memo] §7- メイン口座への公開鍵アイテムを取得、公開鍵指定用の補助アイテム
       
-      §f/cc balance §7- メイン口座の状況を確認
+      §c§l× §f/cc balance §7- メイン口座の状況を確認
+      §c§l× §f/cc balance [pubKey] §7- 口座の状況を確認、省略時は手に持った公開鍵アイテムの公開鍵
       
-      §f/cc send byName <amount> [name] §7- メイン口座から[name]の今のメイン口座への送金を一つ作成
-      §f/cc send byPubKey <amount> [pubKey] §7- メイン口座から[pubKey]の今のメイン口座への送金を一つ作成 [pubKey]省略時は手に持った公開鍵アイテムから送金先を取得
-      §f/cc send list §7- 作成中の送金リスト
-      §f/cc send delete <index|all> §7- 送金リストか間違えた送金を削除
-      §f/cc send create <fee> [memo] §7- いまの送金リストをまとめてマイナー報酬を設定の上取引を作成 mempoolに登録 メモの長さは48Byteまで
+      §c§l× §f/cc send byName <amount> [name] §7- メイン口座から[name]の今のメイン口座への送金を一つ作成
+      §c§l× §f/cc send byPubKey <amount> [pubKey] §7- メイン口座から[pubKey]の今のメイン口座への送金を一つ作成 [pubKey]省略時は手に持った公開鍵アイテムから送金先を取得
+      §c§l× §f/cc send list §7- 作成中の送金リスト
+      §c§l× §f/cc send delete <index|all> §7- 送金リストから間違えた送金を削除
+      §c§l× §f/cc send create <fee> [memo] §7- いまの送金リストをまとめてマイナー報酬を設定の上取引を作成 mempoolに登録 メモの長さは48Byteまで
       
-      §f/cc info blockchain §7- blockchainの状況を確認
-      §f/cc info mempool §7- mempoolの状況を確認
-      §d===============================
+      §c§l× §f/cc info blockchain §7- blockchainの状況を確認
+      §c§l× §f/cc info mempool §7- mempoolの状況を確認
+      §f§l===================================================
     permission: cryptocurrency.user
   cryptocurrencymachine:
     aliases: [ ccmcn ] #CryptoCurrencyMaChiNe
     usage: |
-      §d===== Cryptocurrency Machine help =====
-      §f/ccmcn create §7- 採掘機を作成
-      §f/ccmcn remove <machineId> §7- 採掘機を撤去
+      §f§l=============== §8§lCryptocurrency Machine help §f§l===============
+      §c§l× §f/ccmcn create §7- 採掘機を作成
+      §c§l× §f/ccmcn remove <machineId> §7- 採掘機を撤去
       
-      §f/ccmcn info <machineId> §7- 採掘機の情報を確認
+      §c§l× §f/ccmcn info <machineId> §7- 採掘機の情報を確認
       
-      §f/ccmcn open <machineId> §7- 採掘機を開く
-      §f/ccmcn <set|take> <machineId> <slot> §7- 採掘機のGPU設置/取り外し
-      §f/ccmcn user <add|delete> <machineId> <name> §7- 採掘機に触れるユーザーの追加/削除
-      §f/ccmcn <run|halt> <machineId> §7- 採掘機の電源切り替え
+      §c§l× §f/ccmcn open <machineId> §7- 採掘機を開く
+      §c§l× §f/ccmcn <set|take> <machineId> <slot> §7- 採掘機のGPU設置/取り外し
+      §c§l× §f/ccmcn user <add|delete> <machineId> <name> §7- 採掘機に触れるユーザーの追加/削除
+      §c§l× §f/ccmcn <run|halt> <machineId> §7- 採掘機の電源切り替え
       
-      §f/ccmcn fuel <machineId> §7- 採掘機の燃料投入口を開く
+      §c§l× §f/ccmcn fuel <machineId> §7- 採掘機の燃料投入口を開く
       
-      §f/ccmcn block setDefaultMemo <machineId> [memo] §7- 採掘ブロックのメモを設定しなかった場合のメモ設定
-      §f/ccmcn block setMemo <machineId> [memo] §7- 採掘中ブロックのメモ設定
-      §f/ccmcn block txMode <machineId> §7- 採掘ブロックのトランザクションの集め方切り替え
-      §f/ccmcn block recreate <machineId> §7-最新のmempoolに合わせてブロックの再構築
-      §d=======================================
+      §c§l× §f/ccmcn block setDefaultMemo <machineId> [memo] §7- 採掘ブロックのメモを設定しなかった場合のメモ設定
+      §c§l× §f/ccmcn block setMemo <machineId> [memo] §7- 採掘中ブロックのメモ設定
+      §c§l× §f/ccmcn block txMode <machineId> §7- 採掘ブロックのトランザクションの集め方切り替え
+      §c§l× §f/ccmcn block recreate <machineId> §7-最新のmempoolに合わせてブロックの再構築
+      §f§l===========================================================
     permission: cryptocurrency.miner
   cryptocurrencyadmin:
     aliases: [ ccop ]
     usage: |
-      §d===== Cryptocurrency Admin help =====
+      §f§l=============== §8§lCryptocurrency Admin help §f§l===============
       §f/ccop <run|halt> §7- プラグインの停止/再開
       
       §f/ccop getGpu <gpuId> §7- GPUアイテム取得
-    
-      §f/ccop database connect §7- データベース再接続
-      §f/ccop database reflash §7- mempool等、消せる情報を消去する(何かの移行時の圧縮用)
-      §f/ccop database recalculate §7- blocksコレクションからUTXOやTxHistoryなどを再計算する
-      §d=====================================
+      
+      §c§l× §f/ccop database reconnect §7- データベース再接続
+      §c§l× §f/ccop database flush §7- mempool等、消せる情報を消す(何かの移行時の圧縮用)
+      §c§l× §f/ccop database rebuild §7- blocksコレクションからUTXOやTxHistoryなどのcash再計算(flushからの復旧)
+      §f§l=========================================================
     permission: cryptocurrency.admin
 
 permissions:

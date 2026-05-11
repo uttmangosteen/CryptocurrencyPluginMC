@@ -1,5 +1,7 @@
 package io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.transaction
 
+import io.github.uttmangosteen.cryptocurrencyPluginMC.util.decodeHex
+import io.github.uttmangosteen.cryptocurrencyPluginMC.util.toHex
 import java.security.KeyFactory
 import java.security.PrivateKey
 import java.security.PublicKey
@@ -10,19 +12,34 @@ import java.security.spec.X509EncodedKeySpec
 object Signer {
     const val ALGORITHM = "Ed25519"
 
+    const val PUBLIC_KEY_SIZE = 32
+
     private val x509Header = byteArrayOf(
         0x30, 0x2A, 0x30, 0x05, 0x06, 0x03, 0x2B, 0x65, 0x70, 0x03, 0x21, 0x00
     )
 
     private val keyFactory: KeyFactory = KeyFactory.getInstance(ALGORITHM)
 
-    fun decodePublicKey(publicKeyBytes: ByteArray): PublicKey {
-        val encodedBytes = if (publicKeyBytes.size == 32) {
-            x509Header + publicKeyBytes
-        } else {
-            publicKeyBytes
+    fun normalizePublicKeyBytes(publicKeyBytes: ByteArray): ByteArray {
+        require(publicKeyBytes.size >= PUBLIC_KEY_SIZE) {
+            "public key must be at least $PUBLIC_KEY_SIZE bytes"
         }
-        return keyFactory.generatePublic(X509EncodedKeySpec(encodedBytes))
+        if (publicKeyBytes.size == PUBLIC_KEY_SIZE) return publicKeyBytes
+        return publicKeyBytes.takeLast(PUBLIC_KEY_SIZE).toByteArray()
+    }
+
+    fun normalizePublicKeyHex(publicKeyHex: String): String {
+        if (publicKeyHex.length == PUBLIC_KEY_SIZE * 2) return publicKeyHex.lowercase()
+        return normalizePublicKeyBytes(publicKeyHex.decodeHex()).toHex()
+    }
+
+    fun encodePublicKey(publicKeyBytes: ByteArray): ByteArray {
+        if (publicKeyBytes.size == PUBLIC_KEY_SIZE) return x509Header + publicKeyBytes
+        return publicKeyBytes
+    }
+
+    fun decodePublicKey(publicKeyBytes: ByteArray): PublicKey {
+        return keyFactory.generatePublic(X509EncodedKeySpec(encodePublicKey(publicKeyBytes)))
     }
 
     fun decodePrivateKey(privateKeyBytes: ByteArray): PrivateKey {

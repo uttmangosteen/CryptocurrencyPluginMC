@@ -4,10 +4,11 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.Main
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
+import org.bukkit.command.TabCompleter
 
 class MinerCommand(
     private val plugin: Main,
-) : CommandExecutor {
+) : CommandExecutor, TabCompleter {
     override fun onCommand(
         sender: CommandSender,
         command: Command,
@@ -20,6 +21,20 @@ class MinerCommand(
 
         when (args[0]) {
             else -> return true
+        }
+    }
+
+    override fun onTabComplete(
+        sender: CommandSender,
+        command: Command,
+        alias: String,
+        args: Array<out String>
+    ): List<String> {
+        if (command.name != "cryptocurrencymachine") return emptyList()
+        if (!sender.hasPermission("cryptocurrency.miner")) return emptyList()
+
+        return when (args.size) {
+            else -> emptyList()
         }
     }
 }

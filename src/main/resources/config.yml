@@ -3,9 +3,9 @@ mongodb:
   database: "cryptocurrency"
 
 plugin:
-  prefix: "§f§l[§7§lC§8§lC§f§ll] "
+  prefix: "§f§l[§7§lC§8§lC§f§l] "
   enable: true
-  verbose-logging: false
+  verbose-logging: true
 
 blockchain:
   difficulty: 4

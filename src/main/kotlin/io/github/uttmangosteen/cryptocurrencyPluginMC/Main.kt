@@ -9,12 +9,16 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.gpu.GpuConfi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.bukkit.plugin.java.JavaPlugin
 
 class Main : JavaPlugin() {
 
     lateinit var mongoDatabaseProvider: MongoDatabaseProvider
+        private set
+
+    lateinit var repositories: MongoRepositories
         private set
 
     lateinit var pluginConfig: PluginConfig
@@ -33,12 +37,15 @@ class Main : JavaPlugin() {
             pluginConfig.mongodbConnectionString,
             pluginConfig.mongodbDatabase
         )
-        val repositories = MongoRepositories(mongoDatabaseProvider, logger)
+        repositories = MongoRepositories(mongoDatabaseProvider, logger)
 
         pluginScope.launch {
             try {
                 repositories.setupAll()
-
+                server.scheduler.runTask(this@Main, Runnable {
+                    registerCommands(gpuConfig)
+                    logger.ccInfo(LogComponent.DATABASE, "setup completed")
+                })
 
             } catch (e: Exception) {
                 server.scheduler.runTask(this@Main, Runnable {
@@ -47,16 +54,37 @@ class Main : JavaPlugin() {
                 })
             }
         }
+    }
 
+    private fun registerCommands(gpuConfig: GpuConfig) {
+        val userCommand = UserCommand(this@Main)
+        getCommand("cc")?.tabCompleter = userCommand
         getCommand("cc")?.setExecutor(UserCommand(this@Main))
+
+        val minerCommand = MinerCommand(this@Main)
         getCommand("ccmcn")?.setExecutor(MinerCommand(this@Main))
+        getCommand("ccmcn")?.tabCompleter = minerCommand
 
         val adminCommand = AdminCommand(this@Main, gpuConfig)
         getCommand("ccop")?.setExecutor(adminCommand)
         getCommand("ccop")?.tabCompleter = adminCommand
     }
 
+    fun launchAsync(block: suspend CoroutineScope.() -> Unit) {
+        pluginScope.launch(block = block)
+    }
+
+    fun runSync(block: () -> Unit) {
+        server.scheduler.runTask(this, Runnable {
+            block()
+        })
+    }
+
     override fun onDisable() {
-        // Plugin shutdown logic
+        pluginScope.cancel()
+
+        if (::mongoDatabaseProvider.isInitialized) {
+            mongoDatabaseProvider.close()
+        }
     }
 }

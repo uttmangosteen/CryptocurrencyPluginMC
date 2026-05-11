@@ -8,8 +8,8 @@ import java.util.logging.Logger
 
 enum class LogComponent(val label: String) {
     DATABASE("Database"),
-    MINING_MACHINE_REPOSITORY("MiningMachineRepository"),
     MEMPOOL_REPOSITORY("MempoolRepository"),
+    WALLET_REPOSITORY("WalletRepository"),
 }
 
 private val verboseEnabled: MutableSet<Logger> = Collections.newSetFromMap(WeakHashMap())

@@ -17,12 +17,14 @@ commands:
       §c§l× §f/cc account list §7- 財布に登録されている口座リスト
       §c§l× §f/cc account main <index> §7- メイン口座を口座リストの中から切り替え
       §c§l× §f/cc account getPubKeyItem [memo] §7- メイン口座への公開鍵アイテムを取得、公開鍵指定用の補助アイテム
+      §c§l× §f/cc account getPrivateKeyItem [memo] §7- メイン口座を共有口座にするための秘密鍵付き公開鍵アイテムを取得、§c絶対に落とすな
+      §c§l× §f/cc account register [pubKey] §7- 手に持った鍵アイテムをWalletに登録する　監視だけが目的であれば、pubKey平文指定でも可
       
       §c§l× §f/cc balance §7- メイン口座の状況を確認
       §c§l× §f/cc balance [pubKey] §7- 口座の状況を確認、省略時は手に持った公開鍵アイテムの公開鍵
       
       §c§l× §f/cc send byName <amount> [name] §7- メイン口座から[name]の今のメイン口座への送金を一つ作成
-      §c§l× §f/cc send byPubKey <amount> [pubKey] §7- メイン口座から[pubKey]の今のメイン口座への送金を一つ作成 [pubKey]省略時は手に持った公開鍵アイテムから送金先を取得
+      §c§l× §f/cc send byPubKey <amount> [pubKey] §7- [pubKey]省略時、手に持った公開鍵アイテムへメイン口座からの送金を作成　[pubKey]を平文で指定もできるが、間違えた場合二度とお金は取り出せない
       §c§l× §f/cc send list §7- 作成中の送金リスト
       §c§l× §f/cc send delete <index|all> §7- 送金リストから間違えた送金を削除
       §c§l× §f/cc send create <fee> [memo] §7- いまの送金リストをまとめてマイナー報酬を設定の上取引を作成 mempoolに登録 メモの長さは48Byteまで

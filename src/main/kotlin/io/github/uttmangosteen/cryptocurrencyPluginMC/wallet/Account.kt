@@ -8,13 +8,13 @@ import java.security.KeyPairGenerator
 data class Account(
     val publicKeyHex: String,
     val privateKeyHex: String,
-    var memo: String = ""
+    var memo: String
 ) {
     fun publicKeyBytes(): ByteArray {
         return publicKeyHex.decodeHex()
     }
 
-    fun privateKeyBytes(): ByteArray {
+    fun privateKeyBytes(): ByteArray? {
         return privateKeyHex.decodeHex()
     }
 
@@ -27,14 +27,14 @@ data class Account(
     }
 
     companion object {
-        fun create(memo: String = ""): Account {
+        fun create(): Account {
             val keyPairGenerator = KeyPairGenerator.getInstance(Signer.ALGORITHM)
             val keyPair = keyPairGenerator.generateKeyPair()
 
             return Account(
                 publicKeyHex = Signer.normalizePublicKeyBytes(keyPair.public.encoded).toHex(),
                 privateKeyHex = keyPair.private.encoded.toHex(),
-                memo = memo
+                memo = ""
             )
         }
     }

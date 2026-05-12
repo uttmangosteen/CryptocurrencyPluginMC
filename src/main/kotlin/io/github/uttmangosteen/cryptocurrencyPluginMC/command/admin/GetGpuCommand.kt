@@ -9,11 +9,13 @@ class GetGpuCommand(
     private val plugin: Main,
     private val gpuConfig: GpuConfig
 ) {
+    private val prefix = plugin.pluginConfig.prefix
+
     fun execute(sender: CommandSender, args: Array<out String>) {
         if (sender !is Player) return
         val gpu = gpuConfig.getGpu(args[1]) ?: run { return }
         val item = gpu.createItem(plugin)
         sender.inventory.addItem(item)
-        sender.sendMessage(plugin.pluginConfig.prefix + "§a${gpu.gpuName} §r§aを取得しました")
+        sender.sendMessage("${prefix}§a${gpu.gpuName} §r§aを取得しました")
     }
 }

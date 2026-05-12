@@ -59,7 +59,9 @@ data class Gpu(
                 meta.displayName(legacySerializer.deserialize(gpuName))
 
                 //TODO: ロア清書
-                meta.lore(listOf(legacySerializer.deserialize(description)))
+                meta.lore(listOf(
+                    legacySerializer.deserialize(description),
+                ))
 
                 if (customModelData != 0f) {
                     val customModelDataComponent = meta.customModelDataComponent

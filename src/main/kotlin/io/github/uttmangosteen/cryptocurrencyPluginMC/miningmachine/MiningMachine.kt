@@ -2,9 +2,11 @@ package io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine
 
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.Block
 import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.gpu.Gpu
+import org.bson.codecs.pojo.annotations.BsonId
 import java.util.UUID
 
 data class MiningMachine(
+    @BsonId //PRIMARY_KEY
     val id: String = UUID.randomUUID().toString(),
     val ownerUuid: String,
 

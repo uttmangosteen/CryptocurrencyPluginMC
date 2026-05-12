@@ -1,6 +1,7 @@
 package io.github.uttmangosteen.cryptocurrencyPluginMC.command.user
 
 import io.github.uttmangosteen.cryptocurrencyPluginMC.Main
+import io.github.uttmangosteen.cryptocurrencyPluginMC.wallet.Account
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
@@ -15,30 +16,30 @@ class AccountCommand(
         if (args.size < 2) return
 
         when (args[1]) {
-            "create" -> {
-                create(sender)
-            }
-
+            "create" -> create(sender)
             "delete" -> {
                 if (args.size < 3) return
                 val index = args[2].toIntOrNull() ?: return
                 delete(sender, index)
             }
 
-            "list" -> {
-                list(sender)
-            }
-
+            "list" -> list(sender)
             "main" -> {
                 if (args.size < 3) return
                 val index = args[2].toIntOrNull() ?: return
                 main(sender, index)
             }
 
-            "getPubKeyItem" -> {
-                val memo = args.drop(2).joinToString(" ")
-                getPubKeyItem(sender, memo)
+            "memo" -> {
+                if (args.size < 4) return
+                val index = args[2].toIntOrNull() ?: return
+                memo(sender, index, args[3])
             }
+
+            "getPubKeyItem" -> getPubKeyItem(sender, args.getOrElse(2) { "" })
+            "getPrivateKeyItem" -> getPrivateKeyItem(sender, args.getOrElse(2) { "" })
+            "register" -> register(sender, args.getOrNull(2))
+
 
             else -> return
         }
@@ -58,27 +59,12 @@ class AccountCommand(
 
     private fun delete(player: Player, index: Int) {
         plugin.launchAsync {
-            val deletedAccount = plugin.repositories.walletRepo.forgetAccount(player.uniqueId.toString(), index)
+            val deleted = plugin.repositories.walletRepo.forgetAccount(player.uniqueId.toString(), index)
 
-            if (deletedAccount == null) {
-                player.sendMessage("§c口座の削除に失敗しました")
-                return@launchAsync
-            }
-
-            val memo = deletedAccount.memo.ifBlank {
-                "§f忘れた口座 #$index"
-            }
-
-            val item = publicKeyItemFactory.create(deletedAccount, memo)
-            val overflowItems = player.inventory.addItem(item)
-
-            if (overflowItems.isEmpty()) {
-                player.sendMessage("$prefix§a口座を削除し、公開鍵アイテムを返却しました")
+            if (deleted) {
+                player.sendMessage("$prefix§a口座を削除しました")
             } else {
-                overflowItems.values.forEach { overflowItem ->
-                    player.world.dropItemNaturally(player.location, overflowItem)
-                }
-                player.sendMessage("$prefix§eインベントリに空きがないため、公開鍵アイテムを足元に落としました")
+                player.sendMessage("$prefix§c口座の削除に失敗しました")
             }
         }
     }
@@ -92,14 +78,15 @@ class AccountCommand(
                 return@launchAsync
             }
 
-            player.sendMessage("§f§l=============== §8§lAccount list §f§l===============")
+            player.sendMessage("$prefix§f§l=============== §8§lAccount list §f§l===============")
             wallet.accounts.forEachIndexed { index, account ->
                 val mainMark = if (index == 0) "§a§lMAIN " else ""
-                val memo = if (account.memo.isBlank()) "§7no memo" else account.memo
-                player.sendMessage("§f[$index] $mainMark§r$memo")
-                player.sendMessage("§8${account.publicKeyHex}")
+                val keyMark = if (account.privateKeyHex == null) "§e§lWATCH " else ""
+                val memo = account.memo.ifBlank { "§7no memo" }
+                player.sendMessage("$prefix§f[$index] $mainMark$keyMark§r$memo")
+                player.sendMessage("$prefix§8${account.publicKeyHex}")
             }
-            player.sendMessage("§f§l==========================================")
+            player.sendMessage("$prefix§f§l===========================================")
         }
     }
 
@@ -115,20 +102,32 @@ class AccountCommand(
         }
     }
 
-    private fun getPubKeyItem(player: Player, memo: String) {
+    private fun memo(player: Player, index: Int, memo: String) {
+        plugin.launchAsync {
+            val updated = plugin.repositories.walletRepo.updateMemo(
+                ownerUUID = player.uniqueId.toString(),
+                index = index,
+                memo = memo
+            )
+
+            if (updated) {
+                player.sendMessage("$prefix§a口座メモを変更しました")
+            } else {
+                player.sendMessage("$prefix§c口座メモの変更に失敗しました")
+            }
+        }
+    }
+
+    private fun getPubKeyItem(player: Player, memo: String = "no memo") {
         plugin.launchAsync {
             val account = plugin.repositories.walletRepo.getMainAccount(player.uniqueId.toString())
 
             if (account == null) {
-                player.sendMessage("§cメイン口座がありません")
+                player.sendMessage("$prefix§cメイン口座がありません")
                 return@launchAsync
             }
 
-            val itemMemo = memo.ifBlank {
-                "§f${player.name}の公開鍵"
-            }
-
-            val item = publicKeyItemFactory.create(account, itemMemo)
+            val item = publicKeyItemFactory.create(account, memo)
             val overflowItems = player.inventory.addItem(item)
 
             if (overflowItems.isEmpty()) {
@@ -136,6 +135,102 @@ class AccountCommand(
             } else {
                 player.sendMessage("$prefix§eインベントリに空きがありません")
             }
+        }
+    }
+
+    private fun getPrivateKeyItem(player: Player, memo: String = "no memo") {
+        plugin.launchAsync {
+            val account = plugin.repositories.walletRepo.getMainAccount(player.uniqueId.toString())
+
+            if (account == null) {
+                player.sendMessage("$prefix§cメイン口座がありません")
+                return@launchAsync
+            }
+
+            if (account.privateKeyHex == null) {
+                player.sendMessage("$prefix§cこの口座には秘密鍵がありません")
+                return@launchAsync
+            }
+
+            val item = publicKeyItemFactory.createWithPrivateKey(account, memo)
+
+            if (item == null) {
+                player.sendMessage("$prefix§c秘密鍵付き公開鍵アイテムの作成に失敗しました")
+                return@launchAsync
+            }
+
+            val overflowItems = player.inventory.addItem(item)
+
+            if (overflowItems.isEmpty()) {
+                player.sendMessage("$prefix§c秘密鍵付き公開鍵アイテムを取得しました　取扱注意")
+            } else {
+                player.sendMessage("$prefix§eインベントリに空きがありません")
+            }
+        }
+    }
+
+    private fun register(player: Player, pubKey: String?) {
+        val account = if (pubKey != null) {
+            Account.watchOnly(
+                publicKeyHex = pubKey,
+                memo = "§7watch-only"
+            )
+        } else {
+            publicKeyItemFactory.readAccount(
+                itemStack = player.inventory.itemInMainHand,
+                memo = "§7registered item"
+            )
+        }
+
+        if (account == null) {
+            player.sendMessage("$prefix§c公開鍵アイテムを手に持つか、公開鍵を指定してください")
+            return
+        }
+
+        plugin.launchAsync {
+            val registered = plugin.repositories.walletRepo.registerAccount(
+                ownerUUID = player.uniqueId.toString(),
+                account = account
+            )
+
+            when (registered) {
+                true -> {
+                    if (account.privateKeyHex == null) {
+                        player.sendMessage("$prefix§a監視用口座を登録しました")
+                    } else {
+                        player.sendMessage("$prefix§a秘密鍵付き口座を登録しました")
+                    }
+                }
+
+                false -> player.sendMessage("$prefix§c口座数が上限に達しているか、同じ公開鍵が既に登録されています")
+                null -> player.sendMessage("$prefix§c口座の登録に失敗しました")
+            }
+        }
+    }
+
+    fun getTabCompletions(args: Array<out String>): List<String> {
+        return when (args.size) {
+            2 -> listOf(
+                "create",
+                "delete",
+                "list",
+                "main",
+                "memo",
+                "getPubKeyItem",
+                "getPrivateKeyItem",
+                "register"
+            ).filter { it.startsWith(args[1]) }
+            3 -> when (args[1]) {
+                "delete", "main", "memo" -> listOf("<index>").filter { it.startsWith(args[2]) }
+                "getPubKeyItem", "getPrivateKeyItem" -> listOf("[itemMemo]").filter { it.startsWith(args[2]) }
+                "register" -> listOf("[pubKey]").filter { it.startsWith(args[2]) }
+                else -> emptyList()
+            }
+            4 -> when (args[1]) {
+                "memo" -> listOf("<memo>").filter { it.startsWith(args[3]) }
+                else -> emptyList()
+            }
+            else -> emptyList()
         }
     }
 }

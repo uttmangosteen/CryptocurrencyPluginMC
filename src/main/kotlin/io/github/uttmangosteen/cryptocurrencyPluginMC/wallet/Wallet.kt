@@ -1,38 +1,33 @@
 package io.github.uttmangosteen.cryptocurrencyPluginMC.wallet
 
-import org.bson.codecs.pojo.annotations.BsonId
-
 class Wallet(
-    @BsonId //PRIMARY_KEY
     val ownerUUID: String,
-    //index:0の口座がmain口座
-    val accounts: MutableList<Account>
+    val accounts: MutableList<Account> //index:0の口座がmain口座
 ) {
-    //TODO:GUI設計時要調整
-    private val maxAccounts = 6
-
     fun normalizeKeys() {
         accounts.replaceAll { account -> account.normalized() }
     }
 
     fun createAccount(): Boolean {
-        if (accounts.size >= maxAccounts) return false
+        if (accounts.size >= MAX_ACCOUNTS) return false
         val account = Account.create()
         accounts.add(account)
         return true
     }
 
+    //同じpubkey登録しようとしたらnull
     fun addAccount(account: Account): Boolean {
-        if (accounts.size >= maxAccounts) return false
-        accounts.add(account)
+        if (accounts.size >= MAX_ACCOUNTS) return false
+        val normalizedAccount = account.normalized()
+        if (accounts.any { it.normalized().publicKeyHex == normalizedAccount.publicKeyHex }) return false
+        accounts.add(normalizedAccount)
         return true
     }
 
-    fun deleteAccount(index: Int): Account? {
-        if (index !in accounts.indices) return null
-        val account = accounts[index]
+    fun deleteAccount(index: Int): Boolean {
+        if (index !in accounts.indices) return false
         accounts.removeAt(index)
-        return account
+        return true
     }
 
     fun switchMainAccount(index: Int): Boolean {
@@ -44,7 +39,16 @@ class Wallet(
         return true
     }
 
+    fun updateMemo(index: Int, memo: String): Boolean {
+        if (index !in accounts.indices) return false
+        accounts[index].memo = memo
+        return true
+    }
+
     companion object {
+        //TODO:GUI作成時見直し
+        private const val MAX_ACCOUNTS = 6
+
         fun create(ownerUUID: String): Wallet {
             return Wallet(
                 ownerUUID = ownerUUID,

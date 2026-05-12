@@ -45,23 +45,17 @@ class UserCommand(
                 "wallet",
                 "account",
                 "balance",
+                "history",
                 "send",
                 "info"
             ).filter { it.startsWith(args[0]) }
 
-            2 -> when (args[0]) {
-                "account" -> listOf(
-                    "create",
-                    "delete",
-                    "list",
-                    "main",
-                    "getPubKeyItem"
-                ).filter { it.startsWith(args[1]) }
+            else -> when (args[0].lowercase()) {
+                "account" -> AccountCommand(plugin).getTabCompletions(args)
+
 
                 else -> emptyList()
             }
-
-            else -> emptyList()
         }
     }
 }

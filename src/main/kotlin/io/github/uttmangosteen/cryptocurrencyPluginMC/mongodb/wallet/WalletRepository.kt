@@ -9,13 +9,14 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.ccWarning
 import io.github.uttmangosteen.cryptocurrencyPluginMC.wallet.Account
 import io.github.uttmangosteen.cryptocurrencyPluginMC.wallet.Wallet
 import kotlinx.coroutines.flow.firstOrNull
+import org.bson.Document
 import java.util.logging.Logger
 
 class WalletRepository(
     database: MongoDatabase,
     private val logger: Logger
 ) {
-    private val collection = database.getCollection<Wallet>("wallets")
+    private val collection = database.getCollection<Document>("wallets")
 
     fun setup() {
         // walletsはownerUUIDを_idとして保存するため、追加Indexは不要
@@ -28,14 +29,6 @@ class WalletRepository(
         val shouldSave = block(wallet)
         if (!shouldSave) return false
         return save(wallet)
-    }
-
-    // Walletを変更しつつ、削除したAccountなどの結果も返したい場合に使う
-    suspend fun <T> computeWallet(ownerUUID: String, block: (Wallet) -> T?): T? {
-        val wallet = getWallet(ownerUUID) ?: return null
-        val result = block(wallet) ?: return null
-        return if (save(wallet)) result
-        else null
     }
 
     suspend fun getWallet(ownerUUID: String): Wallet? {
@@ -52,9 +45,17 @@ class WalletRepository(
         return true
     }
 
-    suspend fun forgetAccount(ownerUUID: String, index: Int): Account? {
-        // 削除したAccountは、コマンド側で公開鍵アイテム化してプレイヤーへ返す
-        return computeWallet(ownerUUID) { wallet ->
+    suspend fun registerAccount(ownerUUID: String, account: Account): Boolean? {
+        val wallet = getWallet(ownerUUID) ?: Wallet.create(ownerUUID)
+        val registered = wallet.addAccount(account)
+        if (!registered) return false
+        val saved = save(wallet)
+        if (!saved) return null
+        return true
+    }
+
+    suspend fun forgetAccount(ownerUUID: String, index: Int): Boolean {
+        return updateWallet(ownerUUID) { wallet ->
             wallet.deleteAccount(index)
         }
     }
@@ -63,6 +64,12 @@ class WalletRepository(
         // index番目のAccountとindex 0のAccountを入れ替える
         return updateWallet(ownerUUID) { wallet ->
             wallet.switchMainAccount(index)
+        }
+    }
+
+    suspend fun updateMemo(ownerUUID: String, index: Int, memo: String): Boolean {
+        return updateWallet(ownerUUID) { wallet ->
+            wallet.updateMemo(index, memo)
         }
     }
 
@@ -77,7 +84,7 @@ class WalletRepository(
         return try {
             val result = collection.replaceOne(
                 Filters.eq("_id", wallet.ownerUUID),
-                wallet,
+                wallet.toDocument(),
                 ReplaceOptions().upsert(true)
             )
             result.wasAcknowledged()
@@ -94,7 +101,8 @@ class WalletRepository(
 
     private suspend fun get(ownerUUID: String): Wallet? {
         return try {
-            val wallet = collection.find(Filters.eq("_id", ownerUUID)).firstOrNull() ?: return null
+            val document = collection.find(Filters.eq("_id", ownerUUID)).firstOrNull() ?: return null
+            val wallet = document.toWallet()
             // ヘッダー付き公開鍵が混ざっても、統一する
             wallet.normalizeKeys()
             wallet
@@ -107,5 +115,36 @@ class WalletRepository(
             )
             null
         }
+    }
+
+    private fun Wallet.toDocument(): Document {
+        return Document("_id", ownerUUID)
+            .append(
+                "accounts",
+                accounts.map { account ->
+                    Document("publicKeyHex", account.publicKeyHex)
+                        .append("privateKeyHex", account.privateKeyHex)
+                        .append("memo", account.memo)
+                }
+            )
+    }
+
+    private fun Document.toWallet(): Wallet {
+        val ownerUUID = getString("_id")
+        val accounts = getList("accounts", Document::class.java)
+            .orEmpty()
+            .map { accountDocument ->
+                Account(
+                    publicKeyHex = accountDocument.getString("publicKeyHex"),
+                    privateKeyHex = accountDocument.getString("privateKeyHex"),
+                    memo = accountDocument.getString("memo") ?: ""
+                ).normalized()
+            }
+            .toMutableList()
+
+        return Wallet(
+            ownerUUID = ownerUUID,
+            accounts = accounts
+        )
     }
 }

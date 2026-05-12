@@ -9,19 +9,21 @@ commands:
   cryptocurrency:
     aliases: [ cc ] #CryptoCurrency
     usage: |
-      §f§l=============== §8§lCryptocurrency help §f§l===============
+      §f§l========== §8§lCryptocurrency help §f§l==========
       §c§l× §f/cc wallet §7- 自分の財布を開く(GUI)
       
-      §c§l× §f/cc account create §7- 口座作成、財布に登録
-      §c§l× §f/cc account delete <index> §7- 財布から口座を削除(一生触れなくなるが、他者からの送金は通ってしまうので注意)
-      §c§l× §f/cc account list §7- 財布に登録されている口座リスト
-      §c§l× §f/cc account main <index> §7- メイン口座を口座リストの中から切り替え
-      §c§l× §f/cc account getPubKeyItem [memo] §7- メイン口座への公開鍵アイテムを取得、公開鍵指定用の補助アイテム
-      §c§l× §f/cc account getPrivateKeyItem [memo] §7- メイン口座を共有口座にするための秘密鍵付き公開鍵アイテムを取得、§c絶対に落とすな
-      §c§l× §f/cc account register [pubKey] §7- 手に持った鍵アイテムをWalletに登録する　監視だけが目的であれば、pubKey平文指定でも可
+      §f/cc account create §7- 口座作成、財布に登録
+      §f/cc account delete <index> §7- 財布から口座を削除 pubKeyを保存していなかったら、一生触れなくなる
+      §f/cc account list §7- 財布に登録されている口座リスト
+      §f/cc account main <index> §7- メイン口座を口座リストの中から切り替え
+      §f/cc account memo <index> <memo>  §7- 口座のメモを編集
+      §f/cc account getPubKeyItem [itemMemo] §7- メイン口座への公開鍵アイテムを取得、公開鍵指定用の補助アイテム
+      §f/cc account getPrivateKeyItem [itemMemo] §7- メイン口座を共有口座にするための秘密鍵付き公開鍵アイテムを取得、§c取扱注意
+      §f/cc account register [pubKey] §7- pubKey省略で手に持った鍵アイテムをWalletに登録する　pubKey平文指定も可
       
-      §c§l× §f/cc balance §7- メイン口座の状況を確認
-      §c§l× §f/cc balance [pubKey] §7- 口座の状況を確認、省略時は手に持った公開鍵アイテムの公開鍵
+      §c§l× §f/cc balance [index] §7- 口座の状況を確認
+      
+      §c§l× §f/cc history [index] [page] §7- 口座の取引履歴を確認
       
       §c§l× §f/cc send byName <amount> [name] §7- メイン口座から[name]の今のメイン口座への送金を一つ作成
       §c§l× §f/cc send byPubKey <amount> [pubKey] §7- [pubKey]省略時、手に持った公開鍵アイテムへメイン口座からの送金を作成　[pubKey]を平文で指定もできるが、間違えた場合二度とお金は取り出せない
@@ -31,12 +33,12 @@ commands:
       
       §c§l× §f/cc info blockchain §7- blockchainの状況を確認
       §c§l× §f/cc info mempool §7- mempoolの状況を確認
-      §f§l===================================================
+      §f§l=========================================
     permission: cryptocurrency.user
   cryptocurrencymachine:
     aliases: [ ccmcn ] #CryptoCurrencyMaChiNe
     usage: |
-      §f§l=============== §8§lCryptocurrency Machine help §f§l===============
+      §f§l========== §8§lCryptocurrency Machine help §f§l==========
       §c§l× §f/ccmcn create §7- 採掘機を作成
       §c§l× §f/ccmcn remove <machineId> §7- 採掘機を撤去
       
@@ -53,12 +55,12 @@ commands:
       §c§l× §f/ccmcn block setMemo <machineId> [memo] §7- 採掘中ブロックのメモ設定
       §c§l× §f/ccmcn block txMode <machineId> §7- 採掘ブロックのトランザクションの集め方切り替え
       §c§l× §f/ccmcn block recreate <machineId> §7-最新のmempoolに合わせてブロックの再構築
-      §f§l===========================================================
+      §f§l=================================================
     permission: cryptocurrency.miner
   cryptocurrencyadmin:
     aliases: [ ccop ]
     usage: |
-      §f§l=============== §8§lCryptocurrency Admin help §f§l===============
+      §f§l========== §8§lCryptocurrency Admin help §f§l==========
       §f/ccop <run|halt> §7- プラグインの停止/再開
       
       §f/ccop getGpu <gpuId> §7- GPUアイテム取得
@@ -66,7 +68,7 @@ commands:
       §c§l× §f/ccop database reconnect §7- データベース再接続
       §c§l× §f/ccop database flush §7- mempool等、消せる情報を消す(何かの移行時の圧縮用)
       §c§l× §f/ccop database rebuild §7- blocksコレクションからUTXOやTxHistoryなどのcash再計算(flushからの復旧)
-      §f§l=========================================================
+      §f§l===============================================
     permission: cryptocurrency.admin
 
 permissions:

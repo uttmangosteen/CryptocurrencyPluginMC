@@ -14,7 +14,7 @@ data class Account(
         return publicKeyHex.decodeHex()
     }
 
-    fun privateKeyBytes(): ByteArray? {
+    fun privateKeyBytes(): ByteArray {
         return privateKeyHex.decodeHex()
     }
 

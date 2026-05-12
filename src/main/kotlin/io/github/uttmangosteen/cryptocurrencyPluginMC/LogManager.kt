@@ -52,7 +52,7 @@ fun Logger.ccSevere(
 }
 
 //デバック用ログ
-fun Logger.mncVerbose(
+fun Logger.ccVerbose(
     component: LogComponent,
     message: String,
     vararg params: Pair<String, Any?>

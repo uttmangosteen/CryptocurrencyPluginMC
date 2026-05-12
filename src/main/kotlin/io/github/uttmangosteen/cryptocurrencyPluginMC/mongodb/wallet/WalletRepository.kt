@@ -17,7 +17,7 @@ class WalletRepository(
 ) {
     private val collection = database.getCollection<Wallet>("wallets")
 
-    suspend fun setup() {
+    fun setup() {
         // walletsはownerUUIDを_idとして保存するため、追加Indexは不要
         logger.ccInfo(LogComponent.WALLET_REPOSITORY, "setup completed")
     }

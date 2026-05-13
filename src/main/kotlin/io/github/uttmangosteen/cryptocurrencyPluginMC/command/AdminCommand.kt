@@ -32,6 +32,8 @@ class AdminCommand(
             }
 
             "database" -> {
+                if (args.size < 2) return true
+
                 when (args[1]) {
                     "reconnect" -> {
                         //TODO:

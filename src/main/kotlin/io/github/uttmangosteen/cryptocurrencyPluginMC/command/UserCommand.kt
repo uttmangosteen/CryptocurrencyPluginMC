@@ -22,9 +22,7 @@ class UserCommand(
         if (args.isEmpty()) return false
 
         when (args[0]) {
-            "account" -> {
-                AccountCommand(plugin).execute(sender, args)
-            }
+            "account" -> AccountCommand(plugin).execute(sender, args)
 
             else -> return true
         }

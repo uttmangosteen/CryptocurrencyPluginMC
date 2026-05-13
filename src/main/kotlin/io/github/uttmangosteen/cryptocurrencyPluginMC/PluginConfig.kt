@@ -45,7 +45,7 @@ data class PluginConfig(
                 miningReward = config.safeLong("blockchain.mining-reward", DEFAULT_MINING_REWARD),
                 mempoolLimitPerBlock = config.safeInt("blockchain.mempool-limit-per-block", DEFAULT_MEMPOOL_LIMIT_PER_BLOCK),
 
-                miningMachineMiningDelayTicks = config.safeInt("mining-machine.mining-delay-ticks", DEFAULT_MINING_MACHINE_DELAY_TICKS),
+                miningMachineMiningDelayTicks = config.safeInt("mining-machine.delay-ticks", DEFAULT_MINING_MACHINE_DELAY_TICKS),
                 miningMachineSaveIntervalMillis = config.safeInt("mining-machine.save-interval-millis", DEFAULT_MINING_MACHINE_SAVE_INTERVAL_MILLIS)
             )
         }

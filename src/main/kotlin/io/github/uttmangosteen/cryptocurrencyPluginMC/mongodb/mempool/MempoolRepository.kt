@@ -45,12 +45,12 @@ class MempoolRepository(
         // 同じ OutPoint を消費するトランザクションは mempool に1つしか入れない
         collection.createIndex(
             Indexes.compoundIndex(
-                Indexes.ascending("consumedOutpoints.txHashHex"),
-                Indexes.ascending("consumedOutpoints.outputIndex")
+                Indexes.ascending("outpoints.txHashHex"),
+                Indexes.ascending("outpoints.outputIndex")
             ),
             IndexOptions()
                 .unique(true)
-                .name("unique_consumed_outpoint")
+                .name("unique_outpoint")
         )
 
         logger.ccInfo(LogComponent.MEMPOOL_REPOSITORY, "setup completed")
@@ -146,12 +146,7 @@ class MempoolRepository(
             .append("txHashHex", txHashHex)
             .append("timestamp", timestamp)
             .append("pubkeyList", pubkeyList)
-            .append(
-                "consumedOutpoints",
-                consumedOutpoints.map { outPoint ->
-                    outPoint.toDocument()
-                }
-            )
+            .append("outpoints", outpoints.map { outPoint -> outPoint.toDocument() })
     }
 
     private fun Document.toTransactionEntity(): TransactionEntry {
@@ -165,18 +160,8 @@ class MempoolRepository(
 
     private fun Transaction.toDocument(): Document {
         return Document("isCoinbase", isCoinbase)
-            .append(
-                "inputs",
-                inputs.map { input ->
-                    input.toDocument()
-                }
-            )
-            .append(
-                "outputs",
-                outputs.map { output ->
-                    output.toDocument()
-                }
-            )
+            .append("inputs", inputs.map { input -> input.toDocument() })
+            .append("outputs", outputs.map { output -> output.toDocument() })
             .append("timestamp", timestamp)
             .append("memo", memo)
             .append("txHashHex", txHash.toHex())
@@ -185,15 +170,11 @@ class MempoolRepository(
     private fun Document.toTransaction(): Transaction {
         val inputs = getList("inputs", Document::class.java)
             .orEmpty()
-            .map { inputDocument ->
-                inputDocument.toTxInput()
-            }
+            .map { inputDocument -> inputDocument.toTxInput() }
 
         val outputs = getList("outputs", Document::class.java)
             .orEmpty()
-            .map { outputDocument ->
-                outputDocument.toTxOutput()
-            }
+            .map { outputDocument -> outputDocument.toTxOutput() }
 
         return Transaction(
             isCoinbase = getBoolean("isCoinbase") ?: false,

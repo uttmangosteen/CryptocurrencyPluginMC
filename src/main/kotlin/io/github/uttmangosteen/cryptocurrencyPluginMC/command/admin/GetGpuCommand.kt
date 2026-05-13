@@ -13,7 +13,16 @@ class GetGpuCommand(
 
     fun execute(sender: CommandSender, args: Array<out String>) {
         if (sender !is Player) return
-        val gpu = gpuConfig.getGpu(args[1]) ?: run { return }
+        if (args.size < 2) {
+            sender.sendMessage("${prefix}§cGPU IDを指定してください")
+            return
+        }
+
+        val gpu = gpuConfig.getGpu(args[1]) ?: run {
+            sender.sendMessage("${prefix}§c指定されたGPUが見つかりません")
+            return
+        }
+
         val item = gpu.createItem(plugin)
         sender.inventory.addItem(item)
         sender.sendMessage("${prefix}§a${gpu.gpuName} §r§aを取得しました")

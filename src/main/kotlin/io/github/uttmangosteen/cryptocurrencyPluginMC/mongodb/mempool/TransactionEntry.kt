@@ -15,7 +15,7 @@ data class TransactionEntry(
 
     val timestamp: Long = transaction.timestamp,
     val pubkeyList: List<String> = extractPubKeys(transaction),
-    val consumedOutpoints: List<OutPoint> = extractConsumedOutpoints(transaction),
+    val outpoints: List<OutPoint> = extractConsumedOutpoints(transaction),
 ) {
 
     companion object {

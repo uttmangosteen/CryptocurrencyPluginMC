@@ -12,9 +12,10 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.Utxo
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.transaction.Transaction
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccInfo
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccWarning
-import io.github.uttmangosteen.cryptocurrencyPluginMC.util.decodeHex
+import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.toDocument
+import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.toMongoId
+import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.toUtxo
 import io.github.uttmangosteen.cryptocurrencyPluginMC.util.toHex
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import org.bson.Document
@@ -181,40 +182,5 @@ class UtxoRepository(
                 receiverPubKeyHex = receiverPubKeyHex
             )
         }
-    }
-
-    private fun OutPoint.toMongoId(): String {
-        return "$txHashHex.$outputIndex"
-    }
-
-    private fun Utxo.toDocument(): Document {
-        val document = Document("_id", outPoint.toMongoId())
-            .append("txHashHex", txHash.toHex())
-            .append("amount", amount)
-            .append("receiverPubKeyHex", receiverPubKeyHex)
-
-        if (lockedByTxId != null) {
-            document.append("lockedByTxId", lockedByTxId)
-        }
-
-        return document
-    }
-
-    private fun Document.toUtxo(): Utxo {
-        val id = getString("_id")
-        val txHashHex = getString("txHashHex")
-        val receiverPubKeyHex = getString("receiverPubKeyHex")
-
-        return Utxo(
-            outPoint = OutPoint(
-                txHashHex = id.substringBeforeLast("."),
-                outputIndex = id.substringAfterLast(".").toInt()
-            ),
-            txHash = txHashHex.decodeHex(),
-            amount = getLong("amount") ?: 0L,
-            receiverPubKey = receiverPubKeyHex.decodeHex(),
-            receiverPubKeyHex = receiverPubKeyHex,
-            lockedByTxId = getString("lockedByTxId")
-        )
     }
 }

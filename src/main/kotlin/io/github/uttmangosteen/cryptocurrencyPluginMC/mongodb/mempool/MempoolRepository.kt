@@ -14,6 +14,8 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.transaction.TxO
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccInfo
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccWarning
 import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.CreateBlockMode
+import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.toDocument
+import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.toTransaction
 import io.github.uttmangosteen.cryptocurrencyPluginMC.util.decodeHex
 import io.github.uttmangosteen.cryptocurrencyPluginMC.util.toHex
 import kotlinx.coroutines.flow.map
@@ -169,66 +171,5 @@ class MempoolRepository(
             transaction = transactionDocument.toTransaction(),
             fee = getLong("fee") ?: 0L
         )
-    }
-
-    private fun Transaction.toDocument(): Document {
-        return Document("isCoinbase", isCoinbase)
-            .append("inputs", inputs.map { input -> input.toDocument() })
-            .append("outputs", outputs.map { output -> output.toDocument() })
-            .append("timestamp", timestamp)
-            .append("memo", memo)
-            .append("txHashHex", txHash.toHex())
-    }
-
-    private fun Document.toTransaction(): Transaction {
-        val inputs = getList("inputs", Document::class.java)
-            .orEmpty()
-            .map { inputDocument -> inputDocument.toTxInput() }
-
-        val outputs = getList("outputs", Document::class.java)
-            .orEmpty()
-            .map { outputDocument -> outputDocument.toTxOutput() }
-
-        return Transaction(
-            isCoinbase = getBoolean("isCoinbase") ?: false,
-            inputs = inputs,
-            outputs = outputs,
-            timestamp = getLong("timestamp") ?: 0L,
-            memo = getString("memo") ?: "",
-            txHash = getString("txHashHex").decodeHex()
-        )
-    }
-
-    private fun TxInput.toDocument(): Document {
-        return Document("prevTxHashHex", prevTxHash.toHex())
-            .append("outputIndex", outputIndex)
-            .append("signatureHex", signature?.toHex())
-            .append("publicKeyHex", publicKey.toHex())
-    }
-
-    private fun Document.toTxInput(): TxInput {
-        return TxInput(
-            prevTxHash = getString("prevTxHashHex").decodeHex(),
-            outputIndex = getInteger("outputIndex") ?: 0,
-            signature = getString("signatureHex")?.decodeHex(),
-            publicKey = getString("publicKeyHex").decodeHex()
-        )
-    }
-
-    private fun TxOutput.toDocument(): Document {
-        return Document("amount", amount)
-            .append("receiverPubKeyHex", receiverPubKey.toHex())
-    }
-
-    private fun Document.toTxOutput(): TxOutput {
-        return TxOutput(
-            amount = getLong("amount") ?: 0L,
-            receiverPubKey = getString("receiverPubKeyHex").decodeHex()
-        )
-    }
-
-    private fun OutPoint.toDocument(): Document {
-        return Document("txHashHex", txHashHex)
-            .append("outputIndex", outputIndex)
     }
 }

@@ -10,7 +10,10 @@ enum class LogComponent(val label: String) {
     DATABASE("Database"),
     MEMPOOL_REPOSITORY("MempoolRepository"),
     WALLET_REPOSITORY("WalletRepository"),
-    BLOCK_REPOSITORY("BlockRepository")
+    BLOCK_REPOSITORY("BlockRepository"),
+    MINING_MACHINE_REPOSITORY("MiningMachineRepository"),
+    TRANSACTION_HISTORY_REPOSITORY("TransactionHistoryRepository"),
+    UTXO_REPOSITORY("UtxoRepository")
 }
 
 private val verboseEnabled: MutableSet<Logger> = Collections.newSetFromMap(WeakHashMap())

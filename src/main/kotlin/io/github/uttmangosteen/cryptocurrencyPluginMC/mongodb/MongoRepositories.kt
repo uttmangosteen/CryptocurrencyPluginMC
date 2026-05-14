@@ -2,6 +2,7 @@ package io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb
 
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blocks.BlockRepository
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.mempool.MempoolRepository
+import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.utxo.UtxoRepository
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.wallet.WalletRepository
 import java.util.logging.Logger
 
@@ -11,11 +12,11 @@ class MongoRepositories(
 ) {
     val mempoolRepo = MempoolRepository(provider.database, logger)
     val walletRepo = WalletRepository(provider.database, logger)
-    val blockRepo = BlockRepository(provider.database, logger)
+    val utxoRepo = UtxoRepository(provider.database, logger)
 
     suspend fun setupAll() {
         mempoolRepo.setup()
         walletRepo.setup()
-        blockRepo.setup()
+        utxoRepo.setup()
     }
 }

@@ -5,7 +5,8 @@ data class Utxo(
     val txHash: ByteArray,
     val amount: Long,
     val receiverPubKey: ByteArray,
-    val receiverPubKeyHash: String
+    val receiverPubKeyHex: String,
+    val lockedByTxId: String? = null
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -17,7 +18,8 @@ data class Utxo(
         if (outPoint != other.outPoint) return false
         if (!txHash.contentEquals(other.txHash)) return false
         if (!receiverPubKey.contentEquals(other.receiverPubKey)) return false
-        if (receiverPubKeyHash != other.receiverPubKeyHash) return false
+        if (receiverPubKeyHex != other.receiverPubKeyHex) return false
+        if (lockedByTxId != other.lockedByTxId) return false
 
         return true
     }
@@ -27,7 +29,8 @@ data class Utxo(
         result = 31 * result + outPoint.hashCode()
         result = 31 * result + txHash.contentHashCode()
         result = 31 * result + receiverPubKey.contentHashCode()
-        result = 31 * result + receiverPubKeyHash.hashCode()
+        result = 31 * result + receiverPubKeyHex.hashCode()
+        result = 31 * result + (lockedByTxId?.hashCode() ?: 0)
         return result
     }
 }

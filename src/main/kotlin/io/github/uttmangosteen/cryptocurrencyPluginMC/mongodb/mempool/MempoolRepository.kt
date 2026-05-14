@@ -96,46 +96,59 @@ class MempoolRepository(
         minerPubKeyHex: String,
         limit: Int
     ): List<TransactionEntry> {
-        return when (mode) {
-            CreateBlockMode.NONE -> emptyList()
+        return try {
+            when (mode) {
+                CreateBlockMode.NONE -> emptyList()
 
-            CreateBlockMode.ONLY_MINE -> {
-                collection.find(Filters.eq("pubkeyList", minerPubKeyHex))
-                    .sort(Sorts.descending("fee"))
-                    .limit(limit)
-                    .map { it.toTransactionEntity() }
-                    .toList()
+                CreateBlockMode.ONLY_MINE -> {
+                    collection.find(Filters.eq("pubkeyList", minerPubKeyHex))
+                        .sort(Sorts.descending("fee"))
+                        .limit(limit)
+                        .map { it.toTransactionEntity() }
+                        .toList()
+                }
+
+                CreateBlockMode.FEE_SORT -> {
+                    collection.find()
+                        .sort(Sorts.descending("fee"))
+                        .limit(limit)
+                        .map { it.toTransactionEntity() }
+                        .toList()
+                }
+
+                CreateBlockMode.MINE_AND_FEE_SORT -> {
+                    val mine = collection.find(Filters.eq("pubkeyList", minerPubKeyHex))
+                        .sort(Sorts.descending("fee"))
+                        .limit(limit)
+                        .map { it.toTransactionEntity() }
+                        .toList()
+
+                    val remaining = limit - mine.size
+                    if (remaining <= 0) {
+                        mine
+                    } else {
+                        val mineHashes = mine.map { it.txHashHex }
+
+                        val others = collection.find(Filters.nin("_id", mineHashes))
+                            .sort(Sorts.descending("fee"))
+                            .limit(remaining)
+                            .map { it.toTransactionEntity() }
+                            .toList()
+
+                        mine + others
+                    }
+                }
             }
-
-            CreateBlockMode.FEE_SORT -> {
-                // 手数料が高い順に取得
-                collection.find()
-                    .sort(Sorts.descending("fee"))
-                    .limit(limit)
-                    .map { it.toTransactionEntity() }
-                    .toList()
-            }
-
-            CreateBlockMode.MINE_AND_FEE_SORT -> {
-                val mine = collection.find(Filters.eq("pubkeyList", minerPubKeyHex))
-                    .sort(Sorts.descending("fee"))
-                    .limit(limit)
-                    .map { it.toTransactionEntity() }
-                    .toList()
-
-                val remaining = limit - mine.size
-                if (remaining <= 0) return mine
-
-                val mineHashes = mine.map { it.txHashHex }
-
-                val others = collection.find(Filters.nin("_id", mineHashes))
-                    .sort(Sorts.descending("fee"))
-                    .limit(remaining)
-                    .map { it.toTransactionEntity() }
-                    .toList()
-
-                mine + others
-            }
+        } catch (e: Exception) {
+            logger.ccWarning(
+                LogComponent.MEMPOOL_REPOSITORY,
+                "failed to get mempool txs for mining",
+                e,
+                "mode" to mode,
+                "minerPubKeyHex" to minerPubKeyHex,
+                "limit" to limit
+            )
+            emptyList()
         }
     }
 

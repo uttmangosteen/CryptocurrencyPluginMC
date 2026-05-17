@@ -1,7 +1,5 @@
 package io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.transaction
 
-import io.github.uttmangosteen.cryptocurrencyPluginMC.util.decodeHex
-import io.github.uttmangosteen.cryptocurrencyPluginMC.util.toHex
 import java.security.KeyFactory
 import java.security.PrivateKey
 import java.security.PublicKey
@@ -11,7 +9,6 @@ import java.security.spec.X509EncodedKeySpec
 
 object Signer {
     const val ALGORITHM = "Ed25519"
-
     const val PUBLIC_KEY_SIZE = 32
 
     private val x509Header = byteArrayOf(
@@ -20,48 +17,33 @@ object Signer {
 
     private val keyFactory: KeyFactory = KeyFactory.getInstance(ALGORITHM)
 
-    fun normalizePublicKeyBytes(publicKeyBytes: ByteArray): ByteArray {
-        require(publicKeyBytes.size >= PUBLIC_KEY_SIZE) {
-            "public key must be at least $PUBLIC_KEY_SIZE bytes"
-        }
-        if (publicKeyBytes.size == PUBLIC_KEY_SIZE) return publicKeyBytes
-        return publicKeyBytes.takeLast(PUBLIC_KEY_SIZE).toByteArray()
+    private fun decodePublicKey(publicKey: String): PublicKey {
+        val bytes = publicKey.hexToByteArray()
+        val specBytes = if (bytes.size == PUBLIC_KEY_SIZE) x509Header + bytes else bytes
+        return keyFactory.generatePublic(X509EncodedKeySpec(specBytes))
     }
 
-    fun normalizePublicKeyHex(publicKeyHex: String): String {
-        if (publicKeyHex.length == PUBLIC_KEY_SIZE * 2) return publicKeyHex.lowercase()
-        return normalizePublicKeyBytes(publicKeyHex.decodeHex()).toHex()
+    private fun decodePrivateKey(privateKeyHex: String): PrivateKey {
+        return keyFactory.generatePrivate(PKCS8EncodedKeySpec(privateKeyHex.hexToByteArray()))
     }
 
-    fun encodePublicKey(publicKeyBytes: ByteArray): ByteArray {
-        if (publicKeyBytes.size == PUBLIC_KEY_SIZE) return x509Header + publicKeyBytes
-        return publicKeyBytes
-    }
-
-    fun decodePublicKey(publicKeyBytes: ByteArray): PublicKey {
-        return keyFactory.generatePublic(X509EncodedKeySpec(encodePublicKey(publicKeyBytes)))
-    }
-
-    fun decodePrivateKey(privateKeyBytes: ByteArray): PrivateKey {
-        return keyFactory.generatePrivate(PKCS8EncodedKeySpec(privateKeyBytes))
-    }
-
-    fun sign(privateKeyBytes: ByteArray, data: ByteArray): ByteArray {
-        val privateKey = decodePrivateKey(privateKeyBytes)
-
+    fun sign(privateKeyHex: String, messageHex: String): String {
+        val privateKey = decodePrivateKey(privateKeyHex)
         return Signature.getInstance(ALGORITHM).apply {
             initSign(privateKey)
-            update(data)
-        }.sign()
+            update(messageHex.hexToByteArray())
+        }.sign().toHexString()
     }
 
-    fun verify(publicKeyBytes: ByteArray, data: ByteArray, signatureBytes: ByteArray): Boolean {
-        val publicKey = decodePublicKey(publicKeyBytes)
-
-        return Signature.getInstance(ALGORITHM).run {
-            initVerify(publicKey)
-            update(data)
-            verify(signatureBytes)
+    fun verify(publicKeyHex: String, messageHex: String, signatureHex: String): Boolean {
+        return try {
+            val publicKey = decodePublicKey(publicKeyHex)
+            Signature.getInstance(ALGORITHM).apply {
+                initVerify(publicKey)
+                update(messageHex.hexToByteArray())
+            }.verify(signatureHex.hexToByteArray())
+        } catch (e: Exception) {
+            false
         }
     }
 }

@@ -1,6 +1,6 @@
 package io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.transaction
 
-import io.github.uttmangosteen.cryptocurrencyPluginMC.util.sha256
+import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.sha256
 import java.nio.ByteBuffer
 
 data class Transaction(
@@ -9,12 +9,11 @@ data class Transaction(
     val outputs: List<TxOutput>,
     val timestamp: Long,
     val memo: String = "",
-    val txHash: ByteArray = calculateHash(isCoinbase, inputs, outputs, timestamp, memo)
+    val txHash: String = calculateHash(isCoinbase, inputs, outputs, timestamp, memo)
 ) {
     companion object {
-        // memoのバイト長上限
-        private const val MEMO_SIZE = 48
-        private const val SPACE_BYTE = ' '.code.toByte()
+        // memoの文字数上限
+        private const val MEMO_MAX_LENGTH = 32
 
         fun calculateHash(
             isCoinbase: Boolean,
@@ -22,59 +21,57 @@ data class Transaction(
             outputs: List<TxOutput>,
             timestamp: Long,
             memo: String
-        ): ByteArray {
-            val memoBytes = ByteArray(MEMO_SIZE) { SPACE_BYTE }
-            memo.toByteArray(Charsets.UTF_8).let { rawMemo ->
-                System.arraycopy(rawMemo, 0, memoBytes, 0, minOf(rawMemo.size, MEMO_SIZE))
-            }
+        ): String {
+            val safeMemo = memo.take(MEMO_MAX_LENGTH)
+            val memoBytes = safeMemo.toByteArray(Charsets.UTF_8)
 
             val totalSize = 1 +
-                inputs.sumOf { 36 + it.publicKey.size } +
-                outputs.sumOf { 8 + it.receiverPubKey.size } +
-                8 +
-                MEMO_SIZE
+                    inputs.sumOf { 36 + it.publicKey.length / 2 } +
+                    outputs.sumOf { 8 + it.receiverPubKey.length / 2 } +
+                    8 +
+                    memoBytes.size
 
             val buffer = ByteBuffer.allocate(totalSize)
 
             buffer.put(if (isCoinbase) 1.toByte() else 0.toByte())
 
             for (input in inputs) {
-                buffer.put(input.prevTxHash)
+                buffer.put(input.prevTxHash.hexToByteArray())
                 buffer.putInt(input.outputIndex)
-                buffer.put(input.publicKey)
+                buffer.put(input.publicKey.hexToByteArray())
             }
 
             for (output in outputs) {
                 buffer.putLong(output.amount)
-                buffer.put(output.receiverPubKey)
+                buffer.put(output.receiverPubKey.hexToByteArray())
             }
 
             buffer.putLong(timestamp)
             buffer.put(memoBytes)
 
-            return buffer.array().sha256()
+            return buffer.array().sha256().toHexString()
         }
 
         fun createCoinbase(
-            minerPubKey: ByteArray,
+            minerPubKey: String,
             rewardAmount: Long,
-            memo: String = "Coinbase"
         ): Transaction {
             return Transaction(
                 isCoinbase = true,
                 inputs = emptyList(),
                 outputs = listOf(TxOutput(amount = rewardAmount, receiverPubKey = minerPubKey)),
                 timestamp = System.currentTimeMillis(),
-                memo = memo
+                memo = "Coinbase"
             )
         }
     }
 
     fun isValid(): Boolean {
-        if (!txHash.contentEquals(calculateHash(isCoinbase, inputs, outputs, timestamp, memo))) return false
+        if (txHash != calculateHash(isCoinbase, inputs, outputs, timestamp, memo)) return false
         if (outputs.any { it.amount <= 0 }) return false
         if (isCoinbase) return inputs.isEmpty() && outputs.size == 1
         if (inputs.isEmpty()) return false
+
         return try {
             inputs.all { input ->
                 val signature = input.signature ?: return false
@@ -85,29 +82,15 @@ data class Transaction(
         }
     }
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
+    data class TxInput(
+        val prevTxHash: String,
+        val outputIndex: Int,
+        val signature: String?,
+        val publicKey: String
+    )
 
-        other as Transaction
-
-        if (isCoinbase != other.isCoinbase) return false
-        if (timestamp != other.timestamp) return false
-        if (inputs != other.inputs) return false
-        if (outputs != other.outputs) return false
-        if (memo != other.memo) return false
-        if (!txHash.contentEquals(other.txHash)) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = isCoinbase.hashCode()
-        result = 31 * result + timestamp.hashCode()
-        result = 31 * result + inputs.hashCode()
-        result = 31 * result + outputs.hashCode()
-        result = 31 * result + memo.hashCode()
-        result = 31 * result + txHash.contentHashCode()
-        return result
-    }
+    data class TxOutput(
+        val amount: Long,
+        val receiverPubKey: String
+    )
 }

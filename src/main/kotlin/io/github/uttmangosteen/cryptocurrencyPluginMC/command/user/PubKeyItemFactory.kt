@@ -23,15 +23,15 @@ class PubKeyItemFactory(
                 meta.lore(listOf(
                     legacySerializer.deserialize("§f§l公開鍵共有用アイテム"),
                     legacySerializer.deserialize("§7publicKey:"),
-                    legacySerializer.deserialize("§8${account.publicKeyHex}")
+                    legacySerializer.deserialize("§8${account.publicKey}")
                 ))
-                meta.persistentDataContainer.set(publicKeyKey, PersistentDataType.STRING, account.publicKeyHex)
+                meta.persistentDataContainer.set(publicKeyKey, PersistentDataType.STRING, account.publicKey)
             }
         }
     }
 
     fun createWithPrivateKey(account: Account, memo: String): ItemStack? {
-        val privateKeyHex = account.privateKeyHex ?: return null
+        val privateKeyHex = account.privateKey ?: return null
 
         return ItemStack(Material.PAPER).apply {
             editMeta { meta ->
@@ -40,11 +40,11 @@ class PubKeyItemFactory(
                     legacySerializer.deserialize("§c§l秘密鍵付き公開鍵共有用アイテム"),
                     legacySerializer.deserialize("§4§k§na§4§n落とすな、絶対に。§4§k§na"),
                     legacySerializer.deserialize("§7publicKey:"),
-                    legacySerializer.deserialize("§8${account.publicKeyHex}"),
+                    legacySerializer.deserialize("§8${account.publicKey}"),
                     legacySerializer.deserialize("§7privateKey:"),
                     legacySerializer.deserialize("§8$privateKeyHex")
                 ))
-                meta.persistentDataContainer.set(publicKeyKey, PersistentDataType.STRING, account.publicKeyHex)
+                meta.persistentDataContainer.set(publicKeyKey, PersistentDataType.STRING, account.publicKey)
                 meta.persistentDataContainer.set(privateKeyKey, PersistentDataType.STRING, privateKeyHex)
             }
         }
@@ -58,8 +58,8 @@ class PubKeyItemFactory(
         val privateKeyHex = container.get(privateKeyKey, PersistentDataType.STRING)
 
         return Account(
-            publicKeyHex = publicKeyHex,
-            privateKeyHex = privateKeyHex,
+            publicKey = publicKeyHex,
+            privateKey = privateKeyHex,
             memo = memo
         ).normalized()
     }

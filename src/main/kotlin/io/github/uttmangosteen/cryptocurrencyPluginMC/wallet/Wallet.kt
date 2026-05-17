@@ -11,7 +11,6 @@ class Wallet(
         return true
     }
 
-    //同じpubkey登録しようとしたらnull
     fun addAccount(account: Account): Boolean {
         if (accounts.size >= MAX_ACCOUNTS) return false
         if (accounts.any { it.publicKey == account.publicKey }) return false

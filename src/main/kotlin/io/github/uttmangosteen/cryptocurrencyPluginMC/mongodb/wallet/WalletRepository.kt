@@ -79,8 +79,6 @@ class WalletRepository(
     }
 
     private suspend fun save(wallet: Wallet): Boolean {
-        // ヘッダー付き公開鍵が混ざっても、統一する
-        wallet.normalizeKeys()
         return try {
             val result = collection.replaceOne(
                 Filters.eq("_id", wallet.ownerUUID),
@@ -103,8 +101,6 @@ class WalletRepository(
         return try {
             val document = collection.find(Filters.eq("_id", ownerUUID)).firstOrNull() ?: return null
             val wallet = document.toWallet()
-            // ヘッダー付き公開鍵が混ざっても、統一する
-            wallet.normalizeKeys()
             wallet
         } catch (e: Exception) {
             logger.ccWarning(
@@ -122,8 +118,8 @@ class WalletRepository(
             .append(
                 "accounts",
                 accounts.map { account ->
-                    Document("publicKeyHex", account.publicKeyHex)
-                        .append("privateKeyHex", account.privateKeyHex)
+                    Document("publicKeyHex", account.publicKey)
+                        .append("privateKeyHex", account.privateKey)
                         .append("memo", account.memo)
                 }
             )
@@ -135,8 +131,8 @@ class WalletRepository(
             .orEmpty()
             .map { accountDocument ->
                 Account(
-                    publicKeyHex = accountDocument.getString("publicKeyHex"),
-                    privateKeyHex = accountDocument.getString("privateKeyHex"),
+                    publicKey = accountDocument.getString("publicKeyHex"),
+                    privateKey = accountDocument.getString("privateKeyHex"),
                     memo = accountDocument.getString("memo") ?: ""
                 ).normalized()
             }

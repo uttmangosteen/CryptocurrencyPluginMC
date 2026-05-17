@@ -12,7 +12,6 @@ data class Transaction(
     val txHash: String = calculateHash(isCoinbase, inputs, outputs, timestamp, memo)
 ) {
     companion object {
-        // memoの文字数上限
         private const val MEMO_MAX_LENGTH = 32
 
         fun calculateHash(

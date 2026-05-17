@@ -1,116 +1,100 @@
 package io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain
 
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.transaction.Transaction
-import io.github.uttmangosteen.cryptocurrencyPluginMC.util.sha256Digest
-import io.github.uttmangosteen.cryptocurrencyPluginMC.util.toHex
+import java.math.BigInteger
 import java.nio.ByteBuffer
 import java.security.MessageDigest
 
 data class Block(
     val height: Int,
-    val previousHash: ByteArray,
+    val previousHash: String,
     val transactions: List<Transaction>,
-    val transactionsRoot: ByteArray = calculateTransactionsRoot(transactions),
+    val transactionsRoot: String = calculateTransactionsRoot(transactions),
     val timestamp: Long,
     val memo: String = "",
-    val difficulty: Int,
+    val difficulty: Long,
     var nonce: Long = 0,
-    var hash: ByteArray? = null
+    var hash: String? = null
 ) {
 
     companion object {
-        // memoのバイト長上限
-        private const val MEMO_SIZE = 48
-        private const val SPACE_BYTE = ' '.code.toByte()
+        private const val MEMO_MAX_LENGTH = 32
 
-        fun calculateTransactionsRoot(txs: List<Transaction>): ByteArray {
-            return sha256Digest().run {
-                txs.forEach { update(it.txHash) }
-                digest()
+        // SHA-256の最大値 (2^256 - 1)
+        val MAX_HASH_VALUE: BigInteger = BigInteger.ONE.shiftLeft(256).subtract(BigInteger.ONE)
+
+        fun calculateTransactionsRoot(txs: List<Transaction>): String {
+            if (txs.isEmpty()) return ByteArray(32).toHexString()
+            val buffer = ByteBuffer.allocate(txs.size * 32)
+            txs.forEach { tx ->
+                buffer.put(tx.txHash.hexToByteArray())
             }
+            return buffer.array().sha256().toHexString()
         }
 
-        fun isMined(hash: ByteArray, diff: Int): Boolean {
-            if (diff < 0) return false
-            if (diff > hash.size * 2) return false
-            val full = diff / 2
-            if (!(0 until full).all { hash[it] == 0.toByte() }) return false
-            return diff % 2 == 0 || (hash[full].toInt() and 0xF0) == 0
-        }
-
-        fun mine(base: MessageDigest, nonce: Long, diff: Int): ByteArray? {
-            val hash = (base.clone() as MessageDigest).digest(
-                ByteBuffer.allocate(8).putLong(nonce).array()
-            )
-            return hash.takeIf { isMined(it, diff) }
+        // 採掘難易度1/diffの確率で採掘成功する
+        fun isMined(hashBytes: ByteArray, diff: Long): Boolean {
+            if (diff <= 0) return false
+            val hashValue = BigInteger(1, hashBytes)
+            val target = MAX_HASH_VALUE.divide(BigInteger.valueOf(diff))
+            return hashValue <= target
         }
     }
 
-    fun prepareMining(): MessageDigest = sha256Digest().apply {
-        val memoBytes = ByteArray(MEMO_SIZE) { SPACE_BYTE }
-        memo.toByteArray(Charsets.UTF_8).let { rawMemo ->
-            System.arraycopy(rawMemo, 0, memoBytes, 0, minOf(rawMemo.size, MEMO_SIZE))
-        }
-        val fixedData = ByteBuffer.allocate(80 + MEMO_SIZE)
+    private fun prepareHeaderBytes(): ByteArray {
+        val safeMemo = memo.take(MEMO_MAX_LENGTH)
+        val memoBytes = safeMemo.toByteArray(Charsets.UTF_8)
+
+        val prevHashBytes = previousHash.hexToByteArray()
+        val rootBytes = transactionsRoot.hexToByteArray()
+
+        val totalSize = 4 + prevHashBytes.size + rootBytes.size + 8 + memoBytes.size + 4
+        val buffer = ByteBuffer.allocate(totalSize)
             .putInt(height)
-            .put(previousHash)
-            .put(transactionsRoot)
+            .put(prevHashBytes)
+            .put(rootBytes)
             .putLong(timestamp)
             .put(memoBytes)
-            .putInt(difficulty)
-            .array()
-        update(fixedData)
+            .putLong(difficulty)
+
+        return buffer.array()
     }
 
-    fun isValid(expectedDifficulty: Int): Boolean {
+    fun calculateHashWithNonce(currentNonce: Long): ByteArray {
+        val headerBytes = prepareHeaderBytes()
+        val buffer = ByteBuffer.allocate(headerBytes.size + 8)
+            .put(headerBytes)
+            .putLong(currentNonce)
+        return buffer.array().sha256()
+    }
+
+    fun isValid(expectedDifficulty: Long): Boolean {
         if (this.difficulty != expectedDifficulty) return false
-        val blockHash = this.hash ?: run { return false }
-        val verifiedHash = mine(prepareMining(), nonce, difficulty) ?: return false
-        if (!verifiedHash.contentEquals(blockHash)) return false
-        if (!this.transactionsRoot.contentEquals(calculateTransactionsRoot(this.transactions))) return false
+        val blockHash = this.hash ?: return false
+
+        // hash
+        val calculatedHashBytes = calculateHashWithNonce(this.nonce)
+        if (blockHash != calculatedHashBytes.toHexString()) return false
+
+        //　hash がクリアできてるか
+        if (!isMined(calculatedHashBytes, difficulty)) return false
+
+        // txRoot
+        if (this.transactionsRoot != calculateTransactionsRoot(this.transactions)) return false
+
+        // tx
         val spentOutpoints = mutableSetOf<OutPoint>()
         for (tx in transactions) {
             if (!tx.isValid()) return false
             for (input in tx.inputs) {
                 val outpoint = OutPoint(
-                    txHashHex = input.prevTxHash.toHex(),
+                    txHashHex = input.prevTxHash,
                     outputIndex = input.outputIndex
                 )
+                //同じブロック内での2重支払い?
                 if (!spentOutpoints.add(outpoint)) return false
             }
         }
         return true
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as Block
-
-        if (height != other.height) return false
-        if (timestamp != other.timestamp) return false
-        if (difficulty != other.difficulty) return false
-        if (nonce != other.nonce) return false
-        if (!previousHash.contentEquals(other.previousHash)) return false
-        if (transactions != other.transactions) return false
-        if (!transactionsRoot.contentEquals(other.transactionsRoot)) return false
-        if (memo != other.memo) return false
-        if (!hash.contentEquals(other.hash)) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = height
-        result = 31 * result + timestamp.hashCode()
-        result = 31 * result + difficulty
-        result = 31 * result + nonce.hashCode()
-        result = 31 * result + previousHash.contentHashCode()
-        result = 31 * result + transactions.hashCode()
-        result = 31 * result + transactionsRoot.contentHashCode()
-        result = 31 * result + memo.hashCode()
-        result = 31 * result + (hash?.contentHashCode() ?: 0)
-        return result
     }
 }

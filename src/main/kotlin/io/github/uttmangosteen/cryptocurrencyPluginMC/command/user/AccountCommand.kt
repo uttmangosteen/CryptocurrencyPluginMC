@@ -86,10 +86,10 @@ class AccountCommand(
                     player.sendMessage("$prefix§f§l=============== §8§lAccount list §f§l===============")
                     wallet.accounts.forEachIndexed { index, account ->
                         val mainMark = if (index == 0) "§a§lMAIN " else ""
-                        val keyMark = if (account.privateKeyHex == null) "§e§lWATCH " else ""
+                        val keyMark = if (account.privateKey == null) "§e§lWATCH " else ""
                         val memo = account.memo.ifBlank { "§7no memo" }
                         player.sendMessage("$prefix§f[$index] $mainMark$keyMark§r$memo")
-                        player.sendMessage("$prefix§8${account.publicKeyHex}")
+                        player.sendMessage("$prefix§8${account.publicKey}")
                     }
                     player.sendMessage("$prefix§f§l===========================================")
                 }
@@ -160,7 +160,7 @@ class AccountCommand(
                         return@runSync
                     }
 
-                    if (account.privateKeyHex == null) {
+                    if (account.privateKey == null) {
                         player.sendMessage("$prefix§cこの口座には秘密鍵がありません")
                         return@runSync
                     }
@@ -186,7 +186,7 @@ class AccountCommand(
         private fun register(player: Player, pubKey: String?) {
             val account = if (pubKey != null) {
                 Account.watchOnly(
-                    publicKeyHex = pubKey,
+                    publicKey = pubKey,
                     memo = "§7watch-only"
                 )
             } else {
@@ -210,7 +210,7 @@ class AccountCommand(
                 plugin.runSync {
                     when (registered) {
                         true -> {
-                            if (account.privateKeyHex == null) {
+                            if (account.privateKey == null) {
                                 player.sendMessage("$prefix§a監視用口座を登録しました")
                             } else {
                                 player.sendMessage("$prefix§a秘密鍵付き口座を登録しました")

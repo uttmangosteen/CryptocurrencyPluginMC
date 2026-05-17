@@ -4,10 +4,6 @@ class Wallet(
     val ownerUUID: String,
     val accounts: MutableList<Account> //index:0の口座がmain口座
 ) {
-    fun normalizeKeys() {
-        accounts.replaceAll { account -> account.normalized() }
-    }
-
     fun createAccount(): Boolean {
         if (accounts.size >= MAX_ACCOUNTS) return false
         val account = Account.create()
@@ -18,9 +14,8 @@ class Wallet(
     //同じpubkey登録しようとしたらnull
     fun addAccount(account: Account): Boolean {
         if (accounts.size >= MAX_ACCOUNTS) return false
-        val normalizedAccount = account.normalized()
-        if (accounts.any { it.normalized().publicKeyHex == normalizedAccount.publicKeyHex }) return false
-        accounts.add(normalizedAccount)
+        if (accounts.any { it.publicKey == account.publicKey }) return false
+        accounts.add(account)
         return true
     }
 

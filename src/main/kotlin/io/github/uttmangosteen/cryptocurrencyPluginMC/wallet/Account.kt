@@ -1,28 +1,19 @@
 package io.github.uttmangosteen.cryptocurrencyPluginMC.wallet
 
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.transaction.Signer
-import io.github.uttmangosteen.cryptocurrencyPluginMC.util.decodeHex
-import io.github.uttmangosteen.cryptocurrencyPluginMC.util.toHex
 
 import java.security.KeyPairGenerator
 
 data class Account(
-    val publicKeyHex: String,
-    val privateKeyHex: String?,
+    val publicKey: String,
+    val privateKey: String?,
     var memo: String
 ) {
-    fun publicKeyBytes(): ByteArray {
-        return publicKeyHex.decodeHex()
-    }
-
-    fun privateKeyBytes(): ByteArray? {
-        return privateKeyHex?.decodeHex()
-    }
 
     fun normalized(): Account {
         return Account(
-            publicKeyHex = Signer.normalizePublicKeyHex(publicKeyHex),
-            privateKeyHex = privateKeyHex,
+            publicKey = publicKey,
+            privateKey = privateKey,
             memo = memo
         )
     }
@@ -33,16 +24,16 @@ data class Account(
             val keyPair = keyPairGenerator.generateKeyPair()
 
             return Account(
-                publicKeyHex = Signer.normalizePublicKeyBytes(keyPair.public.encoded).toHex(),
-                privateKeyHex = keyPair.private.encoded.toHex(),
+                publicKey = keyPair.public.encoded.toHexString(),
+                privateKey = keyPair.private.encoded.toHexString(),
                 memo = ""
             )
         }
 
-        fun watchOnly(publicKeyHex: String, memo: String = ""): Account {
+        fun watchOnly(publicKey: String, memo: String = ""): Account {
             return Account(
-                publicKeyHex = Signer.normalizePublicKeyHex(publicKeyHex),
-                privateKeyHex = null,
+                publicKey = publicKey,
+                privateKey = null,
                 memo = memo
             )
         }

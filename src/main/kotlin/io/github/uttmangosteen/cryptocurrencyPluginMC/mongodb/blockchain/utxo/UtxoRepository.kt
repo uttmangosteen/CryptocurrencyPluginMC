@@ -1,4 +1,4 @@
-package io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.utxo
+package io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.utxo
 
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.Indexes
@@ -12,9 +12,9 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.Utxo
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.transaction.Transaction
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccInfo
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccWarning
-import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.toDocument
-import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.toMongoId
-import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.toUtxo
+import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.toDocument
+import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.toMongoId
+import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.toUtxo
 import io.github.uttmangosteen.cryptocurrencyPluginMC.util.toHex
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList

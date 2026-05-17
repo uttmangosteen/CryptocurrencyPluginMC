@@ -1,4 +1,4 @@
-package io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.mempool
+package io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.mempool
 
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.IndexOptions
@@ -7,17 +7,12 @@ import com.mongodb.client.model.Sorts
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import io.github.uttmangosteen.cryptocurrencyPluginMC.LogComponent
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.Block
-import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.OutPoint
-import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.transaction.Transaction
-import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.transaction.TxInput
-import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.transaction.TxOutput
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccInfo
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccWarning
 import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.CreateBlockMode
-import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.toDocument
-import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.toTransaction
-import io.github.uttmangosteen.cryptocurrencyPluginMC.util.decodeHex
-import io.github.uttmangosteen.cryptocurrencyPluginMC.util.toHex
+import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.toDocument
+import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.toOutPoint
+import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.toTransaction
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import org.bson.Document
@@ -47,7 +42,7 @@ class MempoolRepository(
         // 同じ OutPoint を消費するトランザクションは mempool に1つしか入れない
         collection.createIndex(
             Indexes.compoundIndex(
-                Indexes.ascending("outpoints.txHashHex"),
+                Indexes.ascending("outpoints.txHash"),
                 Indexes.ascending("outpoints.outputIndex")
             ),
             IndexOptions()
@@ -67,7 +62,7 @@ class MempoolRepository(
                 LogComponent.MEMPOOL_REPOSITORY,
                 "failed to save mempool tx",
                 e,
-                "txHash" to entity.txHashHex
+                "txHash" to entity.txHash
             )
             false
         }
@@ -77,7 +72,7 @@ class MempoolRepository(
         val transactions = block.transactions
         if (transactions.isEmpty()) return true
 
-        val hashes = transactions.map { it.txHash.toHex() }
+        val hashes = transactions.map { it.txHash }
 
         return try {
             val result = collection.deleteMany(Filters.`in`("_id", hashes))
@@ -95,7 +90,7 @@ class MempoolRepository(
 
     suspend fun getTxForMining(
         mode: CreateBlockMode,
-        minerPubKeyHex: String,
+        minerPubKey: String,
         limit: Int
     ): List<TransactionEntry> {
         return try {
@@ -103,7 +98,7 @@ class MempoolRepository(
                 CreateBlockMode.NONE -> emptyList()
 
                 CreateBlockMode.ONLY_MINE -> {
-                    collection.find(Filters.eq("pubkeyList", minerPubKeyHex))
+                    collection.find(Filters.eq("pubkeyList", minerPubKey))
                         .sort(Sorts.descending("fee"))
                         .limit(limit)
                         .map { it.toTransactionEntity() }
@@ -119,7 +114,7 @@ class MempoolRepository(
                 }
 
                 CreateBlockMode.MINE_AND_FEE_SORT -> {
-                    val mine = collection.find(Filters.eq("pubkeyList", minerPubKeyHex))
+                    val mine = collection.find(Filters.eq("pubkeyList", minerPubKey))
                         .sort(Sorts.descending("fee"))
                         .limit(limit)
                         .map { it.toTransactionEntity() }
@@ -129,7 +124,7 @@ class MempoolRepository(
                     if (remaining <= 0) {
                         mine
                     } else {
-                        val mineHashes = mine.map { it.txHashHex }
+                        val mineHashes = mine.map { it.txHash }
 
                         val others = collection.find(Filters.nin("_id", mineHashes))
                             .sort(Sorts.descending("fee"))
@@ -147,7 +142,7 @@ class MempoolRepository(
                 "failed to get mempool txs for mining",
                 e,
                 "mode" to mode,
-                "minerPubKeyHex" to minerPubKeyHex,
+                "minerPubKey" to minerPubKey,
                 "limit" to limit
             )
             emptyList()
@@ -155,10 +150,12 @@ class MempoolRepository(
     }
 
     private fun TransactionEntry.toDocument(): Document {
-        return Document("_id", txHashHex)
+        return Document("_id", txHash)
+
             .append("transaction", transaction.toDocument())
+
             .append("fee", fee)
-            .append("txHashHex", txHashHex)
+
             .append("timestamp", timestamp)
             .append("pubkeyList", pubkeyList)
             .append("outpoints", outpoints.map { outPoint -> outPoint.toDocument() })
@@ -169,7 +166,11 @@ class MempoolRepository(
 
         return TransactionEntry(
             transaction = transactionDocument.toTransaction(),
-            fee = getLong("fee") ?: 0L
+            txHash = getString("_id"),
+            fee = get("fee", Number::class.java).toLong(),
+            timestamp = get("timestamp", Number::class.java).toLong(),
+            pubkeyList = getList("pubkeyList", String::class.java).orEmpty(),
+            outpoints = getList("outpoints", Document::class.java).orEmpty().map { it.toOutPoint() }
         )
     }
 }

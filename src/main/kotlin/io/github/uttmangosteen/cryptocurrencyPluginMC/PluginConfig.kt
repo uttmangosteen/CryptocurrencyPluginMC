@@ -10,7 +10,7 @@ data class PluginConfig(
     var enable: Boolean,
     val verboseLogging: Boolean,
 
-    val blockchainDifficulty: Int,
+    val blockchainDifficulty: Long,
     val miningReward: Long,
     val mempoolLimitPerBlock: Int,
 
@@ -25,7 +25,7 @@ data class PluginConfig(
         private const val DEFAULT_ENABLE = true
         private const val DEFAULT_VERBOSE_LOGGING = false
 
-        private const val DEFAULT_BLOCKCHAIN_DIFFICULTY = 4
+        private const val DEFAULT_BLOCKCHAIN_DIFFICULTY = 16L
         private const val DEFAULT_MINING_REWARD = 100000L
         private const val DEFAULT_MEMPOOL_LIMIT_PER_BLOCK = 100
 
@@ -41,7 +41,7 @@ data class PluginConfig(
                 enable = config.getBoolean("plugin.enable", DEFAULT_ENABLE),
                 verboseLogging = config.getBoolean("plugin.verbose-logging", DEFAULT_VERBOSE_LOGGING),
 
-                blockchainDifficulty = config.safeInt("blockchain.difficulty", DEFAULT_BLOCKCHAIN_DIFFICULTY),
+                blockchainDifficulty = config.safeLong("blockchain.difficulty", DEFAULT_BLOCKCHAIN_DIFFICULTY),
                 miningReward = config.safeLong("blockchain.mining-reward", DEFAULT_MINING_REWARD),
                 mempoolLimitPerBlock = config.safeInt("blockchain.mempool-limit-per-block", DEFAULT_MEMPOOL_LIMIT_PER_BLOCK),
 

@@ -8,7 +8,8 @@ plugin:
   verbose-logging: true
 
 blockchain:
-  difficulty: 4
+  # 1/difficultyの確率で採掘成功する
+  difficulty: 16
   mining-reward: 100000
   mempool-limit-per-block: 100
 

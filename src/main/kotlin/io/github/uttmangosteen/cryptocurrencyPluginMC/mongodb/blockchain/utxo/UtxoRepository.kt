@@ -13,9 +13,8 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.transaction.Tra
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccInfo
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccWarning
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.toDocument
-import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.toMongoId
+import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.toOutPointId
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.toUtxo
-import io.github.uttmangosteen.cryptocurrencyPluginMC.util.toHex
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import org.bson.Document
@@ -29,7 +28,7 @@ class UtxoRepository(
 
     suspend fun setup() {
         collection.createIndex(
-            Indexes.ascending("receiverPubKeyHex")
+            Indexes.ascending("receiverPubKey")
         )
 
         collection.createIndex(
@@ -40,11 +39,11 @@ class UtxoRepository(
     }
 
     //今送金に使える残高取得用
-    suspend fun getAvailableUtxos(publicKeyHex: String): List<Utxo> {
+    suspend fun getAvailableUtxos(publicKey: String): List<Utxo> {
         return try {
             collection.find(
                 Filters.and(
-                    Filters.eq("receiverPubKeyHex", publicKeyHex),
+                    Filters.eq("receiverPubKey", publicKey),
                     Filters.or(
                         Filters.exists("lockedByTxId", false),
                         Filters.eq("lockedByTxId", null)
@@ -58,39 +57,38 @@ class UtxoRepository(
                 LogComponent.UTXO_REPOSITORY,
                 "failed to get available utxos",
                 e,
-                "publicKeyHex" to publicKeyHex
+                "publicKey" to publicKey
             )
             emptyList()
         }
     }
 
-    //送金作成時Transactionから幾つかのutxoロック
+    //送金作成時Transactionが使用するutxoロック
     suspend fun lock(transaction: Transaction): Boolean {
         if (transaction.isCoinbase || transaction.inputs.isEmpty()) return true
 
-        val txId = transaction.txHash.toHex()
         val outPoints = transaction.toSpentOutPoints()
-        val mongoIds = outPoints.map { outPoint -> outPoint.toMongoId() }
+        val outPointIds = outPoints.map { outPoint -> outPoint.toOutPointId() }
 
         return try {
             val result = collection.updateMany(
                 Filters.and(
-                    Filters.`in`("_id", mongoIds),
+                    Filters.`in`("_id", outPointIds),
                     Filters.or(
                         Filters.exists("lockedByTxId", false),
                         Filters.eq("lockedByTxId", null)
                     )
                 ),
-                Updates.set("lockedByTxId", txId)
+                Updates.set("lockedByTxId", transaction.txHash)
             )
-            result.wasAcknowledged() && result.modifiedCount == mongoIds.size.toLong()
+            result.wasAcknowledged() && result.modifiedCount == outPointIds.size.toLong()
         } catch (e: Exception) {
             logger.ccWarning(
                 LogComponent.UTXO_REPOSITORY,
                 "failed to lock utxos for transaction",
                 e,
-                "txId" to txId,
-                "requestedCount" to mongoIds.size
+                "txId" to transaction.txHash,
+                "requestedCount" to outPointIds.size
             )
             false
         }
@@ -98,10 +96,9 @@ class UtxoRepository(
 
     //mempoolからtransaction消すときtransaction内のutxoロック解除
     suspend fun unlock(transaction: Transaction): Boolean {
-        val txId = transaction.txHash.toHex()
         return try {
             val result = collection.updateMany(
-                Filters.eq("lockedByTxId", txId),
+                Filters.eq("lockedByTxId", transaction.txHash),
                 Updates.unset("lockedByTxId")
             )
             result.wasAcknowledged()
@@ -110,7 +107,7 @@ class UtxoRepository(
                 LogComponent.UTXO_REPOSITORY,
                 "failed to unlock utxos for transaction",
                 e,
-                "txId" to txId
+                "txId" to transaction.txHash
             )
             false
         }
@@ -128,7 +125,7 @@ class UtxoRepository(
                 true
             } else {
                 val result = collection.deleteMany(
-                    Filters.`in`("_id", allSpentOutPoints.map { it.toMongoId() })
+                    Filters.`in`("_id", allSpentOutPoints.map { it.toOutPointId() })
                 )
                 result.wasAcknowledged()
             }
@@ -159,27 +156,22 @@ class UtxoRepository(
 
         return inputs.map { input ->
             OutPoint(
-                txHashHex = input.prevTxHash.toHex(),
+                txHash = input.prevTxHash,
                 outputIndex = input.outputIndex
             )
         }
     }
 
     private fun Transaction.toCreatedUtxos(): List<Utxo> {
-        val txHashHex = txHash.toHex()
-
         return outputs.mapIndexed { index, output ->
-            val receiverPubKeyHex = output.receiverPubKey.toHex()
-
             Utxo(
                 outPoint = OutPoint(
-                    txHashHex = txHashHex,
+                    txHash = txHash,
                     outputIndex = index
                 ),
-                txHash = txHash,
                 amount = output.amount,
                 receiverPubKey = output.receiverPubKey,
-                receiverPubKeyHex = receiverPubKeyHex
+                lockedByTxId = null
             )
         }
     }

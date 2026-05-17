@@ -104,14 +104,14 @@ fun Document.toOutPoint(): OutPoint {
     )
 }
 
-fun OutPoint.toMongoId(): String {
+fun OutPoint.toOutPointId(): String {
     return "$txHash.$outputIndex"
 }
 
 fun Utxo.toDocument(): Document {
     return Document().apply {
         //検索用
-        append("_id", outPoint.toMongoId())
+        append("_id", outPoint.toOutPointId())
         append("txHash", outPoint.txHash)
 
         append("outPoint", outPoint.toDocument())

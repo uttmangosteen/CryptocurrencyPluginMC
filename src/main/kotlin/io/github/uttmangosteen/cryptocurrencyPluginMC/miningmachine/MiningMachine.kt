@@ -6,7 +6,6 @@ import org.bson.codecs.pojo.annotations.BsonId
 import java.util.UUID
 
 data class MiningMachine(
-    @BsonId //PRIMARY_KEY
     val id: String = UUID.randomUUID().toString(),
     val ownerUuid: String,
 
@@ -53,8 +52,8 @@ data class MiningMachine(
 }
 
 enum class MiningMachineStatus {
-    IDLE,// 待機中(GPUなしor燃料なし)
-    MINING,// ハッシュ計算中(nonceを試行しているが、まだ採掘成功していない)
+    IDLE,// 待機中(GPUなしor燃料なしorブロック確定待ち)
+    MINING,// ハッシュ計算中
     DISABLED// 電源off
 }
 

@@ -23,7 +23,7 @@ data class Block(
         // SHA-256の最大値 (2^256 - 1)
         val MAX_HASH_VALUE: BigInteger = BigInteger.ONE.shiftLeft(256).subtract(BigInteger.ONE)
 
-        fun calculateTransactionsRoot(txs: List<Transaction>): String {
+        private fun calculateTransactionsRoot(txs: List<Transaction>): String {
             if (txs.isEmpty()) return ByteArray(32).toHexString()
             val buffer = ByteBuffer.allocate(txs.size * 32)
             txs.forEach { tx ->
@@ -32,23 +32,30 @@ data class Block(
             return buffer.array().sha256().toHexString()
         }
 
-        // 採掘難易度1/diffの確率で採掘成功する
+        // 1/diffで採掘成功
         fun isMined(hashBytes: ByteArray, diff: Long): Boolean {
             if (diff <= 0) return false
             val hashValue = BigInteger(1, hashBytes)
             val target = MAX_HASH_VALUE.divide(BigInteger.valueOf(diff))
             return hashValue <= target
         }
+
+        fun calculateFastHash(headerBytes: ByteArray, nonce: Long): ByteArray {
+            val buffer = ByteBuffer.allocate(headerBytes.size + 8)
+                .put(headerBytes)
+                .putLong(nonce)
+            return buffer.array().sha256()
+        }
     }
 
-    private fun prepareHeaderBytes(): ByteArray {
+    fun prepareHeaderBytes(): ByteArray {
         val safeMemo = memo.take(MEMO_MAX_LENGTH)
         val memoBytes = safeMemo.toByteArray(Charsets.UTF_8)
 
         val prevHashBytes = previousHash.hexToByteArray()
         val rootBytes = transactionsRoot.hexToByteArray()
 
-        val totalSize = 4 + prevHashBytes.size + rootBytes.size + 8 + memoBytes.size + 4
+        val totalSize = 4 + prevHashBytes.size + rootBytes.size + 8 + memoBytes.size + 8
         val buffer = ByteBuffer.allocate(totalSize)
             .putInt(height)
             .put(prevHashBytes)
@@ -60,11 +67,10 @@ data class Block(
         return buffer.array()
     }
 
-    fun calculateHashWithNonce(currentNonce: Long): ByteArray {
-        val headerBytes = prepareHeaderBytes()
+    fun calculateHashWithNonce(headerBytes: ByteArray, nonce: Long): ByteArray {
         val buffer = ByteBuffer.allocate(headerBytes.size + 8)
             .put(headerBytes)
-            .putLong(currentNonce)
+            .putLong(nonce)
         return buffer.array().sha256()
     }
 
@@ -73,7 +79,7 @@ data class Block(
         val blockHash = this.hash ?: return false
 
         // hash
-        val calculatedHashBytes = calculateHashWithNonce(this.nonce)
+        val calculatedHashBytes = calculateHashWithNonce(prepareHeaderBytes(), this.nonce)
         if (blockHash != calculatedHashBytes.toHexString()) return false
 
         //　hash がクリアできてるか
@@ -88,7 +94,7 @@ data class Block(
             if (!tx.isValid()) return false
             for (input in tx.inputs) {
                 val outpoint = OutPoint(
-                    txHashHex = input.prevTxHash,
+                    txHash = input.prevTxHash,
                     outputIndex = input.outputIndex
                 )
                 //同じブロック内での2重支払い?

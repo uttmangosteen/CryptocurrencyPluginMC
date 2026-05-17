@@ -1,6 +1,5 @@
 package io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb
 
-import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blocks.BlockRepository
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.mempool.MempoolRepository
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.utxo.UtxoRepository
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.wallet.WalletRepository

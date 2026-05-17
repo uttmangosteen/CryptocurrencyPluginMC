@@ -29,7 +29,7 @@ commands:
       §c§l× §f/cc send byPubKey <amount> [pubKey] §7- [pubKey]省略時、手に持った公開鍵アイテムへメイン口座からの送金を作成　[pubKey]を平文で指定もできるが、間違えた場合二度とお金は取り出せない
       §c§l× §f/cc send list §7- 作成中の送金リスト
       §c§l× §f/cc send delete <index|all> §7- 送金リストから間違えた送金を削除
-      §c§l× §f/cc send create <fee> [memo] §7- いまの送金リストをまとめてマイナー報酬を設定の上取引を作成 mempoolに登録 メモの長さは48Byteまで
+      §c§l× §f/cc send create <fee> [memo] §7- いまの送金リストをまとめてマイナー報酬を設定の上取引を作成 mempoolに登録 メモの長さは32文字まで
       
       §c§l× §f/cc info blockchain §7- blockchainの状況を確認
       §c§l× §f/cc info mempool §7- mempoolの状況を確認

@@ -64,7 +64,7 @@ class UtxoRepository(
         }
     }
 
-    //送金作成時Transactionが使用するutxoロック
+    //送金作成時Transactionが使用するutxoをロック
     suspend fun lock(transaction: Transaction): Boolean {
         if (transaction.isCoinbase || transaction.inputs.isEmpty()) return true
 

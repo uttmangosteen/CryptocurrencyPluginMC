@@ -1,8 +1,8 @@
-package io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain
+package io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain
 
 import com.mongodb.MongoCommandException
-import com.mongodb.client.model.Filters
 import io.github.uttmangosteen.cryptocurrencyPluginMC.LogComponent
+import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.Block
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccInfo
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccWarning
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.MongoDatabaseProvider
@@ -10,7 +10,6 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.blocks.
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.mempool.MempoolRepository
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.utxo.UtxoRepository
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.transactionhistory.TransactionHistoryRepository
-import org.bson.Document
 import java.util.logging.Logger
 
 class BlockchainManager(

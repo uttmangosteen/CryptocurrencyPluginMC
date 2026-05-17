@@ -158,15 +158,10 @@ class AccountCommand(
                 }
 
                 val item = publicKeyItemFactory.create(account, memo)
-                val overflowItems = player.inventory.addItem(item)
-
-                if (overflowItems.isEmpty()) {
-                    playWriteSound(player)
-                    player.sendMessage("$prefix§a公開鍵アイテムを取得しました")
-                } else {
-                    player.inventory.addItem(ItemStack(Material.PAPER, 1))
-                    player.sendMessage("$prefix§eインベントリに空きがありません")
-                }
+                val overflow = player.inventory.addItem(item)
+                overflow.values.forEach { player.world.dropItemNaturally(player.location, it) }
+                playWriteSound(player)
+                player.sendMessage("$prefix§a公開鍵アイテムを取得しました")
             }
         }
     }
@@ -226,7 +221,7 @@ class AccountCommand(
             player.location,
             Sound.UI_CARTOGRAPHY_TABLE_TAKE_RESULT,
             1.0f,
-            0.5f
+            0.8f
         )
     }
 
@@ -236,9 +231,9 @@ class AccountCommand(
                 publicKey = pubKey,
                 memo = "§7watch-only"
             )
-            if (watchAccount == null){
+            if (watchAccount == null) {
                 player.sendMessage("$prefix§c公開鍵のフォーマットが不正です")
-                player.sendMessage("$prefix§8└ §764文字の16進数（0-9, a-f）で正確に入力してください")
+                player.sendMessage("$prefix§c64文字の16進数(0-9, a-f)で正確に入力してください")
                 return
             }
             watchAccount

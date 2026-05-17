@@ -1,6 +1,6 @@
 package io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb
 
-import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.BlockchainManager
+import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.BlockchainManager
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.blocks.BlockRepository
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.mempool.MempoolRepository
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.transactionhistory.TransactionHistoryRepository

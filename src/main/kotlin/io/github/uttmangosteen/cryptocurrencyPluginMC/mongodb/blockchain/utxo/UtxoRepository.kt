@@ -5,6 +5,7 @@ import com.mongodb.client.model.Indexes
 import com.mongodb.client.model.InsertOneModel
 import com.mongodb.client.model.WriteModel
 import com.mongodb.client.model.Updates
+import com.mongodb.kotlin.client.coroutine.ClientSession
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import io.github.uttmangosteen.cryptocurrencyPluginMC.LogComponent
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.OutPoint
@@ -113,8 +114,8 @@ class UtxoRepository(
         }
     }
 
-    //Block承認による消費Utxo削除と新規Utxo追加
-    suspend fun applyTransactions(transactions: List<Transaction>): Boolean {
+    //acceptNewBlock時実行
+    suspend fun applyTransactions(session: ClientSession, transactions: List<Transaction>): Boolean {
         if (transactions.isEmpty()) return true
 
         val allSpentOutPoints = transactions.flatMap { it.toSpentOutPoints() }
@@ -125,15 +126,17 @@ class UtxoRepository(
                 true
             } else {
                 val result = collection.deleteMany(
+                    session,
                     Filters.`in`("_id", allSpentOutPoints.map { it.toOutPointId() })
                 )
-                result.wasAcknowledged()
+                result.wasAcknowledged() && result.deletedCount == allSpentOutPoints.size.toLong()
             }
 
             if (!deleteResult) return false
             if (allCreatedUtxos.isEmpty()) return true
 
             val insertResult = collection.bulkWrite(
+                session,
                 allCreatedUtxos.map { utxo ->
                     InsertOneModel(utxo.toDocument()) as WriteModel<Document>
                 }

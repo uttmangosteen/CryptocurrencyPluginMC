@@ -4,6 +4,7 @@ import com.mongodb.client.model.Filters
 import com.mongodb.client.model.IndexOptions
 import com.mongodb.client.model.Indexes
 import com.mongodb.client.model.Sorts
+import com.mongodb.kotlin.client.coroutine.ClientSession
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import io.github.uttmangosteen.cryptocurrencyPluginMC.LogComponent
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.Block
@@ -17,6 +18,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import org.bson.Document
 import java.util.logging.Logger
+import kotlin.collections.map
+import kotlin.collections.plus
 
 class MempoolRepository(
     database: MongoDatabase,
@@ -68,14 +71,33 @@ class MempoolRepository(
         }
     }
 
-    suspend fun delete(block: Block): Boolean {
+    //acceptNewBlock時実行
+    suspend fun delete(session: ClientSession, block: Block): Boolean {
         val transactions = block.transactions
         if (transactions.isEmpty()) return true
 
-        val hashes = transactions.map { it.txHash }
+        val txHashes = transactions.map { it.txHash }
+
+        val consumeOutpointDocuments = transactions
+            .filter { !it.isCoinbase }
+            .flatMap { tx ->
+                tx.inputs.map { input ->
+                    Document("txHash", input.prevTxHash)
+                        .append("outputIndex", input.outputIndex)
+                }
+            }
 
         return try {
-            val result = collection.deleteMany(Filters.`in`("_id", hashes))
+            val filter = if (consumeOutpointDocuments.isEmpty()) {
+                Filters.`in`("_id", txHashes)
+            } else {
+                // このブロックに入ってるtxと、今使われたお金を横取りしようとしていた未承認txを消す
+                Filters.or(
+                    Filters.`in`("_id", txHashes),
+                    Filters.`in`("outpoints", consumeOutpointDocuments)
+                )
+            }
+            val result = collection.deleteMany(session, filter)
             result.wasAcknowledged()
         } catch (e: Exception) {
             logger.ccWarning(

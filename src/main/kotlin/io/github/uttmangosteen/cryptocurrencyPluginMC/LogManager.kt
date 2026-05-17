@@ -1,6 +1,5 @@
 package io.github.uttmangosteen.cryptocurrencyPluginMC
 
-import io.github.uttmangosteen.cryptocurrencyPluginMC.util.toHex
 import java.util.Collections
 import java.util.WeakHashMap
 import java.util.logging.Level
@@ -16,7 +15,9 @@ enum class LogComponent(val label: String) {
     UTXO_REPOSITORY("UtxoRepository")
 }
 
-private val verboseEnabled: MutableSet<Logger> = Collections.newSetFromMap(WeakHashMap())
+private val verboseEnabled: MutableSet<Logger> = Collections.synchronizedSet(
+    Collections.newSetFromMap(WeakHashMap<Logger, Boolean>())
+)
 
 fun Logger.setVerbose(enabled: Boolean) {
     if (enabled) {
@@ -99,7 +100,7 @@ private fun Logger.ccLog(
 private fun Any?.formatLogValue(): String {
     return when (this) {
         null -> "null"
-        is ByteArray -> toHex()
+        is ByteArray -> toHexString()
         is Throwable -> "${this::class.simpleName}:${message.orEmpty().sanitizeLogValue()}"
         else -> toString().sanitizeLogValue()
     }

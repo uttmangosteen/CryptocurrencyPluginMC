@@ -13,8 +13,9 @@ class Wallet(
 
     fun addAccount(account: Account): Boolean {
         if (accounts.size >= MAX_ACCOUNTS) return false
-        if (accounts.any { it.publicKey == account.publicKey }) return false
-        accounts.add(account)
+        val normalizedAccount = account.normalized()
+        if (accounts.any { it.normalized().publicKey == normalizedAccount.publicKey }) return false
+        accounts.add(normalizedAccount)
         return true
     }
 

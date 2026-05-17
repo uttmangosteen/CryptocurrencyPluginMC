@@ -12,7 +12,7 @@ data class Account(
 
     fun normalized(): Account {
         return Account(
-            publicKey = publicKey,
+            publicKey = Signer.normalizePublicKey(publicKey),
             privateKey = privateKey,
             memo = memo
         )
@@ -24,7 +24,7 @@ data class Account(
             val keyPair = keyPairGenerator.generateKeyPair()
 
             return Account(
-                publicKey = keyPair.public.encoded.toHexString(),
+                publicKey = Signer.normalizePublicKey(keyPair.public.encoded.toHexString()),
                 privateKey = keyPair.private.encoded.toHexString(),
                 memo = ""
             )
@@ -32,7 +32,7 @@ data class Account(
 
         fun watchOnly(publicKey: String, memo: String = ""): Account {
             return Account(
-                publicKey = publicKey,
+                publicKey = Signer.normalizePublicKey(publicKey),
                 privateKey = null,
                 memo = memo
             )

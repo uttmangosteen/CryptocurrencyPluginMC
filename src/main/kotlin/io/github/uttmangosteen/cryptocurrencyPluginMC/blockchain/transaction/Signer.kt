@@ -17,6 +17,14 @@ object Signer {
 
     private val keyFactory: KeyFactory = KeyFactory.getInstance(ALGORITHM)
 
+    fun normalizePublicKey(publicKey: String): String {
+        val bytes = publicKey.hexToByteArray()
+        require(bytes.size >= PUBLIC_KEY_SIZE) {
+            "public key must be at least $PUBLIC_KEY_SIZE bytes"
+        }
+        return bytes.takeLast(PUBLIC_KEY_SIZE).toByteArray().toHexString()
+    }
+
     private fun decodePublicKey(publicKey: String): PublicKey {
         val bytes = publicKey.hexToByteArray()
         val specBytes = if (bytes.size == PUBLIC_KEY_SIZE) x509Header + bytes else bytes

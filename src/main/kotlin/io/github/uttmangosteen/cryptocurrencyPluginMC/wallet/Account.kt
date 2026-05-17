@@ -9,30 +9,22 @@ data class Account(
     val privateKey: String?,
     var memo: String
 ) {
-
-    fun normalized(): Account {
-        return Account(
-            publicKey = Signer.normalizePublicKey(publicKey),
-            privateKey = privateKey,
-            memo = memo
-        )
-    }
-
     companion object {
         fun create(): Account {
             val keyPairGenerator = KeyPairGenerator.getInstance(Signer.ALGORITHM)
             val keyPair = keyPairGenerator.generateKeyPair()
 
             return Account(
-                publicKey = Signer.normalizePublicKey(keyPair.public.encoded.toHexString()),
+                publicKey = Signer.toRawPublicKeyHex(keyPair.public),
                 privateKey = keyPair.private.encoded.toHexString(),
                 memo = ""
             )
         }
 
-        fun watchOnly(publicKey: String, memo: String = ""): Account {
+        fun watchOnly(publicKey: String, memo: String = ""): Account? {
+            val normalizedKey = Signer.normalizePublicKey(publicKey) ?: return null
             return Account(
-                publicKey = Signer.normalizePublicKey(publicKey),
+                publicKey = normalizedKey,
                 privateKey = null,
                 memo = memo
             )

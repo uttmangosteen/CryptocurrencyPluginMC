@@ -54,13 +54,13 @@ class PubKeyItemFactory(
         val meta = itemStack.itemMeta ?: return null
         val container = meta.persistentDataContainer
 
-        val publicKeyHex = container.get(publicKeyKey, PersistentDataType.STRING) ?: return null
-        val privateKeyHex = container.get(privateKeyKey, PersistentDataType.STRING)
+        val publicKey = container.get(publicKeyKey, PersistentDataType.STRING) ?: return null
+        val privateKey = container.get(privateKeyKey, PersistentDataType.STRING)
 
         return Account(
-            publicKey = publicKeyHex,
-            privateKey = privateKeyHex,
+            publicKey = publicKey,
+            privateKey = privateKey,
             memo = memo
-        ).normalized()
+        )
     }
 }

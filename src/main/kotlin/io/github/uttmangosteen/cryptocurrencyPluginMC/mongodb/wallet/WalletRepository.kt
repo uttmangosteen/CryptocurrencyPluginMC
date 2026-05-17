@@ -118,8 +118,8 @@ class WalletRepository(
             .append(
                 "accounts",
                 accounts.map { account ->
-                    Document("publicKeyHex", account.publicKey)
-                        .append("privateKeyHex", account.privateKey)
+                    Document("publicKey", account.publicKey)
+                        .append("privateKey", account.privateKey)
                         .append("memo", account.memo)
                 }
             )
@@ -131,10 +131,10 @@ class WalletRepository(
             .orEmpty()
             .map { accountDocument ->
                 Account(
-                    publicKey = accountDocument.getString("publicKeyHex"),
-                    privateKey = accountDocument.getString("privateKeyHex"),
+                    publicKey = accountDocument.getString("publicKey"),
+                    privateKey = accountDocument.getString("privateKey"),
                     memo = accountDocument.getString("memo") ?: ""
-                ).normalized()
+                )
             }
             .toMutableList()
 

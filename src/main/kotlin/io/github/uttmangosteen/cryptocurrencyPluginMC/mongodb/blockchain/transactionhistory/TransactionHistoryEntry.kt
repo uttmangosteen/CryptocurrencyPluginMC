@@ -2,8 +2,8 @@ package io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.transa
 
 data class TransactionHistoryEntry(
     val txHash: String,
-    val senderPubKeyHash: String?,
-    val receiverPubKeyHash: String,
+    val senderPubKey: String?,
+    val receiverPubKey: String,
     val amount: Long,
     val height: Int,
     val blockTimestamp: Long,

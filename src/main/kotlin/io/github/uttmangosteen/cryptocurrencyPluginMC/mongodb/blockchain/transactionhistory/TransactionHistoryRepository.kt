@@ -17,9 +17,8 @@ class TransactionHistoryRepository(
     private val collection = database.getCollection<Document>("transaction_history")
 
     suspend fun setup() {
-        // プレイヤーが自分の「送信履歴」「受信履歴」を高速にGUI等で確認できるようにインデックスを張る
-        collection.createIndex(Indexes.ascending("senderPubKeyHash"))
-        collection.createIndex(Indexes.ascending("receiverPubKeyHash"))
+        collection.createIndex(Indexes.ascending("senderPubKey"))
+        collection.createIndex(Indexes.ascending("receiverPubKey"))
         logger.ccInfo(LogComponent.TRANSACTION_HISTORY_REPOSITORY, "setup completed")
     }
 
@@ -34,8 +33,8 @@ class TransactionHistoryRepository(
                         // _idは「txHash + 宛先」で重複防止
                         append("_id", "${tx.txHash}_${output.receiverPubKey}")
                         append("txHash", tx.txHash)
-                        append("senderPubKeyHash", sender)
-                        append("receiverPubKeyHash", output.receiverPubKey)
+                        append("senderPubKey", sender)
+                        append("receiverPubKey", output.receiverPubKey)
                         append("amount", output.amount)
                         append("height", height)
                         append("blockTimestamp", blockTimestamp)

@@ -17,12 +17,18 @@ object Signer {
 
     private val keyFactory: KeyFactory = KeyFactory.getInstance(ALGORITHM)
 
-    fun normalizePublicKey(publicKey: String): String {
-        val bytes = publicKey.hexToByteArray()
-        require(bytes.size >= PUBLIC_KEY_SIZE) {
-            "public key must be at least $PUBLIC_KEY_SIZE bytes"
-        }
-        return bytes.takeLast(PUBLIC_KEY_SIZE).toByteArray().toHexString()
+    // 外部入力用、長さが32バイト以外か不正な文字ならnull
+    fun normalizePublicKey(publicKey: String): String? {
+        return runCatching {
+            val bytes = publicKey.hexToByteArray()
+            if (bytes.size != PUBLIC_KEY_SIZE) return null
+            bytes.toHexString()
+        }.getOrNull()
+    }
+
+    // 内部用、JavaのPublicKey(44バイト)から8Byteヘッダーを取り除く
+    fun toRawPublicKeyHex(publicKey: PublicKey): String {
+        return publicKey.encoded.takeLast(PUBLIC_KEY_SIZE).toByteArray().toHexString()
     }
 
     private fun decodePublicKey(publicKey: String): PublicKey {
@@ -43,9 +49,9 @@ object Signer {
         }.sign().toHexString()
     }
 
-    fun verify(publicKeyHex: String, messageHex: String, signatureHex: String): Boolean {
+    fun verify(publicKey: String, messageHex: String, signatureHex: String): Boolean {
         return try {
-            val publicKey = decodePublicKey(publicKeyHex)
+            val publicKey = decodePublicKey(publicKey)
             Signature.getInstance(ALGORITHM).apply {
                 initVerify(publicKey)
                 update(messageHex.hexToByteArray())

@@ -53,6 +53,7 @@ commands:
   
       §f/ccmcn fuel <machineId> §7- 手持ちの石炭/木炭/石炭ブロックを採掘機の燃料にする
       
+      §f/ccmcn block setRewardPubKey <machineId> [index] §7- 自分のwalletの公開鍵を設定
       §f/ccmcn block setDefaultMemo <machineId> [memo] §7- 採掘ブロックのメモを設定しなかった場合のメモ設定
       §f/ccmcn block setMemo <machineId> [memo] §7- 採掘中ブロックのメモ設定
       §f/ccmcn block txMode <machineId> §7- 採掘ブロックのトランザクションの集め方切り替え

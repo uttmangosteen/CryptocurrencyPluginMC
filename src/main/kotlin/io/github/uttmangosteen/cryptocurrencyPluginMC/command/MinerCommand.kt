@@ -41,7 +41,7 @@ class MinerCommand(
             "user" -> userCommand.execute(sender, args)
             "fuel" -> fuelCommand.execute(sender, args)
             "block" -> blockCommand.execute(sender, args)
-            else -> return false
+            else -> return true
         }
 
         return true

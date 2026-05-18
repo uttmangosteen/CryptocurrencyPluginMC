@@ -13,7 +13,7 @@ data class PluginConfig(
     val mempoolLimitPerBlock: Int,
 
     val miningMachineMiningDelayTicks: Int,
-    val miningMachineSaveIntervalMillis: Int,
+    val miningMachineSaveIntervalMiningTicks: Int,
 ) {
     companion object {
         private const val DEFAULT_MONGODB_CONNECTION_STRING = "mongodb://127.0.0.1:27017/?replicaSet=rs0"
@@ -26,7 +26,7 @@ data class PluginConfig(
         private const val DEFAULT_MEMPOOL_LIMIT_PER_BLOCK = 100
 
         private const val DEFAULT_MINING_MACHINE_DELAY_TICKS = 20
-        private const val DEFAULT_MINING_MACHINE_SAVE_INTERVAL_MILLIS = 10000
+        private const val DEFAULT_MINING_MACHINE_SAVE_INTERVAL_MINING_TICKS = 60
 
         fun load(config: FileConfiguration): PluginConfig {
             return PluginConfig(
@@ -40,7 +40,10 @@ data class PluginConfig(
                 mempoolLimitPerBlock = config.safeInt("blockchain.mempool-limit-per-block", DEFAULT_MEMPOOL_LIMIT_PER_BLOCK),
 
                 miningMachineMiningDelayTicks = config.safeInt("mining-machine.delay-ticks", DEFAULT_MINING_MACHINE_DELAY_TICKS),
-                miningMachineSaveIntervalMillis = config.safeInt("mining-machine.save-interval-millis", DEFAULT_MINING_MACHINE_SAVE_INTERVAL_MILLIS)
+                miningMachineSaveIntervalMiningTicks = config.safeInt(
+                    "mining-machine.save-interval-mining-ticks",
+                    DEFAULT_MINING_MACHINE_SAVE_INTERVAL_MINING_TICKS
+                )
             )
         }
 

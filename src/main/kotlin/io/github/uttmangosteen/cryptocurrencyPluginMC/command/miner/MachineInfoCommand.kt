@@ -19,8 +19,12 @@ class MachineInfoCommand(
             val machine = plugin.repositories.miningMachineRepo.get(machineId)
 
             plugin.runSync {
-                if (machine == null || !machine.canAccess(player.uniqueId.toString())) {
-                    player.sendMessage("$prefix§c指定された採掘機が見つからないか、権限がありません")
+                if (machine == null) {
+                    player.sendMessage("$prefix§c指定された採掘機が見つかりません")
+                    return@runSync
+                }
+                if (!machine.canAccess(player.uniqueId.toString()) && !player.isOp) {
+                    player.sendMessage("$prefix§c権限がありません")
                     return@runSync
                 }
 
@@ -30,9 +34,9 @@ class MachineInfoCommand(
     }
 
     private fun sendMachineInfo(player: Player, machine: MiningMachine) {
-        player.sendMessage("$prefix§f§l=============== §8§lMining Machine §f§l===============")
+        player.sendMessage("$prefix§f§l========== §8§lMining Machine §f§l==========")
         player.sendMessage("$prefix§7id: §f${machine.id}")
-        player.sendMessage("$prefix§7owner: §f${machine.ownerUuid ?: "unknown"}")
+        player.sendMessage("$prefix§7owner: §f${machine.ownerUuid}")
         player.sendMessage("$prefix§7enabled: §f${machine.enabled}")
         player.sendMessage("$prefix§7status: §f${machine.status}")
         player.sendMessage("$prefix§7fuel: §f${machine.fuelAmount}")
@@ -42,6 +46,6 @@ class MachineInfoCommand(
         player.sendMessage("$prefix§7memo: §f${machine.memo.ifBlank { "§7no memo" }}")
         player.sendMessage("$prefix§7defaultMemo: §f${machine.defaultMemo.ifBlank { "§7no memo" }}")
         player.sendMessage("$prefix§7rewardAccount: §8${machine.rewardAccountPubKey ?: "none"}")
-        player.sendMessage("$prefix§f§l================================================")
+        player.sendMessage("$prefix§f§l====================================")
     }
 }

@@ -1,7 +1,7 @@
 package io.github.uttmangosteen.cryptocurrencyPluginMC.command.user
 
 import io.github.uttmangosteen.cryptocurrencyPluginMC.Main
-import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.policy.CoinbasePolicy
+import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.policy.TextFormat
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
@@ -27,13 +27,11 @@ class BalanceCommand(
                 return@launchAsync
             }
 
-            val availableBalance = plugin.repositories.utxoRepo.getBalance(account.publicKey)
-            val pendingBalance = plugin.repositories.utxoRepo.getPendingBalance(account.publicKey)
-            val totalBalance = Math.addExact(availableBalance, pendingBalance)
+            val walletState = plugin.repositories.utxoRepo.getWalletState(account.publicKey)
 
-            val formattedTotalBalance = formatCoin(totalBalance)
-            val formattedAvailableBalance = formatCoin(availableBalance)
-            val formattedPendingBalance = formatCoin(pendingBalance)
+            val formattedTotalBalance = TextFormat.formatCoin(walletState.totalBalance)
+            val formattedAvailableBalance = TextFormat.formatCoin(walletState.balance)
+            val formattedPendingBalance = TextFormat.formatCoin(walletState.pendingBalance)
 
             plugin.runSync {
                 val mainMark = if (index == 0) "§a§lMAIN " else ""
@@ -50,12 +48,6 @@ class BalanceCommand(
                 sender.sendMessage("$prefix§f§l=============================")
             }
         }
-    }
-
-    private fun formatCoin(amount: Long): String {
-        val whole = amount / CoinbasePolicy.COIN_SCALE
-        val fraction = amount % CoinbasePolicy.COIN_SCALE
-        return "%d.%05d CC".format(whole, fraction)
     }
 
     fun getTabCompletions(args: Array<out String>): List<String> {

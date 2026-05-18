@@ -11,13 +11,56 @@ class MachineBlockCommand(
     fun execute(player: Player, args: Array<out String>) {
         val action = args.getOrNull(1) ?: return
         val machineId = args.getOrNull(2) ?: return
-        val memo = args.drop(3).joinToString(" ")
 
         when (action) {
-            "setDefaultMemo" -> setDefaultMemo(player, machineId, memo)
-            "setMemo" -> setMemo(player, machineId, memo)
+            "setRewardPubKey" -> {
+                val index = args.getOrNull(3)?.toIntOrNull() ?: 0
+                setRewardPubKey(player, machineId, index)
+            }
+
+            "setDefaultMemo" -> {
+                val memo = args.drop(3).joinToString(" ")
+                setDefaultMemo(player, machineId, memo)
+            }
+
+            "setMemo" -> {
+                val memo = args.drop(3).joinToString(" ")
+                setMemo(player, machineId, memo)
+            }
+
             "txMode" -> txMode(player, machineId)
             "recreate" -> recreateBlock(player, machineId)
+        }
+    }
+
+    private fun setRewardPubKey(player: Player, machineId: String, index: Int) {
+        plugin.launchAsync {
+            val account = plugin.repositories.walletRepo.getWallet(player.uniqueId.toString())
+                ?.accounts
+                ?.getOrNull(index)
+
+            if (account == null) {
+                plugin.runSync {
+                    player.sendMessage("$prefix§c指定された口座がありません")
+                }
+                return@launchAsync
+            }
+
+            val updated = plugin.repositories.miningMachineRepo.updateMachine(
+                machineId = machineId,
+                requesterUuid = player.uniqueId.toString()
+            ) { machine ->
+                machine.setRewardAccountPubKey(account.publicKey)
+            }
+
+            plugin.runSync {
+                if (updated) {
+                    player.sendMessage("$prefix§a報酬受取口座を設定しました")
+                    player.sendMessage("$prefix§7rewardPubKey: §8${account.publicKey}")
+                } else {
+                    player.sendMessage("$prefix§c報酬受取口座の設定に失敗しました")
+                }
+            }
         }
     }
 
@@ -103,12 +146,22 @@ class MachineBlockCommand(
 
     fun getTabCompletions(args: Array<out String>): List<String> {
         return when (args.size) {
-            2 -> listOf("setDefaultMemo", "setMemo", "txMode", "recreate").filter { it.startsWith(args[1]) }
+            2 -> listOf(
+                "setRewardPubKey",
+                "setDefaultMemo",
+                "setMemo",
+                "txMode",
+                "recreate"
+            ).filter { it.startsWith(args[1]) }
+
             3 -> listOf("<machineId>").filter { it.startsWith(args[2]) }
+
             4 -> when (args[1]) {
+                "setRewardPubKey" -> listOf("[index]").filter { it.startsWith(args[3]) }
                 "setDefaultMemo", "setMemo" -> listOf("[memo]").filter { it.startsWith(args[3]) }
                 else -> emptyList()
             }
+
             else -> emptyList()
         }
     }

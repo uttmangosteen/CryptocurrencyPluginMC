@@ -15,6 +15,10 @@ class MiningMachineService(
 ) {
     private var task: BukkitTask? = null
     private var runningJob: Job? = null
+    private var miningTickCount: Int = 0
+
+    private val saveIntervalMiningTicks = plugin.pluginConfig.miningMachineSaveIntervalMiningTicks
+        .coerceAtLeast(1)
 
     private val blockFactory = BlockFactory(
         plugin = plugin,
@@ -53,14 +57,23 @@ class MiningMachineService(
         val networkMiningPower = plugin.repositories.miningMachineRepo.calculateNetworkMiningPower()
         if (networkMiningPower <= 0L) return
 
+        miningTickCount++
+        val shouldSaveMiningState = miningTickCount >= saveIntervalMiningTicks
+        if (shouldSaveMiningState) miningTickCount = 0
+
         for (machine in machines) {
-            processMachine(machine, networkMiningPower)
+            processMachine(
+                machine = machine,
+                networkMiningPower = networkMiningPower,
+                shouldSaveMiningState = shouldSaveMiningState
+            )
         }
     }
 
     private suspend fun processMachine(
         machine: MiningMachine,
-        networkMiningPower: Long
+        networkMiningPower: Long,
+        shouldSaveMiningState: Boolean
     ) {
         try {
             machine.refreshStatus()
@@ -124,10 +137,16 @@ class MiningMachineService(
                         "height" to miningBlock.height
                     )
                 }
+
+                machine.refreshStatus()
+                plugin.repositories.miningMachineRepo.save(machine)
+                return
             }
 
             machine.refreshStatus()
-            plugin.repositories.miningMachineRepo.save(machine)
+            if (shouldSaveMiningState) {
+                plugin.repositories.miningMachineRepo.save(machine)
+            }
         } catch (e: Exception) {
             plugin.logger.ccWarning(
                 LogComponent.MINING_MACHINE_REPOSITORY,
@@ -156,12 +175,10 @@ class MiningMachineService(
 
         repeat(power) {
             val hashBytes = block.calculateHash(block.nonce)
-
             if (Block.isMined(hashBytes, block.difficulty)) {
                 block.hash = hashBytes.toHexString()
                 return true
             }
-
             block.nonce++
         }
 
@@ -176,9 +193,8 @@ class MiningMachineService(
             val minerName = if (machine.shareNameOnMined) {
                 "§f${owner.name}"
             } else {
-                "§7匿名"
+                "§7§k00000000"
             }
-
             val message = "${plugin.pluginConfig.prefix}§a$minerName §aがブロックを採掘しました §7height=§f${block.height}"
             for (player in Bukkit.getOnlinePlayers()) {
                 player.sendMessage(message)

@@ -2,10 +2,11 @@ package io.github.uttmangosteen.cryptocurrencyPluginMC.command.user
 
 import io.github.uttmangosteen.cryptocurrencyPluginMC.Main
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.Utxo
-import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.policy.CoinbasePolicy
+import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.policy.TextFormat
+import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.policy.TextFormat.formatCoin
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.transaction.Signer
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.transaction.Transaction
-import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.repository.TransactionEntry
+import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.repository.MempoolEntry
 import io.github.uttmangosteen.cryptocurrencyPluginMC.wallet.Account
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
@@ -27,7 +28,7 @@ class SendCommand(
 
         when (action) {
             "byName" -> {
-                val amount = parseCoin(args.getOrNull(2))
+                val amount = TextFormat.parseCoin(args.getOrNull(2))
                 val name = args.getOrNull(3)
 
                 if (amount == null || name == null) {
@@ -39,7 +40,7 @@ class SendCommand(
             }
 
             "byPubKey" -> {
-                val amount = parseCoin(args.getOrNull(2))
+                val amount = TextFormat.parseCoin(args.getOrNull(2))
 
                 if (amount == null) {
                     sender.sendMessage("$prefix§c/cc send byPubKey <amount> [pubKey]")
@@ -57,7 +58,7 @@ class SendCommand(
             }
 
             "create" -> {
-                val fee = parseCoin(args.getOrNull(2))
+                val fee = TextFormat.parseCoin(args.getOrNull(2))
 
                 if (fee == null) {
                     sender.sendMessage("$prefix§c/cc send create <fee> [memo]")
@@ -114,12 +115,12 @@ class SendCommand(
             return
         }
 
-        player.sendMessage("$prefix§f§l=============== §8§lPending sends §f§l===============")
+        player.sendMessage("$prefix§f§l========== §8§lPending sends §f§l==========")
         list.forEachIndexed { index, send ->
             player.sendMessage("$prefix§f[$index] §a${formatCoin(send.amount)} §7->")
             player.sendMessage("$prefix§8${send.receiverPubKey}")
         }
-        player.sendMessage("$prefix§f§l=============================================")
+        player.sendMessage("$prefix§f§l===================================")
     }
 
     private fun delete(player: Player, target: String) {
@@ -188,13 +189,13 @@ class SendCommand(
 
             if (!locked) {
                 plugin.runSync {
-                    player.sendMessage("$prefix§c使用するUTXOのロックに失敗しました。残高が既に使用中かもしれません")
+                    player.sendMessage("$prefix§c使用するUTXOのロックに失敗しました")
                 }
                 return@launchAsync
             }
 
             val saved = plugin.repositories.mempoolRepo.save(
-                TransactionEntry(
+                MempoolEntry(
                     transaction = tx,
                     fee = fee
                 )
@@ -301,38 +302,6 @@ class SendCommand(
             )
     }
 
-    private fun parseCoin(value: String?): Long? {
-        if (value == null) return null
-
-        val normalized = value.trim()
-        if (normalized.isBlank()) return null
-
-        val parts = normalized.split(".")
-        if (parts.size > 2) return null
-
-        val whole = parts[0].toLongOrNull() ?: return null
-        if (whole < 0L) return null
-
-        val fraction = if (parts.size == 2) {
-            val raw = parts[1]
-            if (raw.length > 5) return null
-            raw.padEnd(5, '0').toLongOrNull() ?: return null
-        } else {
-            0L
-        }
-
-        return Math.addExact(
-            Math.multiplyExact(whole, CoinbasePolicy.COIN_SCALE),
-            fraction
-        )
-    }
-
-    private fun formatCoin(amount: Long): String {
-        val whole = amount / CoinbasePolicy.COIN_SCALE
-        val fraction = amount % CoinbasePolicy.COIN_SCALE
-        return "%d.%05d CC".format(whole, fraction)
-    }
-
     fun getTabCompletions(args: Array<out String>): List<String> {
         return when (args.size) {
             2 -> listOf("byName", "byPubKey", "list", "delete", "create")
@@ -346,7 +315,7 @@ class SendCommand(
             }
 
             4 -> when (args[1]) {
-                "byName" -> listOf("<name>").filter { it.startsWith(args[3]) }
+                "byName" -> Bukkit.getOnlinePlayers().map { it.name }.filter { it.startsWith(args[3]) }
                 "byPubKey" -> listOf("[pubKey]").filter { it.startsWith(args[3]) }
                 "create" -> listOf("[memo]").filter { it.startsWith(args[3]) }
                 else -> emptyList()

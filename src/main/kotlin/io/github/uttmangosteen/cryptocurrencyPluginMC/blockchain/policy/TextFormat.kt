@@ -1,21 +1,21 @@
 package io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.policy
 
-class TextFormat {
-    private val fractionDigits: Int = CoinbasePolicy.COIN_SCALE
-        .toString()
-        .length - 1
+object TextFormat {
+    const val COIN_NAME: String = "MNC"
+    //1MNC = 10万Takashi という仮設定
+    const val COIN_FRACTION_DIGITS: Int = 5
 
-    fun format(amount: Long): String {
+    fun formatCoin(amount: Long): String {
         val whole = amount / CoinbasePolicy.COIN_SCALE
         val fraction = amount % CoinbasePolicy.COIN_SCALE
-        return "%d.%0${fractionDigits}d %s".format(
+        return "%d.%0${COIN_FRACTION_DIGITS}d %s".format(
             whole,
             fraction,
-            CoinbasePolicy.COIN_NAME
+            COIN_NAME
         )
     }
 
-    fun parse(value: String?): Long? {
+    fun parseCoin(value: String?): Long? {
         if (value == null) return null
 
         val normalized = value.trim()
@@ -29,8 +29,8 @@ class TextFormat {
 
         val fraction = if (parts.size == 2) {
             val raw = parts[1]
-            if (raw.length > fractionDigits) return null
-            raw.padEnd(fractionDigits, '0').toLongOrNull() ?: return null
+            if (raw.length > COIN_FRACTION_DIGITS) return null
+            raw.padEnd(COIN_FRACTION_DIGITS, '0').toLongOrNull() ?: return null
         } else {
             0L
         }

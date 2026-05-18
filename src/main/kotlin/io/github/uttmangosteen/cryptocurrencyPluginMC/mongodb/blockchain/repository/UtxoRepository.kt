@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import org.bson.Document
+import java.lang.Math.addExact
 import java.util.logging.Logger
 import kotlin.collections.map
 
@@ -41,84 +42,48 @@ class UtxoRepository(
         logger.ccInfo(LogComponent.UTXO_REPOSITORY, "setup completed")
     }
 
-    //今送金に使える残高取得用
+    private suspend fun getAllUtxos(publicKey: String): List<Utxo> {
+        return try {
+            collection.find(Filters.eq("receiverPubKey", publicKey))
+                .map { it.toUtxo() }
+                .toList()
+        } catch (e: Exception) {
+            logger.ccWarning(
+                LogComponent.UTXO_REPOSITORY,
+                "failed to get utxos",
+                e,
+                "publicKey" to publicKey
+            )
+            emptyList()
+        }
+    }
+
+    private fun List<Utxo>.sumAmounts(): Long {
+        return this.fold(0L) { sum, utxo -> addExact(sum, utxo.amount) }
+    }
+
     suspend fun getAvailableUtxos(publicKey: String): List<Utxo> {
-        return try {
-            collection.find(
-                Filters.and(
-                    Filters.eq("receiverPubKey", publicKey),
-                    Filters.or(
-                        Filters.exists("lockedByTxId", false),
-                        Filters.eq("lockedByTxId", null)
-                    )
-                )
-            )
-                .map { it.toUtxo() }
-                .toList()
-        } catch (e: Exception) {
-            logger.ccWarning(
-                LogComponent.UTXO_REPOSITORY,
-                "failed to get available utxos",
-                e,
-                "publicKey" to publicKey
-            )
-            emptyList()
-        }
+        return getAllUtxos(publicKey).filter { it.lockedByTxId == null }
     }
 
-    suspend fun getPendingUtxos(publicKey: String): List<Utxo> {
-        return try {
-            collection.find(
-                Filters.and(
-                    Filters.eq("receiverPubKey", publicKey),
-                    Filters.exists("lockedByTxId", true),
-                    Filters.ne("lockedByTxId", null)
-                )
-            )
-                .map { it.toUtxo() }
-                .toList()
-        } catch (e: Exception) {
-            logger.ccWarning(
-                LogComponent.UTXO_REPOSITORY,
-                "failed to get pending utxos",
-                e,
-                "publicKey" to publicKey
-            )
-            emptyList()
-        }
+    //balance用
+    suspend fun getWalletState(publicKey: String): WalletState {
+        val allUtxos = getAllUtxos(publicKey)
+        val (pending, available) = allUtxos.partition { it.lockedByTxId != null }
+
+        val balance = try { available.sumAmounts() } catch (_: ArithmeticException) { 0L }
+        val pendingBalance = try { pending.sumAmounts() } catch (_: ArithmeticException) { 0L }
+        val totalBalance = try { addExact(balance, pendingBalance) } catch (_: ArithmeticException) { 0L }
+
+        return WalletState(
+            availableUtxos = available,
+            pendingUtxos = pending,
+            balance = balance,
+            pendingBalance = pendingBalance,
+            totalBalance = totalBalance
+        )
     }
 
-    suspend fun getBalance(publicKey: String): Long {
-        return try {
-            getAvailableUtxos(publicKey).fold(0L) { sum, utxo ->
-                Math.addExact(sum, utxo.amount)
-            }
-        } catch (e: Exception) {
-            logger.ccWarning(
-                LogComponent.UTXO_REPOSITORY,
-                "failed to calculate balance",
-                e,
-                "publicKey" to publicKey
-            )
-            0L
-        }
-    }
-
-    suspend fun getPendingBalance(publicKey: String): Long {
-        return try {
-            getPendingUtxos(publicKey).fold(0L) { sum, utxo ->
-                Math.addExact(sum, utxo.amount)
-            }
-        } catch (e: Exception) {
-            logger.ccWarning(
-                LogComponent.UTXO_REPOSITORY,
-                "failed to calculate pending balance",
-                e,
-                "publicKey" to publicKey
-            )
-            0L
-        }
-    }
 
     //送金作成時Transactionが使用するutxoをロック
     suspend fun lock(transaction: Transaction): Boolean {
@@ -257,3 +222,11 @@ class UtxoRepository(
         }
     }
 }
+
+data class WalletState(
+    val availableUtxos: List<Utxo>,
+    val pendingUtxos: List<Utxo>,
+    val balance: Long,
+    val pendingBalance: Long,
+    val totalBalance: Long
+)

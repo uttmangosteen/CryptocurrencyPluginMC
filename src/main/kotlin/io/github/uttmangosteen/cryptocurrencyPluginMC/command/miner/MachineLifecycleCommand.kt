@@ -31,34 +31,15 @@ class MachineLifecycleCommand(
 
     private fun create(player: Player) {
         plugin.launchAsync {
-            val mainAccount = plugin.repositories.walletRepo.getMainAccount(player.uniqueId.toString())
-
-            if (mainAccount == null) {
-                plugin.runSync {
-                    player.sendMessage("$prefix§c先に /cc account create で口座を作成してください")
-                }
-                return@launchAsync
-            }
-
             val machine = plugin.repositories.miningMachineRepo.create(player.uniqueId.toString())
 
-            if (machine == null) {
-                plugin.runSync {
-                    player.sendMessage("$prefix§c採掘機の作成に失敗しました")
-                }
-                return@launchAsync
-            }
-
-            machine.setRewardAccountPubKey(mainAccount.publicKey)
-            val saved = plugin.repositories.miningMachineRepo.save(machine)
-
             plugin.runSync {
-                if (saved) {
+                if (machine != null) {
                     player.sendMessage("$prefix§a採掘機を作成しました")
                     player.sendMessage("$prefix§7machineId: §f${machine.id}")
-                    player.sendMessage("$prefix§7報酬口座: §8${mainAccount.publicKey}")
+                    player.sendMessage("$prefix§7報酬口座は /ccmcn block setRewardPubKey ${machine.id} [index] で設定してください")
                 } else {
-                    player.sendMessage("$prefix§c採掘機の保存に失敗しました")
+                    player.sendMessage("$prefix§c採掘機の作成に失敗しました")
                 }
             }
         }

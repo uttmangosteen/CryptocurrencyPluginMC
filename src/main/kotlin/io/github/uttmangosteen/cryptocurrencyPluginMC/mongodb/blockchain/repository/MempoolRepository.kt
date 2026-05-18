@@ -54,7 +54,7 @@ class MempoolRepository(
         logger.ccInfo(LogComponent.MEMPOOL_REPOSITORY, "setup completed")
     }
 
-    suspend fun save(entity: TransactionEntry): Boolean {
+    suspend fun save(entity: MempoolEntry): Boolean {
         return try {
             val result = collection.insertOne(entity.toDocument())
             result.wasAcknowledged()
@@ -112,7 +112,7 @@ class MempoolRepository(
         mode: CreateBlockMode,
         minerPubKey: String,
         limit: Int
-    ): List<TransactionEntry> {
+    ): List<MempoolEntry> {
         return try {
             when (mode) {
                 CreateBlockMode.NONE -> emptyList()
@@ -169,7 +169,7 @@ class MempoolRepository(
         }
     }
 
-    private fun TransactionEntry.toDocument(): Document {
+    private fun MempoolEntry.toDocument(): Document {
         return Document("_id", txHash)
 
             .append("transaction", transaction.toDocument())
@@ -181,10 +181,10 @@ class MempoolRepository(
             .append("outpoints", outpoints.map { outPoint -> outPoint.toDocument() })
     }
 
-    private fun Document.toTransactionEntity(): TransactionEntry {
+    private fun Document.toTransactionEntity(): MempoolEntry {
         val transactionDocument = get("transaction", Document::class.java)
 
-        return TransactionEntry(
+        return MempoolEntry(
             transaction = transactionDocument.toTransaction(),
             txHash = getString("_id"),
             fee = get("fee", Number::class.java).toLong(),

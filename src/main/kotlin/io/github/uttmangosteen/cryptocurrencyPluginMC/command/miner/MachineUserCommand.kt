@@ -68,7 +68,7 @@ class MachineUserCommand(
         return when (args.size) {
             2 -> listOf("add", "delete").filter { it.startsWith(args[1]) }
             3 -> listOf("<machineId>").filter { it.startsWith(args[2]) }
-            4 -> listOf("<name>").filter { it.startsWith(args[3]) }
+            4 -> Bukkit.getOnlinePlayers().map { it.name }.filter { it.startsWith(args[3]) }
             else -> emptyList()
         }
     }

@@ -11,8 +11,6 @@ object CoinbasePolicy {
     // 何ブロックごとに半減期？ 0以下なら半減なし
     const val HALVING_INTERVAL: Int = 100000
 
-    const val COIN_NAME: String = "MNC"
-
     fun calculateCoinbaseAmount(
         blockHeight: Int,
         currentSupply: Long,

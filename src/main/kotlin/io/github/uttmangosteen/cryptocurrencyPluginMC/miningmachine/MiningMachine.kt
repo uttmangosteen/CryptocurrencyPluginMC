@@ -39,8 +39,7 @@ data class MiningMachine(
         }
     }
 
-    val ownerUuid: String?
-        get() = userUuids.firstOrNull()
+    val ownerUuid: String? get() = userUuids.firstOrNull()
 
     fun isOwner(uuid: String): Boolean {
         return ownerUuid == uuid
@@ -64,6 +63,7 @@ data class MiningMachine(
         return userUuids.remove(uuid)
     }
 
+    //DBとの兼ね合いでnull埋め手動
     fun normalizeGpuSlots() {
         if (gpuSlots.size < MAX_GPU_SLOTS) {
             repeat(MAX_GPU_SLOTS - gpuSlots.size) {
@@ -155,7 +155,7 @@ data class MiningMachine(
         miningBlock = null
     }
 
-    fun setRewardAccountPubKey(publicKey: String?): Boolean {
+    fun setRewardAccountPubKey(publicKey: String): Boolean {
         rewardAccountPubKey = publicKey
         refreshStatus()
         return true

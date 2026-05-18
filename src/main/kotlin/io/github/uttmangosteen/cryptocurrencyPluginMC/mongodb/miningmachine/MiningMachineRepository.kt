@@ -167,31 +167,4 @@ class MiningMachineRepository(
             0L
         }
     }
-
-    suspend fun haltAll(): Boolean {
-        return try {
-            val machines = collection.find()
-                .map { it.toMiningMachine() }
-                .toList()
-
-            var allSaved = true
-            for (machine in machines) {
-                if (machine.enabled) {
-                    machine.toggleEnabled()
-                } else {
-                    machine.refreshStatus()
-                }
-                allSaved = save(machine) && allSaved
-            }
-
-            allSaved
-        } catch (e: Exception) {
-            logger.ccWarning(
-                LogComponent.MINING_MACHINE_REPOSITORY,
-                "failed to halt all mining machines",
-                e
-            )
-            false
-        }
-    }
 }

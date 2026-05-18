@@ -4,7 +4,7 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.OutPoint
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.transaction.Transaction
 
 // Mempool内で扱うトランザクション情報
-data class TransactionEntry(
+data class MempoolEntry(
     val transaction: Transaction,
 
     // 以下検索高速化用

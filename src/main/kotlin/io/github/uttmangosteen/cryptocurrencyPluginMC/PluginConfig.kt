@@ -55,9 +55,5 @@ data class PluginConfig(
         private fun FileConfiguration.safeInt(path: String, default: Int): Int {
             return getInt(path, default).coerceIn(0, Integer.MAX_VALUE)
         }
-
-        private fun FileConfiguration.safeLong(path: String, default: Long): Long {
-            return getLong(path, default).coerceIn(0L, Long.MAX_VALUE)
-        }
     }
 }

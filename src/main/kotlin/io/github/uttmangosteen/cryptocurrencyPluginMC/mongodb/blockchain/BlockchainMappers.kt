@@ -105,7 +105,7 @@ fun Document.toOutPoint(): OutPoint {
 }
 
 fun OutPoint.toOutPointId(): String {
-    return "$txHash.$outputIndex"
+    return "${txHash}_$outputIndex"
 }
 
 fun Utxo.toDocument(): Document {

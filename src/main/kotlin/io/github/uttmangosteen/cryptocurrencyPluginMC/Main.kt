@@ -58,16 +58,16 @@ class Main : JavaPlugin() {
 
     private fun registerCommands(gpuConfig: GpuConfig) {
         val userCommand = UserCommand(this@Main)
-        getCommand("cc")?.tabCompleter = userCommand
-        getCommand("cc")?.setExecutor(UserCommand(this@Main))
+        getCommand("cryptocurrency")?.tabCompleter = userCommand
+        getCommand("cryptocurrency")?.setExecutor(userCommand)
 
         val minerCommand = MinerCommand(this@Main)
-        getCommand("ccmcn")?.setExecutor(MinerCommand(this@Main))
-        getCommand("ccmcn")?.tabCompleter = minerCommand
+        getCommand("cryptocurrencymachine")?.setExecutor(minerCommand)
+        getCommand("cryptocurrencymachine")?.tabCompleter = minerCommand
 
         val adminCommand = AdminCommand(this@Main, gpuConfig)
-        getCommand("ccop")?.setExecutor(adminCommand)
-        getCommand("ccop")?.tabCompleter = adminCommand
+        getCommand("cryptocurrencyadmin")?.setExecutor(adminCommand)
+        getCommand("cryptocurrencyadmin")?.tabCompleter = adminCommand
     }
 
     fun launchAsync(block: suspend CoroutineScope.() -> Unit) {

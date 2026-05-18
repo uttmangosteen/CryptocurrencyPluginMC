@@ -3,7 +3,6 @@ package io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.transaction.Transaction
 import java.math.BigInteger
 import java.nio.ByteBuffer
-import java.security.MessageDigest
 
 data class Block(
     val height: Int,
@@ -16,11 +15,19 @@ data class Block(
     var nonce: Long = 0,
     var hash: String? = null
 ) {
+    private val headerBytes = prepareHeaderBytes()
+
+    fun calculateHash(nonce: Long): ByteArray {
+        val buffer = ByteBuffer.allocate(this.headerBytes.size + 8)
+            .put(this.headerBytes)
+            .putLong(nonce)
+        return buffer.array().sha256()
+    }
 
     companion object {
         private const val MEMO_MAX_LENGTH = 32
 
-        // SHA-256の最大値 (2^256 - 1)
+        // SHA-256の最大値(2^256 - 1)
         val MAX_HASH_VALUE: BigInteger = BigInteger.ONE.shiftLeft(256).subtract(BigInteger.ONE)
 
         private fun calculateTransactionsRoot(txs: List<Transaction>): String {
@@ -39,16 +46,9 @@ data class Block(
             val target = MAX_HASH_VALUE.divide(BigInteger.valueOf(diff))
             return hashValue <= target
         }
-
-        fun calculateFastHash(headerBytes: ByteArray, nonce: Long): ByteArray {
-            val buffer = ByteBuffer.allocate(headerBytes.size + 8)
-                .put(headerBytes)
-                .putLong(nonce)
-            return buffer.array().sha256()
-        }
     }
 
-    fun prepareHeaderBytes(): ByteArray {
+    private fun prepareHeaderBytes(): ByteArray {
         val safeMemo = memo.take(MEMO_MAX_LENGTH)
         val memoBytes = safeMemo.toByteArray(Charsets.UTF_8)
 
@@ -67,37 +67,45 @@ data class Block(
         return buffer.array()
     }
 
-    fun calculateHashWithNonce(headerBytes: ByteArray, nonce: Long): ByteArray {
-        val buffer = ByteBuffer.allocate(headerBytes.size + 8)
-            .put(headerBytes)
-            .putLong(nonce)
-        return buffer.array().sha256()
-    }
-
-    fun isValid(expectedDifficulty: Long): Boolean {
+    //Block自身でできるチェックしか含まれていない点に注意されたい
+    fun isValid(latestBlock: Block, expectedDifficulty: Long): Boolean {
+        if (this.height != latestBlock.height + 1) return false
+        if (this.previousHash != latestBlock.hash) return false
         if (this.difficulty != expectedDifficulty) return false
-        val blockHash = this.hash ?: return false
+
+        if (this.timestamp <= latestBlock.timestamp) return false
 
         // hash
-        val calculatedHashBytes = calculateHashWithNonce(prepareHeaderBytes(), this.nonce)
+        val blockHash = this.hash ?: return false
+        val calculatedHashBytes = calculateHash(this.nonce)
         if (blockHash != calculatedHashBytes.toHexString()) return false
 
         //　hash がクリアできてるか
         if (!isMined(calculatedHashBytes, difficulty)) return false
 
+        if (transactions.isEmpty()) return false
+
         // txRoot
         if (this.transactionsRoot != calculateTransactionsRoot(this.transactions)) return false
 
+        //coinbase
+        val firstTx = transactions[0]
+        if (!firstTx.isCoinbase) return false
+        if (!firstTx.isValid()) return false
+
         // tx
         val spentOutpoints = mutableSetOf<OutPoint>()
-        for (tx in transactions) {
+        for (i in 1 until transactions.size) {
+            val tx = transactions[i]
+            if (tx.isCoinbase) return false
             if (!tx.isValid()) return false
+
             for (input in tx.inputs) {
                 val outpoint = OutPoint(
                     txHash = input.prevTxHash,
                     outputIndex = input.outputIndex
                 )
-                //同じブロック内での2重支払い?
+                //同じブロック内でのutxo2重使用?
                 if (!spentOutpoints.add(outpoint)) return false
             }
         }

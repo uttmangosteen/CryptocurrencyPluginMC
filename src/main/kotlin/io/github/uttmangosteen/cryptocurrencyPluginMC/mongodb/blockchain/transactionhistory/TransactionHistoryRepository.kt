@@ -26,13 +26,15 @@ class TransactionHistoryRepository(
     suspend fun writeHistory(session: ClientSession, transactions: List<Transaction>, height: Int, blockTimestamp: Long): Boolean {
         if (transactions.isEmpty()) return true
         try {
+
             val documents = transactions.flatMap { tx ->
-                val sender = tx.inputs.firstOrNull()?.publicKey // 簡易的に最初のインプットの公開鍵を送信者とする場合
-                tx.outputs.map { output ->
+                val sender = tx.inputs.firstOrNull()?.publicKey
+                tx.outputs.mapIndexed { outputIndex, output ->
+                    val historyId = toHistoryId(tx.txHash, outputIndex)
                     Document().apply {
-                        // _idは「txHash + 宛先」で重複防止
-                        append("_id", "${tx.txHash}_${output.receiverPubKey}")
+                        append("_id", historyId)
                         append("txHash", tx.txHash)
+                        append("outputIndex", outputIndex)
                         append("senderPubKey", sender)
                         append("receiverPubKey", output.receiverPubKey)
                         append("amount", output.amount)
@@ -55,5 +57,9 @@ class TransactionHistoryRepository(
             )
             return false
         }
+    }
+
+    private fun toHistoryId(txHash: String, outputIndex: Int): String {
+        return "${txHash}_$outputIndex"
     }
 }

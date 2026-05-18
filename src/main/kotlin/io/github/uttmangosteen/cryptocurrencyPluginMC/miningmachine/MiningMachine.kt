@@ -2,29 +2,29 @@ package io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine
 
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.Block
 import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.gpu.Gpu
+import io.github.uttmangosteen.cryptocurrencyPluginMC.wallet.Account
 import org.bson.codecs.pojo.annotations.BsonId
 import java.util.UUID
 
 data class MiningMachine(
     val id: String = UUID.randomUUID().toString(),
-    val ownerUuid: String,
+    val userUuids: MutableList<String>,//index:0のuuidがownerUuid
 
     var enabled: Boolean = false,
     var status: MiningMachineStatus = MiningMachineStatus.IDLE,
 
     var createBlockMode: CreateBlockMode = CreateBlockMode.NONE,
-    var rewardAccountId: String? = null,
-    var defaultMemo: String = "",
+    var rewardAccountPubKey: String? = null,
+    var memo: String = "",
 
-    var candidateBlock: Block? = null,
-    var currentNonce: Long = 0L,
+    var miningBlock: Block? = null,
 
     var fuelAmount: Int = 0,
 
     var gpuSlots: MutableList<Gpu?> = MutableList(MAX_GPU_SLOTS) { null },
 ) {
     companion object {
-        const val MAX_GPU_SLOTS = 8//最大GPU搭載数(帰る予定はない)
+        const val MAX_GPU_SLOTS = 8//最大GPU搭載数(変更予定はない)
     }
 
     // gpuSlots の長さを MAX_GPU_SLOTS に正規化する

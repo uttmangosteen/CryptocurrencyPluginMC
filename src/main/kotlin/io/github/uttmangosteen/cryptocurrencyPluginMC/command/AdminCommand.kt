@@ -13,6 +13,9 @@ class AdminCommand(
     private val plugin: Main,
     private val gpuConfig: GpuConfig
 ) : CommandExecutor, TabCompleter {
+    private val enableCommand = EnableCommand(plugin)
+    private val getGpuCommand = GetGpuCommand(plugin, gpuConfig)
+
     override fun onCommand(
         sender: CommandSender,
         command: Command,
@@ -24,11 +27,11 @@ class AdminCommand(
 
         when (args[0]) {
             "run", "halt" -> {
-                EnableCommand(plugin).execute(sender, args)
+                enableCommand.execute(sender, args)
             }
 
             "getGpu" -> {
-                GetGpuCommand(plugin, gpuConfig).execute(sender, args)
+                getGpuCommand.execute(sender, args)
             }
 
             "database" -> {

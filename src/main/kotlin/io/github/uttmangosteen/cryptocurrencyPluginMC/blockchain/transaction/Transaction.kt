@@ -68,8 +68,12 @@ data class Transaction(
     fun isValid(): Boolean {
         if (txHash != calculateHash(isCoinbase, inputs, outputs, timestamp, memo)) return false
         if (outputs.any { it.amount <= 0 }) return false
+        if (outputs.any { Signer.normalizePublicKey(it.receiverPubKey) == null }) return false
+
         if (isCoinbase) return inputs.isEmpty() && outputs.size == 1
+
         if (inputs.isEmpty()) return false
+        if (inputs.any { Signer.normalizePublicKey(it.publicKey) == null }) return false
 
         return try {
             inputs.all { input ->

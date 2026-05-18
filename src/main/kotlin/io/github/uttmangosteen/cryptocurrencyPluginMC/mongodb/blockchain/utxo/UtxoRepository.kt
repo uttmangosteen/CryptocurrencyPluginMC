@@ -16,6 +16,7 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.ccWarning
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.toDocument
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.toOutPointId
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.toUtxo
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import org.bson.Document
@@ -151,6 +152,28 @@ class UtxoRepository(
                 "transactionCount" to transactions.size
             )
             false
+        }
+    }
+
+    suspend fun findUtxo(session: ClientSession, prevTxHash: String, outputIndex: Int): Utxo? {
+        return try {
+            val outPointId = OutPoint(
+                txHash = prevTxHash,
+                outputIndex = outputIndex
+            ).toOutPointId()
+
+            collection.find(session, Filters.eq("_id", outPointId))
+                .firstOrNull()
+                ?.toUtxo()
+        } catch (e: Exception) {
+            logger.ccWarning(
+                LogComponent.UTXO_REPOSITORY,
+                "failed to find utxo",
+                e,
+                "prevTxHash" to prevTxHash,
+                "outputIndex" to outputIndex
+            )
+            null
         }
     }
 

@@ -40,14 +40,17 @@ class BlockRepository(
         }
     }
 
-    suspend fun getLatestBlock(): Block? {
+    suspend fun getLatestBlock(session: ClientSession? = null): Block? {
         return try {
-            val result = collection.find().sort(Sorts.descending("_id")).firstOrNull()?.toBlock()
-            result
+            val findPublisher = if (session != null) collection.find(session) else collection.find()
+            findPublisher
+                .sort(Sorts.descending("_id"))
+                .firstOrNull()
+                ?.toBlock()
         } catch (e: Exception) {
             logger.ccWarning(
                 LogComponent.BLOCK_REPOSITORY,
-                "failed to get latest block",
+                "failed to get latest block in session",
                 e
             )
             null

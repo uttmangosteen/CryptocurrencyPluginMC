@@ -11,6 +11,11 @@ import kotlin.text.startsWith
 class UserCommand(
     private val plugin: Main,
 ) : CommandExecutor, TabCompleter {
+    private val accountCommand = AccountCommand(plugin)
+    // 今後、WalletCommand や SendCommand を作ったらここに並べていく
+    // private val walletCommand = WalletCommand(plugin)
+    // private val sendCommand = SendCommand(plugin)
+
     override fun onCommand(
         sender: CommandSender,
         command: Command,
@@ -19,11 +24,17 @@ class UserCommand(
     ): Boolean {
         if (!plugin.pluginConfig.enable) return true
         if (!sender.hasPermission("cryptocurrency.user")) return true
+
+        // 💡 引数が空の場合は false を返すことで、plugin.yml に書いた美しい help (usage) が自動表示されます
         if (args.isEmpty()) return false
 
         when (args[0]) {
-            "account" -> AccountCommand(plugin).execute(sender, args)
-
+            "account" -> accountCommand.execute(sender, args)
+            // "wallet" -> walletCommand.execute(sender, args)
+            // "balance" -> balanceCommand.execute(sender, args)
+            // "history" -> historyCommand.execute(sender, args)
+            // "send" -> sendCommand.execute(sender, args)
+            // "info" -> infoCommand.execute(sender, args)
             else -> return true
         }
         return true
@@ -49,8 +60,11 @@ class UserCommand(
             ).filter { it.startsWith(args[0]) }
 
             else -> when (args[0].lowercase()) {
-                "account" -> AccountCommand(plugin).getTabCompletions(args)
+                "account" -> accountCommand.getTabCompletions(args)
 
+                // 💡 タブ補完も同様に、ここに対応するクラスの補完ロジックを流すだけ
+                // "wallet" -> walletCommand.getTabCompletions(args)
+                // "send" -> sendCommand.getTabCompletions(args)
 
                 else -> emptyList()
             }

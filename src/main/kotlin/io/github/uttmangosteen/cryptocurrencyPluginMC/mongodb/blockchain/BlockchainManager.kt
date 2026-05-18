@@ -9,10 +9,10 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.transaction.Sig
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccInfo
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccWarning
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.MongoDatabaseProvider
-import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.blocks.BlockRepository
-import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.mempool.MempoolRepository
-import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.utxo.UtxoRepository
-import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.transactionhistory.TransactionHistoryRepository
+import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.repository.BlockRepository
+import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.repository.MempoolRepository
+import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.repository.UtxoRepository
+import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.repository.TransactionHistoryRepository
 import java.util.logging.Logger
 
 class BlockchainManager(

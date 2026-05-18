@@ -21,16 +21,17 @@ commands:
       §f/cc account getPrivateKeyItem <index> [itemMemo] §7- 口座の秘密鍵付き公開鍵アイテムを取得、§c取扱注意
       §f/cc account register [pubKey] §7- pubKey省略で手に持った鍵アイテムをWalletに登録する　pubKey平文指定も可
       
-      §c§l× §f/cc balance [index] §7- 口座の状況を確認
       
+      §f/cc balance [index] §7- 口座の状況を確認
+  
       §c§l× §f/cc history [index] [page] §7- 口座の取引履歴を確認
-      
-      §c§l× §f/cc send byName <amount> [name] §7- メイン口座から[name]の今のメイン口座への送金を一つ作成
-      §c§l× §f/cc send byPubKey <amount> [pubKey] §7- [pubKey]省略時、手に持った公開鍵アイテムへメイン口座からの送金を作成　[pubKey]を平文で指定もできるが、間違えた場合二度とお金は取り出せない
-      §c§l× §f/cc send list §7- 作成中の送金リスト
-      §c§l× §f/cc send delete <index|all> §7- 送金リストから間違えた送金を削除
-      §c§l× §f/cc send create <fee> [memo] §7- いまの送金リストをまとめてマイナー報酬を設定の上取引を作成 mempoolに登録 メモの長さは32文字まで
-      
+  
+      §f/cc send byName <amount> <name> §7- メイン口座から<name>の今のメイン口座への送金を一つ作成
+      §f/cc send byPubKey <amount> [pubKey] §7- [pubKey]省略時、手に持った公開鍵アイテムへメイン口座からの送金を作成　[pubKey]を平文で指定もできるが、間違えた場合二度とお金は取り出せない
+      §f/cc send list §7- 作成中の送金リスト
+      §f/cc send delete <index|all> §7- 送金リストから間違えた送金を削除
+      §f/cc send create <fee> [memo] §7- いまの送金リストをまとめてマイナー報酬を設定の上取引を作成 mempoolに登録 メモの長さは32文字まで
+  
       §c§l× §f/cc info blockchain §7- blockchainの状況を確認
       §c§l× §f/cc info mempool §7- mempoolの状況を確認
       §f§l=========================================
@@ -39,23 +40,23 @@ commands:
     aliases: [ ccmcn ] #CryptoCurrencyMaChiNe
     usage: |
       §f§l========== §8§lCryptocurrency Machine help §f§l==========
-      §c§l× §f/ccmcn create §7- 採掘機を作成
-      §c§l× §f/ccmcn remove <machineId> §7- 採掘機を撤去
-      
-      §c§l× §f/ccmcn info <machineId> §7- 採掘機の情報を確認
-      
+      §f/ccmcn create §7- 採掘機を作成
+      §f/ccmcn remove <machineId> §7- 採掘機を撤去
+  
+      §f/ccmcn info <machineId> §7- 採掘機の情報を確認
+  
       §c§l× §f/ccmcn open <machineId> §7- 採掘機を開く
-      §c§l× §f/ccmcn gpu <set|take> <machineId> <slot> §7- 採掘機のGPU設置/取り外し
-      §c§l× §f/ccmcn user <add|delete> <machineId> <name> §7- 採掘機に触れるユーザーの追加/削除
-      §c§l× §f/ccmcn <run|halt> <machineId> §7- 採掘機の電源切り替え
-      §c§l× §f/ccmcn shareName <machineId> §7- 採掘成功時に、名前を共有するか切り替え
+      §f/ccmcn gpu <set|take> <machineId> <slot> §7- 採掘機のGPU設置/取り外し
+      §f/ccmcn user <add|delete> <machineId> <name> §7- 採掘機に触れるユーザーの追加/削除
+      §f/ccmcn toggle <machineId> §7- 採掘機の電源切り替え
+      §f/ccmcn shareName <machineId> §7- 採掘成功時に、名前を共有するか切り替え
+  
+      §f/ccmcn fuel <machineId> §7- 手持ちの石炭/木炭/石炭ブロックを採掘機の燃料にする
       
-      §c§l× §f/ccmcn fuel <machineId> §7- 採掘機の燃料投入口を開く
-      
-      §c§l× §f/ccmcn block setDefaultMemo <machineId> [memo] §7- 採掘ブロックのメモを設定しなかった場合のメモ設定
-      §c§l× §f/ccmcn block setMemo <machineId> [memo] §7- 採掘中ブロックのメモ設定
-      §c§l× §f/ccmcn block txMode <machineId> §7- 採掘ブロックのトランザクションの集め方切り替え
-      §c§l× §f/ccmcn block recreate <machineId> §7-最新のmempoolに合わせてブロックの再構築
+      §f/ccmcn block setDefaultMemo <machineId> [memo] §7- 採掘ブロックのメモを設定しなかった場合のメモ設定
+      §f/ccmcn block setMemo <machineId> [memo] §7- 採掘中ブロックのメモ設定
+      §f/ccmcn block txMode <machineId> §7- 採掘ブロックのトランザクションの集め方切り替え
+      §f/ccmcn block recreate <machineId> §7-最新のmempoolに合わせてブロックの再構築
       §f§l=================================================
     permission: cryptocurrency.miner
   cryptocurrencyadmin:

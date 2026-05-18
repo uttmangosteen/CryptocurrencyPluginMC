@@ -27,8 +27,8 @@ data class MiningMachine(
 ) {
     companion object {
         const val MAX_GPU_SLOTS = 8
-        const val MAX_USERS = 16
-        const val MAX_FUEL_AMOUNT = 1_000_000
+        const val MAX_USERS = 4
+        const val MAX_FUEL_AMOUNT = 100000
 
         fun create(ownerUuid: String): MiningMachine {
             return MiningMachine(
@@ -37,7 +37,6 @@ data class MiningMachine(
                 memo = ""
             )
         }
-        private const val MEMO_MAX_LENGTH = 32
     }
 
     val ownerUuid: String?
@@ -111,8 +110,8 @@ data class MiningMachine(
 
     fun addFuel(amount: Int): Boolean {
         if (amount <= 0) return false
-        val added = fuelAmount.toLong() + amount.toLong()
-        fuelAmount = added.coerceAtMost(MAX_FUEL_AMOUNT.toLong()).toInt()
+        val added = fuelAmount + amount
+        fuelAmount = added.coerceAtMost(MAX_FUEL_AMOUNT)
         refreshStatus()
         return true
     }
@@ -125,19 +124,18 @@ data class MiningMachine(
         return true
     }
 
-    fun run(): Boolean {
+    fun toggleEnabled(): Boolean {
+        if (enabled) {
+            enabled = false
+            status = MiningMachineStatus.DISABLED
+            return true
+        }
+
         if (rewardAccountPubKey == null) return false
         if (!hasActiveGpu()) return false
         if (fuelAmount <= 0) return false
-
         enabled = true
         status = MiningMachineStatus.MINING
-        return true
-    }
-
-    fun halt(): Boolean {
-        enabled = false
-        status = MiningMachineStatus.DISABLED
         return true
     }
 
@@ -151,6 +149,12 @@ data class MiningMachine(
         }
     }
 
+    fun halt() {
+        enabled = false
+        status = MiningMachineStatus.DISABLED
+        miningBlock = null
+    }
+
     fun setRewardAccountPubKey(publicKey: String?): Boolean {
         rewardAccountPubKey = publicKey
         refreshStatus()
@@ -158,13 +162,13 @@ data class MiningMachine(
     }
 
     fun setDefaultMemo(value: String): Boolean {
-        defaultMemo = value.take(MEMO_MAX_LENGTH)
+        defaultMemo = value
         if (memo.isBlank()) memo = defaultMemo
         return true
     }
 
     fun setMiningMemo(value: String): Boolean {
-        memo = value.take(MEMO_MAX_LENGTH)
+        memo = value
         return true
     }
 
@@ -183,7 +187,7 @@ data class MiningMachine(
         return shareNameOnMined
     }
 
-    fun setMiningBlock(block: Block?) {
+    fun replaceMiningBlock(block: Block?) {
         miningBlock = block
         refreshStatus()
     }

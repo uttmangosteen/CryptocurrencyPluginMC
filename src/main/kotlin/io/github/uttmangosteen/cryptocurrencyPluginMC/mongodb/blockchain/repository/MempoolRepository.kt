@@ -1,4 +1,4 @@
-package io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.mempool
+package io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.repository
 
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.IndexOptions
@@ -18,8 +18,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import org.bson.Document
 import java.util.logging.Logger
-import kotlin.collections.map
-import kotlin.collections.plus
 
 class MempoolRepository(
     database: MongoDatabase,

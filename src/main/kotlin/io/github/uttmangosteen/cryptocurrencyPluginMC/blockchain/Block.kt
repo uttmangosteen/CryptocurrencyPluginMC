@@ -51,6 +51,25 @@ data class Block(
             val target = MAX_HASH_VALUE.divide(BigInteger.valueOf(diff))
             return hashValue <= target
         }
+
+        fun createGenesis(): Block {
+            val genesisBlock = Block(
+                height = 0,
+                previousHash = "00".repeat(32),
+                transactions = emptyList(),
+                timestamp = System.currentTimeMillis(),
+                memo = "Genesis Block",
+                difficulty = 1L,
+                totalChainSupply = 0L,
+                networkMiningPower = 0L,
+                nonce = 0L,
+                hash = null
+            )
+            val hashBytes = genesisBlock.calculateHash(genesisBlock.nonce)
+            genesisBlock.hash = hashBytes.toHexString()
+
+            return genesisBlock
+        }
     }
 
     private fun prepareHeaderBytes(): ByteArray {
@@ -97,7 +116,7 @@ data class Block(
         // txRoot
         if (this.transactionsRoot != calculateTransactionsRoot(this.transactions)) return false
 
-        //coinbase
+        // Coinbase
         val firstTx = transactions[0]
         if (!firstTx.isCoinbase) return false
         if (!firstTx.isValid()) return false

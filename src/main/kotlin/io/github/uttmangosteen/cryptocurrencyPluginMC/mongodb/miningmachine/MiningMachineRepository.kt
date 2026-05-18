@@ -128,24 +128,6 @@ class MiningMachineRepository(
         return save(machine)
     }
 
-    suspend fun getByUser(userUuid: String): List<MiningMachine> {
-        if (userUuid.isBlank()) return emptyList()
-
-        return try {
-            collection.find(Filters.eq("userUuids", userUuid))
-                .map { it.toMiningMachine() }
-                .toList()
-        } catch (e: Exception) {
-            logger.ccWarning(
-                LogComponent.MINING_MACHINE_REPOSITORY,
-                "failed to get mining machines by user",
-                e,
-                "userUuid" to userUuid
-            )
-            emptyList()
-        }
-    }
-
     suspend fun getRunnableMachines(): List<MiningMachine> {
         return try {
             collection.find(
@@ -194,7 +176,11 @@ class MiningMachineRepository(
 
             var allSaved = true
             for (machine in machines) {
-                machine.halt()
+                if (machine.enabled) {
+                    machine.toggleEnabled()
+                } else {
+                    machine.refreshStatus()
+                }
                 allSaved = save(machine) && allSaved
             }
 

@@ -1,4 +1,4 @@
-package io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.transactionhistory
+package io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.repository
 
 import com.mongodb.client.model.Indexes
 import com.mongodb.kotlin.client.coroutine.ClientSession

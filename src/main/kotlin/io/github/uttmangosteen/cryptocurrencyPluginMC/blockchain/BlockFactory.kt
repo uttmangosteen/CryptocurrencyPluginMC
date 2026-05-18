@@ -5,7 +5,7 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.policy.Coinbase
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.policy.DifficultyPolicy
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.transaction.Transaction
 import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.MiningMachine
-import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.mempool.MempoolRepository
+import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.repository.MempoolRepository
 import java.util.concurrent.ThreadLocalRandom
 
 class BlockFactory(

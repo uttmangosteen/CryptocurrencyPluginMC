@@ -35,7 +35,7 @@ class MinerCommand(
         if (args.isEmpty()) return false
 
         when (args[0]) {
-            "create", "remove", "run", "halt", "shareName" -> lifecycleCommand.execute(sender, args)
+            "create", "remove", "toggle", "shareName" -> lifecycleCommand.execute(sender, args)
             "info", "open" -> infoCommand.execute(sender, args)
             "gpu" -> gpuCommand.execute(sender, args)
             "user" -> userCommand.execute(sender, args)
@@ -64,8 +64,7 @@ class MinerCommand(
                 "open",
                 "gpu",
                 "user",
-                "run",
-                "halt",
+                "toggle",
                 "shareName",
                 "fuel",
                 "block"
@@ -75,7 +74,7 @@ class MinerCommand(
                 "gpu" -> gpuCommand.getTabCompletions(args)
                 "user" -> userCommand.getTabCompletions(args)
                 "block" -> blockCommand.getTabCompletions(args)
-                "remove", "info", "open", "run", "halt", "shareName", "fuel" -> {
+                "remove", "info", "open", "toggle", "shareName", "fuel" -> {
                     if (args.size == 2) listOf("<machineId>").filter { it.startsWith(args[1]) } else emptyList()
                 }
                 else -> emptyList()

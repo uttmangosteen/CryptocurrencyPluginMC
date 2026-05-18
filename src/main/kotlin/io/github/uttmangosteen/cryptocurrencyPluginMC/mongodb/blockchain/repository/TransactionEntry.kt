@@ -1,4 +1,4 @@
-package io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.mempool
+package io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.repository
 
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.OutPoint
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.transaction.Transaction

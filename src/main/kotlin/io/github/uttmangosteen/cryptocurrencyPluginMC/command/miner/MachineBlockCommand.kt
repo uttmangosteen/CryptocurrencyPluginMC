@@ -87,7 +87,7 @@ class MachineBlockCommand(
                 machineId = machineId,
                 requesterUuid = player.uniqueId.toString()
             ) { machine ->
-                machine.setMiningBlock(null)
+                machine.replaceMiningBlock(null)
                 true
             }
 

@@ -5,15 +5,16 @@ import java.math.BigInteger
 // ブロックチェーン開始後は触らない
 //difficulty = networkMiningPower * 20 / miningDelayTicks * 300
 object DifficultyPolicy {
-    const val INITIAL_DIFFICULTY: Long = 16L
+    const val INITIAL_DIFFICULTY: Long = 1024L
 
+    //5分を目指す
     const val TARGET_BLOCK_MILLIS: Long = 5L * 60L * 1000L
 
     const val SERVER_TICKS_PER_SECOND: Long = 20L
 
-    const val MIN_DIFFICULTY: Long = 1L
+    const val MIN_DIFFICULTY: Long = INITIAL_DIFFICULTY
 
-    const val MAX_DIFFICULTY: Long = Long.MAX_VALUE / 4L
+    const val MAX_DIFFICULTY: Long = 1048576L
 
     fun calculateExpectedDifficulty(
         networkMiningPower: Long,

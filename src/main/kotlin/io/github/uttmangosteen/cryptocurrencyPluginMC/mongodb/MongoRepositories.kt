@@ -1,10 +1,10 @@
 package io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb
 
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.BlockchainManager
-import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.blocks.BlockRepository
-import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.mempool.MempoolRepository
-import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.transactionhistory.TransactionHistoryRepository
-import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.utxo.UtxoRepository
+import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.repository.BlockRepository
+import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.repository.MempoolRepository
+import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.repository.TransactionHistoryRepository
+import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.repository.UtxoRepository
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.miningmachine.MiningMachineRepository
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.wallet.WalletRepository
 import java.util.logging.Logger

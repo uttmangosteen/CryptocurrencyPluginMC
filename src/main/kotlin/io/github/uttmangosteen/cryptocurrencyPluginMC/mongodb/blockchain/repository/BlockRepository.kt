@@ -1,11 +1,10 @@
-package io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.blocks
+package io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.repository
 
 import com.mongodb.client.model.Sorts
 import com.mongodb.kotlin.client.coroutine.ClientSession
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import io.github.uttmangosteen.cryptocurrencyPluginMC.LogComponent
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.Block
-
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccInfo
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccWarning
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.toBlock
@@ -20,8 +19,32 @@ class BlockRepository(
 ) {
     private val collection = database.getCollection<Document>("blocks")
 
-    fun setup() {
+    suspend fun setup() {
+        if (getLatestBlock() == null) {
+            createGenesisBlock()
+        }
         logger.ccInfo(LogComponent.BLOCK_REPOSITORY, "setup completed")
+    }
+
+    private suspend fun createGenesisBlock() {
+        try {
+            val genesisBlock = Block.createGenesis()
+            val result = collection.insertOne(genesisBlock.toDocument())
+
+            if (result.wasAcknowledged()) {
+                logger.ccInfo(
+                    LogComponent.BLOCK_REPOSITORY,
+                    "genesis block created",
+                    "hash" to genesisBlock.hash
+                )
+            }
+        } catch (e: Exception) {
+            logger.ccWarning(
+                LogComponent.BLOCK_REPOSITORY,
+                "failed to create genesis block",
+                e
+            )
+        }
     }
 
     //acceptNewBlock時実行

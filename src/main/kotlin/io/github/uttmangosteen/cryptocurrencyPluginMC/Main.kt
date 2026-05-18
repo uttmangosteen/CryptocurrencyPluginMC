@@ -5,9 +5,11 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.command.MinerCommand
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.UserCommand
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.MongoDatabaseProvider
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.MongoRepositories
+import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.MiningMachineService
 import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.gpu.GpuConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
@@ -25,6 +27,8 @@ class Main : JavaPlugin() {
         private set
 
     private val pluginScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    
+    private var miningMachineService: MiningMachineService? = null
 
     override fun onEnable() {
         saveDefaultConfig()
@@ -48,6 +52,7 @@ class Main : JavaPlugin() {
                 repositories.setupAll()
                 server.scheduler.runTask(this@Main, Runnable {
                     registerCommands(gpuConfig)
+                    miningMachineService = MiningMachineService(this@Main).also { it.start() }
                     logger.ccInfo(LogComponent.DATABASE, "setup completed")
                 })
 
@@ -74,8 +79,8 @@ class Main : JavaPlugin() {
         getCommand("cryptocurrencyadmin")?.tabCompleter = adminCommand
     }
 
-    fun launchAsync(block: suspend CoroutineScope.() -> Unit) {
-        pluginScope.launch(block = block)
+    fun launchAsync(block: suspend CoroutineScope.() -> Unit): Job {
+        return pluginScope.launch(block = block)
     }
 
     fun runSync(block: () -> Unit) {
@@ -85,6 +90,7 @@ class Main : JavaPlugin() {
     }
 
     override fun onDisable() {
+        miningMachineService?.stop()
         pluginScope.cancel()
 
         if (::mongoDatabaseProvider.isInitialized) {

@@ -17,14 +17,9 @@ class MachineLifecycleCommand(
                 remove(player, machineId)
             }
 
-            "run" -> {
+            "toggle" -> {
                 val machineId = args.getOrNull(1) ?: return
-                run(player, machineId)
-            }
-
-            "halt" -> {
-                val machineId = args.getOrNull(1) ?: return
-                halt(player, machineId)
+                toggle(player, machineId)
             }
 
             "shareName" -> {
@@ -86,40 +81,29 @@ class MachineLifecycleCommand(
         }
     }
 
-    private fun run(player: Player, machineId: String) {
+    private fun toggle(player: Player, machineId: String) {
         plugin.launchAsync {
+            var enabled = false
+
             val updated = plugin.repositories.miningMachineRepo.updateMachine(
                 machineId = machineId,
                 requesterUuid = player.uniqueId.toString()
             ) { machine ->
-                machine.run()
+                val toggled = machine.toggleEnabled()
+                enabled = machine.enabled
+                toggled
             }
 
             plugin.runSync {
                 if (updated) {
-                    player.sendMessage("$prefix§a採掘機を起動しました")
+                    if (enabled) {
+                        player.sendMessage("$prefix§a採掘機を起動しました")
+                    } else {
+                        player.sendMessage("$prefix§c採掘機を停止しました")
+                    }
                 } else {
-                    player.sendMessage("$prefix§c採掘機を起動できませんでした")
-                    player.sendMessage("$prefix§7GPU、燃料、報酬口座を確認してください")
-                }
-            }
-        }
-    }
-
-    private fun halt(player: Player, machineId: String) {
-        plugin.launchAsync {
-            val updated = plugin.repositories.miningMachineRepo.updateMachine(
-                machineId = machineId,
-                requesterUuid = player.uniqueId.toString()
-            ) { machine ->
-                machine.halt()
-            }
-
-            plugin.runSync {
-                if (updated) {
-                    player.sendMessage("$prefix§a採掘機を停止しました")
-                } else {
-                    player.sendMessage("$prefix§c採掘機の停止に失敗しました")
+                    player.sendMessage("$prefix§c採掘機の電源切り替えに失敗しました")
+                    player.sendMessage("$prefix§7起動する場合は、GPU、燃料、報酬口座を確認してください")
                 }
             }
         }

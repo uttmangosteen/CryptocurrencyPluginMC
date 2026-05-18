@@ -1,4 +1,4 @@
-package io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.transactionhistory
+package io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.repository
 
 data class TransactionHistoryEntry(
     val txHash: String,

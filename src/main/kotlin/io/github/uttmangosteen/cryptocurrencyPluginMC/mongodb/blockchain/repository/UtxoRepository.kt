@@ -1,10 +1,10 @@
-package io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.utxo
+package io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.repository
 
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.Indexes
 import com.mongodb.client.model.InsertOneModel
-import com.mongodb.client.model.WriteModel
 import com.mongodb.client.model.Updates
+import com.mongodb.client.model.WriteModel
 import com.mongodb.kotlin.client.coroutine.ClientSession
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import io.github.uttmangosteen.cryptocurrencyPluginMC.LogComponent
@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import org.bson.Document
 import java.util.logging.Logger
+import kotlin.collections.map
 
 class UtxoRepository(
     database: MongoDatabase,
@@ -62,6 +63,60 @@ class UtxoRepository(
                 "publicKey" to publicKey
             )
             emptyList()
+        }
+    }
+
+    suspend fun getPendingUtxos(publicKey: String): List<Utxo> {
+        return try {
+            collection.find(
+                Filters.and(
+                    Filters.eq("receiverPubKey", publicKey),
+                    Filters.exists("lockedByTxId", true),
+                    Filters.ne("lockedByTxId", null)
+                )
+            )
+                .map { it.toUtxo() }
+                .toList()
+        } catch (e: Exception) {
+            logger.ccWarning(
+                LogComponent.UTXO_REPOSITORY,
+                "failed to get pending utxos",
+                e,
+                "publicKey" to publicKey
+            )
+            emptyList()
+        }
+    }
+
+    suspend fun getBalance(publicKey: String): Long {
+        return try {
+            getAvailableUtxos(publicKey).fold(0L) { sum, utxo ->
+                Math.addExact(sum, utxo.amount)
+            }
+        } catch (e: Exception) {
+            logger.ccWarning(
+                LogComponent.UTXO_REPOSITORY,
+                "failed to calculate balance",
+                e,
+                "publicKey" to publicKey
+            )
+            0L
+        }
+    }
+
+    suspend fun getPendingBalance(publicKey: String): Long {
+        return try {
+            getPendingUtxos(publicKey).fold(0L) { sum, utxo ->
+                Math.addExact(sum, utxo.amount)
+            }
+        } catch (e: Exception) {
+            logger.ccWarning(
+                LogComponent.UTXO_REPOSITORY,
+                "failed to calculate pending balance",
+                e,
+                "publicKey" to publicKey
+            )
+            0L
         }
     }
 

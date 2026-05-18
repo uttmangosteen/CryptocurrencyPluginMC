@@ -95,7 +95,7 @@ class AccountCommand(
                     return@runSync
                 }
 
-                player.sendMessage("$prefix§f§l=============== §8§lAccount list §f§l===============")
+                player.sendMessage("$prefix§f§l========== §8§lAccount list §f§l==========")
                 wallet.accounts.forEachIndexed { index, account ->
                     val mainMark = if (index == 0) "§a§lMAIN " else ""
                     val keyMark = if (account.privateKey == null) "§e§lWATCH " else ""
@@ -103,7 +103,7 @@ class AccountCommand(
                     player.sendMessage("$prefix§f[$index] $mainMark$keyMark§r$memo")
                     player.sendMessage("$prefix§8${account.publicKey}")
                 }
-                player.sendMessage("$prefix§f§l===========================================")
+                player.sendMessage("$prefix§f§l==================================")
             }
         }
     }

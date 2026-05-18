@@ -17,6 +17,8 @@ data class MiningMachine(
     var defaultMemo: String = "",
     var memo: String = "",
 
+    var shareNameOnMined: Boolean = false,
+
     var miningBlock: Block? = null,
 
     var fuelAmount: Int = 0,
@@ -35,6 +37,7 @@ data class MiningMachine(
                 memo = ""
             )
         }
+        private const val MEMO_MAX_LENGTH = 32
     }
 
     val ownerUuid: String?
@@ -144,7 +147,6 @@ data class MiningMachine(
             rewardAccountPubKey == null -> MiningMachineStatus.IDLE
             fuelAmount <= 0 -> MiningMachineStatus.IDLE
             !hasActiveGpu() -> MiningMachineStatus.IDLE
-            miningBlock == null -> MiningMachineStatus.IDLE
             else -> MiningMachineStatus.MINING
         }
     }
@@ -176,6 +178,11 @@ data class MiningMachine(
         return createBlockMode
     }
 
+    fun toggleShareNameOnMined(): Boolean {
+        shareNameOnMined = !shareNameOnMined
+        return shareNameOnMined
+    }
+
     fun setMiningBlock(block: Block?) {
         miningBlock = block
         refreshStatus()
@@ -185,10 +192,6 @@ data class MiningMachine(
         normalizeGpuSlots()
         gpuSlots.filterNotNull().forEach { it.consumeLife() }
         refreshStatus()
-    }
-
-    private companion object {
-        const val MEMO_MAX_LENGTH = 32
     }
 }
 

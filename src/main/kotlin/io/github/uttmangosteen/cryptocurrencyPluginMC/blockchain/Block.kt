@@ -13,6 +13,7 @@ data class Block(
     val memo: String = "",
     val difficulty: Long,
 
+    //Coinbase,Difficulty計算単純化のための要素
     val totalChainSupply: Long,
     val networkMiningPower: Long,
 
@@ -59,7 +60,7 @@ data class Block(
         val prevHashBytes = previousHash.hexToByteArray()
         val rootBytes = transactionsRoot.hexToByteArray()
 
-        val totalSize = 4 + prevHashBytes.size + rootBytes.size + 8 + memoBytes.size + 8 + 8
+        val totalSize = 4 + prevHashBytes.size + rootBytes.size + 8 + memoBytes.size + 8 + 8 + 8
         val buffer = ByteBuffer.allocate(totalSize)
             .putInt(height)
             .put(prevHashBytes)
@@ -68,6 +69,7 @@ data class Block(
             .put(memoBytes)
             .putLong(difficulty)
             .putLong(totalChainSupply)
+            .putLong(networkMiningPower)
 
         return buffer.array()
     }
@@ -78,6 +80,7 @@ data class Block(
         if (this.previousHash != latestBlock.hash) return false
         if (this.difficulty != expectedDifficulty) return false
         if (this.totalChainSupply < latestBlock.totalChainSupply) return false
+        if (this.networkMiningPower < 0L) return false
 
         if (this.timestamp <= latestBlock.timestamp) return false
 

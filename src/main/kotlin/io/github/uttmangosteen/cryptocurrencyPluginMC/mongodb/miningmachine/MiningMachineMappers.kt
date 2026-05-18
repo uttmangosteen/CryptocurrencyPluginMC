@@ -19,15 +19,21 @@ fun MiningMachine.toDocument(): Document {
         .append("rewardAccountPubKey", rewardAccountPubKey)
         .append("defaultMemo", defaultMemo)
         .append("memo", memo)
+        .append("shareNameOnMined", shareNameOnMined)
         .append("miningBlock", miningBlock?.toDocument())
         .append("fuelAmount", fuelAmount)
         .append("gpuSlots", gpuSlots.map { gpu -> gpu?.toDocument() })
 }
 
 fun Document.toMiningMachine(): MiningMachine {
-    val gpuDocuments = getList("gpuSlots", Document::class.java).orEmpty()
-    val gpuSlots = gpuDocuments
-        .map { document -> document?.toGpu() }
+    val gpuSlots = getList("gpuSlots", Any::class.java)
+        .orEmpty()
+        .map { value ->
+            when (value) {
+                is Document -> value.toGpu()
+                else -> null
+            }
+        }
         .toMutableList()
 
     val miningBlockDocument = get("miningBlock", Document::class.java)
@@ -45,6 +51,7 @@ fun Document.toMiningMachine(): MiningMachine {
         rewardAccountPubKey = getString("rewardAccountPubKey"),
         defaultMemo = getString("defaultMemo") ?: "",
         memo = getString("memo") ?: "",
+        shareNameOnMined = getBoolean("shareNameOnMined") ?: false,
         miningBlock = miningBlockDocument?.toBlock(),
         fuelAmount = get("fuelAmount", Number::class.java)?.toInt() ?: 0,
         gpuSlots = gpuSlots

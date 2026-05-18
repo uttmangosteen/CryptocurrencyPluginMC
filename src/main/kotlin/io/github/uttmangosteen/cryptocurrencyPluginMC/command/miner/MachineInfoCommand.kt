@@ -1,0 +1,47 @@
+package io.github.uttmangosteen.cryptocurrencyPluginMC.command.miner
+
+import io.github.uttmangosteen.cryptocurrencyPluginMC.Main
+import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.MiningMachine
+import org.bukkit.entity.Player
+
+class MachineInfoCommand(
+    private val plugin: Main
+) {
+    private val prefix = plugin.pluginConfig.prefix
+
+    fun execute(player: Player, args: Array<out String>) {
+        val machineId = args.getOrNull(1) ?: return
+        info(player, machineId)
+    }
+
+    private fun info(player: Player, machineId: String) {
+        plugin.launchAsync {
+            val machine = plugin.repositories.miningMachineRepo.get(machineId)
+
+            plugin.runSync {
+                if (machine == null || !machine.canAccess(player.uniqueId.toString())) {
+                    player.sendMessage("$prefix§c指定された採掘機が見つからないか、権限がありません")
+                    return@runSync
+                }
+
+                sendMachineInfo(player, machine)
+            }
+        }
+    }
+
+    private fun sendMachineInfo(player: Player, machine: MiningMachine) {
+        player.sendMessage("$prefix§f§l=============== §8§lMining Machine §f§l===============")
+        player.sendMessage("$prefix§7id: §f${machine.id}")
+        player.sendMessage("$prefix§7owner: §f${machine.ownerUuid ?: "unknown"}")
+        player.sendMessage("$prefix§7enabled: §f${machine.enabled}")
+        player.sendMessage("$prefix§7status: §f${machine.status}")
+        player.sendMessage("$prefix§7fuel: §f${machine.fuelAmount}")
+        player.sendMessage("$prefix§7gpuPower: §f${machine.totalGpuPower()}")
+        player.sendMessage("$prefix§7txMode: §f${machine.createBlockMode}")
+        player.sendMessage("$prefix§7shareName: §f${machine.shareNameOnMined}")
+        player.sendMessage("$prefix§7memo: §f${machine.memo.ifBlank { "§7no memo" }}")
+        player.sendMessage("$prefix§7defaultMemo: §f${machine.defaultMemo.ifBlank { "§7no memo" }}")
+        player.sendMessage("$prefix§7rewardAccount: §8${machine.rewardAccountPubKey ?: "none"}")
+        player.sendMessage("$prefix§f§l================================================")
+    }
+}

@@ -11,8 +11,6 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.ccWarning
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.toBlock
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.toDocument
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.toList
 import org.bson.Document
 import java.util.logging.Logger
 
@@ -22,7 +20,7 @@ class BlockRepository(
 ) {
     private val collection = database.getCollection<Document>("blocks")
 
-    suspend fun setup() {
+    fun setup() {
         logger.ccInfo(LogComponent.BLOCK_REPOSITORY, "setup completed")
     }
 

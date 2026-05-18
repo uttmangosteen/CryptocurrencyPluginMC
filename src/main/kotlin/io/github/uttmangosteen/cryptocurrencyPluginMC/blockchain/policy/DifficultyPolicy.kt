@@ -1,14 +1,40 @@
 package io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.policy
 
-import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.Block
+import java.math.BigInteger
 
 // ブロックチェーン開始後は触らない
+//difficulty = networkMiningPower * 20 / miningDelayTicks * 300
 object DifficultyPolicy {
     const val INITIAL_DIFFICULTY: Long = 16L
 
-    fun calculateExpectedDifficulty(latestBlock: Block): Long {
-        require(latestBlock.height >= 0) { "latestBlock height must not be negative" }
+    const val TARGET_BLOCK_MILLIS: Long = 5L * 60L * 1000L
 
-        return INITIAL_DIFFICULTY
+    const val SERVER_TICKS_PER_SECOND: Long = 20L
+
+    const val MIN_DIFFICULTY: Long = 1L
+
+    const val MAX_DIFFICULTY: Long = Long.MAX_VALUE / 4L
+
+    fun calculateExpectedDifficulty(
+        networkMiningPower: Long,
+        miningDelayTicks: Int
+    ): Long {
+        require(networkMiningPower >= 0L) { "networkMiningPower must not be negative" }
+        require(miningDelayTicks > 0) { "miningDelayTicks must be positive" }
+
+        if (networkMiningPower <= 0L) return INITIAL_DIFFICULTY
+
+        val targetSecondsNumerator = BigInteger.valueOf(TARGET_BLOCK_MILLIS)
+        val targetSecondsDenominator = BigInteger.valueOf(1000L)
+
+        val difficulty = BigInteger.valueOf(networkMiningPower)
+            .multiply(BigInteger.valueOf(SERVER_TICKS_PER_SECOND))
+            .multiply(targetSecondsNumerator)
+            .divide(targetSecondsDenominator)
+            .divide(BigInteger.valueOf(miningDelayTicks.toLong()))
+
+        return difficulty
+            .coerceIn(BigInteger.valueOf(MIN_DIFFICULTY), BigInteger.valueOf(MAX_DIFFICULTY))
+            .toLong()
     }
 }

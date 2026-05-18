@@ -6,6 +6,7 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.policy.Difficul
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.transaction.Transaction
 import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.MiningMachine
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.mempool.MempoolRepository
+import java.util.concurrent.ThreadLocalRandom
 
 class BlockFactory(
     private val plugin: Main,
@@ -15,6 +16,7 @@ class BlockFactory(
 
     suspend fun createMiningBlock(
         latestBlock: Block,
+        networkMiningPower: Long,
         machine: MiningMachine,
     ): Block? {
         val rewardAccountPubKey = machine.rewardAccountPubKey ?: return null
@@ -25,21 +27,41 @@ class BlockFactory(
         val totalFee = txEntries.fold(0L) { sum, entry ->
             Math.addExact(sum, entry.fee)
         }
-        val totalReward = CoinbasePolicy.calculateCoinbaseAmount(totalFees = totalFee)
+
+        val blockHeight = latestBlock.height + 1
+
+        val mintedReward = CoinbasePolicy.calculateMintedReward(
+            blockHeight = blockHeight,
+            currentSupply = latestBlock.totalChainSupply
+        )
+
+        val totalReward = CoinbasePolicy.calculateCoinbaseAmount(
+            blockHeight = blockHeight,
+            currentSupply = latestBlock.totalChainSupply,
+            totalFees = totalFee
+        )
+
+        val totalChainSupply = Math.addExact(latestBlock.totalChainSupply, mintedReward)
+
         val coinbaseTx = Transaction.createCoinbase(rewardAccountPubKey, totalReward)
         transactions.add(0, coinbaseTx)
 
         val previousHash = latestBlock.hash ?: return null
-        val difficulty = DifficultyPolicy.calculateExpectedDifficulty(latestBlock)
+        val difficulty = DifficultyPolicy.calculateExpectedDifficulty(
+            networkMiningPower = networkMiningPower,
+            miningDelayTicks = plugin.pluginConfig.miningMachineMiningDelayTicks
+        )
 
         return Block(
-            height = latestBlock.height + 1,
+            height = blockHeight,
             previousHash = previousHash,
             transactions = transactions,
             timestamp = System.currentTimeMillis(),
             memo = machine.memo,
             difficulty = difficulty,
-            nonce = 0L,
+            totalChainSupply = totalChainSupply,
+            networkMiningPower = networkMiningPower,
+            nonce = ThreadLocalRandom.current().nextLong(),
             hash = null
         )
     }

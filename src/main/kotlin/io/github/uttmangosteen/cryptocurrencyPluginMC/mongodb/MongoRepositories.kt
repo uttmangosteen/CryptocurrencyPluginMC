@@ -5,12 +5,14 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.blocks.
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.mempool.MempoolRepository
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.transactionhistory.TransactionHistoryRepository
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.utxo.UtxoRepository
+import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.miningmachine.MiningMachineRepository
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.wallet.WalletRepository
 import java.util.logging.Logger
 
 class MongoRepositories(
     provider: MongoDatabaseProvider,
-    logger: Logger
+    logger: Logger,
+    miningDelayTicks: Int
 ) {
     val walletRepo = WalletRepository(provider.database, logger)
 
@@ -19,12 +21,15 @@ class MongoRepositories(
     val historyRepo = TransactionHistoryRepository(provider.database, logger)
     val mempoolRepo = MempoolRepository(provider.database, logger)
 
+    val miningMachineRepo = MiningMachineRepository(provider.database, logger)
+
     val blockchainManager = BlockchainManager(
         provider = provider,
         blockRepo = blockRepo,
         utxoRepo = utxoRepo,
         historyRepo = historyRepo,
         mempoolRepo = mempoolRepo,
+        miningDelayTicks = miningDelayTicks,
         logger = logger
     )
 
@@ -34,5 +39,6 @@ class MongoRepositories(
         blockRepo.setup()
         historyRepo.setup()
         mempoolRepo.setup()
+        miningMachineRepo.setup()
     }
 }

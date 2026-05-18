@@ -37,7 +37,11 @@ class Main : JavaPlugin() {
             pluginConfig.mongodbConnectionString,
             pluginConfig.mongodbDatabase
         )
-        repositories = MongoRepositories(mongoDatabaseProvider, logger)
+        repositories = MongoRepositories(
+            provider = mongoDatabaseProvider,
+            logger = logger,
+            miningDelayTicks = pluginConfig.miningMachineMiningDelayTicks
+        )
 
         pluginScope.launch {
             try {

@@ -21,6 +21,7 @@ class BlockchainManager(
     private val utxoRepo: UtxoRepository,
     private val historyRepo: TransactionHistoryRepository,
     private val mempoolRepo: MempoolRepository,
+    private val miningDelayTicks: Int,
     private val logger: Logger
 ) {
     // blockchain積み上げ、使ったutxo変換、確定分history記述、確定txをmempoolから削除
@@ -30,7 +31,10 @@ class BlockchainManager(
             session.startTransaction()
 
             val latestBlock = blockRepo.getLatestBlock(session) ?: return false
-            val expectedDifficulty = DifficultyPolicy.calculateExpectedDifficulty(latestBlock)
+            val expectedDifficulty = DifficultyPolicy.calculateExpectedDifficulty(
+                networkMiningPower = block.networkMiningPower,
+                miningDelayTicks = miningDelayTicks
+            )
 
             if (!block.isValid(latestBlock, expectedDifficulty)) return false
 
@@ -66,9 +70,21 @@ class BlockchainManager(
 
             if (Signer.normalizePublicKey(coinbaseOutput.receiverPubKey) == null) return false
 
-            val expectedCoinbaseAmount = CoinbasePolicy.calculateCoinbaseAmount(totalFees = totalFees)
+            val mintedReward = CoinbasePolicy.calculateMintedReward(
+                blockHeight = block.height,
+                currentSupply = latestBlock.totalChainSupply
+            )
+
+            val expectedCoinbaseAmount = CoinbasePolicy.calculateCoinbaseAmount(
+                blockHeight = block.height,
+                currentSupply = latestBlock.totalChainSupply,
+                totalFees = totalFees
+            )
 
             if (coinbaseOutput.amount != expectedCoinbaseAmount) return false
+
+            val expectedTotalChainSupply = Math.addExact(latestBlock.totalChainSupply, mintedReward)
+            if (block.totalChainSupply != expectedTotalChainSupply) return false
 
             val blockSaved = blockRepo.saveBlock(session, block)
             if (!blockSaved) return false
@@ -91,9 +107,12 @@ class BlockchainManager(
                 "txCount" to block.transactions.size,
                 "totalFees" to totalFees,
                 "coinbaseAmount" to coinbaseOutput.amount,
+                "mintedReward" to mintedReward,
+                "totalChainSupply" to block.totalChainSupply,
+                "networkMiningPower" to block.networkMiningPower,
                 "difficulty" to block.difficulty
-            )
-            true
+                )
+                true
         } catch (e: Exception) {
             session.abortTransaction()
 

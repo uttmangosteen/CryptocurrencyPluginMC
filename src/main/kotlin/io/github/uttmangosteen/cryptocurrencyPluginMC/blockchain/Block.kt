@@ -12,6 +12,10 @@ data class Block(
     val timestamp: Long,
     val memo: String = "",
     val difficulty: Long,
+
+    val totalChainSupply: Long,
+    val networkMiningPower: Long,
+
     var nonce: Long = 0,
     var hash: String? = null
 ) {
@@ -55,7 +59,7 @@ data class Block(
         val prevHashBytes = previousHash.hexToByteArray()
         val rootBytes = transactionsRoot.hexToByteArray()
 
-        val totalSize = 4 + prevHashBytes.size + rootBytes.size + 8 + memoBytes.size + 8
+        val totalSize = 4 + prevHashBytes.size + rootBytes.size + 8 + memoBytes.size + 8 + 8
         val buffer = ByteBuffer.allocate(totalSize)
             .putInt(height)
             .put(prevHashBytes)
@@ -63,6 +67,7 @@ data class Block(
             .putLong(timestamp)
             .put(memoBytes)
             .putLong(difficulty)
+            .putLong(totalChainSupply)
 
         return buffer.array()
     }
@@ -72,6 +77,7 @@ data class Block(
         if (this.height != latestBlock.height + 1) return false
         if (this.previousHash != latestBlock.hash) return false
         if (this.difficulty != expectedDifficulty) return false
+        if (this.totalChainSupply < latestBlock.totalChainSupply) return false
 
         if (this.timestamp <= latestBlock.timestamp) return false
 

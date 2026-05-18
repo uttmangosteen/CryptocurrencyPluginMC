@@ -17,6 +17,8 @@ fun Block.toDocument(): Document {
         append("timestamp", timestamp)
         append("memo", memo)
         append("difficulty", difficulty)
+        append("totalChainSupply", totalChainSupply)
+        append("networkMiningPower", networkMiningPower)
         append("nonce", nonce)
         append("hash", hash)
     }
@@ -31,6 +33,8 @@ fun Document.toBlock(): Block {
         timestamp = getLong("timestamp"),
         memo = getString("memo") ?: "",
         difficulty = getLong("difficulty"),
+        totalChainSupply = get("totalChainSupply", Number::class.java)?.toLong() ?: 0L,
+        networkMiningPower = get("networkMiningPower", Number::class.java)?.toLong() ?: 0L,
         nonce = getLong("nonce"),
         hash = getString("hash")
     )

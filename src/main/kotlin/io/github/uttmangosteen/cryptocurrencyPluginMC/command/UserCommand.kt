@@ -3,6 +3,7 @@ package io.github.uttmangosteen.cryptocurrencyPluginMC.command
 import io.github.uttmangosteen.cryptocurrencyPluginMC.Main
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.user.AccountCommand
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.user.BalanceCommand
+import io.github.uttmangosteen.cryptocurrencyPluginMC.command.user.HistoryCommand
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.user.SendCommand
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
@@ -15,6 +16,7 @@ class UserCommand(
 ) : CommandExecutor, TabCompleter {
     private val accountCommand = AccountCommand(plugin)
     private val balanceCommand = BalanceCommand(plugin)
+    private val historyCommand = HistoryCommand(plugin)
     private val sendCommand = SendCommand(plugin)
 
     override fun onCommand(
@@ -31,6 +33,7 @@ class UserCommand(
         when (args[0]) {
             "account" -> accountCommand.execute(sender, args)
             "balance" -> balanceCommand.execute(sender, args)
+            "history" -> historyCommand.execute(sender, args)
             "send" -> sendCommand.execute(sender, args)
             else -> return true
         }
@@ -59,6 +62,7 @@ class UserCommand(
             else -> when (args[0].lowercase()) {
                 "account" -> accountCommand.getTabCompletions(args)
                 "balance" -> balanceCommand.getTabCompletions(args)
+                "history" -> historyCommand.getTabCompletions(args)
                 "send" -> sendCommand.getTabCompletions(args)
 
                 else -> emptyList()

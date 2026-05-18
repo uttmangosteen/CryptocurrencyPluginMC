@@ -24,7 +24,7 @@ commands:
       
       §f/cc balance [index] §7- 口座の状況を確認
   
-      §c§l× §f/cc history [index] [page] §7- 口座の取引履歴を確認
+      §f/cc history [index] [page] §7- 口座の取引履歴を確認
   
       §f/cc send byName <amount> <name> §7- メイン口座から<name>の今のメイン口座への送金を一つ作成
       §f/cc send byPubKey <amount> [pubKey] §7- [pubKey]省略時、手に持った公開鍵アイテムへメイン口座からの送金を作成　[pubKey]を平文で指定もできるが、間違えた場合二度とお金は取り出せない

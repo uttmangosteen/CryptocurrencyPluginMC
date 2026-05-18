@@ -1,12 +1,15 @@
 package io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.repository
 
+import com.mongodb.client.model.Filters
 import com.mongodb.client.model.Indexes
+import com.mongodb.client.model.Sorts
 import com.mongodb.kotlin.client.coroutine.ClientSession
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import io.github.uttmangosteen.cryptocurrencyPluginMC.LogComponent
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.transaction.Transaction
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccInfo
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccWarning
+import kotlinx.coroutines.flow.toList
 import org.bson.Document
 import java.util.logging.Logger
 
@@ -41,6 +44,7 @@ class TransactionHistoryRepository(
                         append("height", height)
                         append("blockTimestamp", blockTimestamp)
                         append("txTimestamp", tx.timestamp)
+                        append("memo", tx.memo)
                     }
                 }
             }
@@ -57,6 +61,17 @@ class TransactionHistoryRepository(
             )
             return false
         }
+    }
+
+    suspend fun getHistory(pubKey: String): List<Document> {
+        return collection.find(
+            Filters.or(
+                Filters.eq("senderPubKey", pubKey),
+                Filters.eq("receiverPubKey", pubKey)
+            )
+        )
+            .sort(Sorts.descending("blockTimestamp", "txTimestamp"))
+            .toList()
     }
 
     private fun toHistoryId(txHash: String, outputIndex: Int): String {

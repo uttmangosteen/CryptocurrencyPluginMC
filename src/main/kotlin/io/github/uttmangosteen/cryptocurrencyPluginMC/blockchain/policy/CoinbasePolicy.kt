@@ -52,9 +52,9 @@ object CoinbasePolicy {
         if (blockHeight == 0) return 0L
         if (HALVING_INTERVAL <= 0) return BASE_REWARD
 
-        val halvings = (blockHeight - 1) / HALVING_INTERVAL
-        if (halvings >= Long.SIZE_BITS - 1) return 0L
+        val halving = (blockHeight - 1) / HALVING_INTERVAL
+        if (halving >= Long.SIZE_BITS - 1) return 0L
 
-        return BASE_REWARD shr halvings
+        return BASE_REWARD shr halving
     }
 }

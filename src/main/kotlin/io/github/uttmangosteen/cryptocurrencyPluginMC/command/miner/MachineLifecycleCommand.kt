@@ -37,7 +37,6 @@ class MachineLifecycleCommand(
                 if (machine != null) {
                     player.sendMessage("$prefix§a採掘機を作成しました")
                     player.sendMessage("$prefix§7machineId: §f${machine.id}")
-                    player.sendMessage("$prefix§7報酬口座は /ccmcn block setRewardPubKey ${machine.id} [index] で設定してください")
                 } else {
                     player.sendMessage("$prefix§c採掘機の作成に失敗しました")
                 }

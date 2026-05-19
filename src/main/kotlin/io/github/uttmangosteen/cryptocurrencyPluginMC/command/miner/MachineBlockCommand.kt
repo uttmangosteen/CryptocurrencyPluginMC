@@ -77,7 +77,7 @@ class MachineBlockCommand(
                 if (updated) {
                     player.sendMessage("$prefix§aデフォルトメモを設定しました")
                 } else {
-                    player.sendMessage("$prefix§cデフォルトメモ設定に失敗しました")
+                    player.sendMessage("$prefix§cデフォルトメモの設定に失敗しました")
                 }
             }
         }
@@ -116,7 +116,7 @@ class MachineBlockCommand(
 
             plugin.runSync {
                 if (updated) {
-                    player.sendMessage("$prefix§aTx収集モードを切り替えました: §f$modeName")
+                    player.sendMessage("$prefix§aTx収集モード: §f$modeName")
                 } else {
                     player.sendMessage("$prefix§cTx収集モード切り替えに失敗しました")
                 }
@@ -124,6 +124,7 @@ class MachineBlockCommand(
         }
     }
 
+    //Block nullにすると、次のmineで勝手にBlock作成
     private fun recreateBlock(player: Player, machineId: String) {
         plugin.launchAsync {
             val updated = plugin.repositories.miningMachineRepo.updateMachine(

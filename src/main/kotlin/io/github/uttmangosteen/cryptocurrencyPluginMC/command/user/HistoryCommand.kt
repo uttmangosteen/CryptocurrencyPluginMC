@@ -55,28 +55,39 @@ class HistoryCommand(
                             val height = firstOutput.getInteger("height")
                             val memo = firstOutput.getString("memo") ?: "no memo"
 
-                            sender.sendMessage("$prefix§7pubkey: $targetPubKey")
-                            sender.sendMessage("$prefix§7height: $height")
-                            sender.sendMessage("$prefix§7memo: $memo")
+                            val displayLines = mutableListOf<String>()
 
                             outputs.forEach { output ->
                                 val amount = output.getLong("amount")
                                 val receiver = output.getString("receiverPubKey")
-                                when (val senderPubKey = output.getString("senderPubKey")) {
-                                    null -> {
-                                        sender.sendMessage("$prefix§6coinbase §7-> §a${formatCoin(amount)}")
+                                val senderPubKey = output.getString("senderPubKey")
+
+                                when {
+                                    senderPubKey == null -> {
+                                        if (receiver == targetPubKey) {
+                                            displayLines.add("§a+${formatCoin(amount)} §7(coinbase)")
+                                        }
                                     }
 
-                                    targetPubKey -> {
-                                        sender.sendMessage("$prefix§a${formatCoin(amount)} §7-> §8$receiver")
+                                    senderPubKey == targetPubKey -> {
+                                        if (receiver != targetPubKey) {
+                                            displayLines.add("§c-${formatCoin(amount)} §7-> §8$receiver")
+                                        }
                                     }
 
-                                    else -> {
-                                        sender.sendMessage("$prefix§8${senderPubKey} §7-> §a${formatCoin(amount)}")
+                                    receiver == targetPubKey -> {
+                                        displayLines.add("§a+${formatCoin(amount)} §7<- §8$senderPubKey")
                                     }
                                 }
                             }
-                            sender.sendMessage("§f§l============================================")
+
+                            if (displayLines.isNotEmpty()) {
+                                sender.sendMessage("$prefix§7height: §f$height §8| §7memo: §f$memo")
+                                displayLines.forEach { line ->
+                                    sender.sendMessage("$prefix$line")
+                                }
+                                sender.sendMessage("§f§l============================================")
+                            }
                         }
                     }
                 }

@@ -13,5 +13,5 @@ blockchain:
 
 mining-machine:
   delay-ticks: 20
-  #このtickは↑による(↑が20(1秒)なら↓60で1分毎保存)
+  #このtickは↑による(↑が20(1秒)なら↓を60で1分毎保存)
   save-interval-mining-ticks: 60

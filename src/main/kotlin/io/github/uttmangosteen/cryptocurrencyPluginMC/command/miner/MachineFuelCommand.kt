@@ -9,6 +9,8 @@ class MachineFuelCommand(
 ) {
     private val prefix = plugin.pluginConfig.prefix
 
+    //TODO:燃料システムの再考
+
     fun execute(player: Player, args: Array<out String>) {
         val machineId = args.getOrNull(1) ?: return
         fuel(player, machineId)
@@ -17,14 +19,12 @@ class MachineFuelCommand(
     private fun fuel(player: Player, machineId: String) {
         val item = player.inventory.itemInMainHand
         val fuelPerItem = when (item.type) {
-            Material.COAL -> 100
-            Material.CHARCOAL -> 100
-            Material.COAL_BLOCK -> 900
+            Material.COBBLESTONE -> 1
             else -> 0
         }
 
         if (fuelPerItem <= 0 || item.amount <= 0) {
-            player.sendMessage("$prefix§c石炭、木炭、石炭ブロックを手に持ってください")
+            player.sendMessage("$prefix§c丸石を手に持ってください")
             return
         }
 

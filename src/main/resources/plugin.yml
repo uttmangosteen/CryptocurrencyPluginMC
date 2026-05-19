@@ -51,7 +51,7 @@ commands:
       §f/ccmcn toggle <machineId> §7- 採掘機の電源切り替え
       §f/ccmcn shareName <machineId> §7- 採掘成功時に、名前を共有するか切り替え
   
-      §f/ccmcn fuel <machineId> §7- 手持ちの石炭/木炭/石炭ブロックを採掘機の燃料にする
+      §f/ccmcn fuel <machineId> §7- 手持ちの丸石を採掘機の燃料にする
       
       §f/ccmcn block setRewardPubKey <machineId> [index] §7- 自分のwalletの公開鍵を設定
       §f/ccmcn block setDefaultMemo <machineId> [memo] §7- 採掘ブロックのメモを設定しなかった場合のメモ設定

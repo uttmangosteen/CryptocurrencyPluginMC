@@ -17,6 +17,10 @@ class MiningMachineService(
     private var runningJob: Job? = null
     private var miningTickCount: Int = 0
 
+    private val activeBlocksCache = mutableMapOf<String, Block?>()
+    private val pendingFuelCache = mutableMapOf<String, Int>()
+    private val pendingGpuCache = mutableMapOf<String, Int>()
+
     private val saveIntervalMiningTicks = plugin.pluginConfig.miningMachineSaveIntervalMiningTicks
         .coerceAtLeast(1)
 
@@ -52,7 +56,13 @@ class MiningMachineService(
 
     private suspend fun tick() {
         val machines = plugin.repositories.miningMachineRepo.getRunnableMachines()
-        if (machines.isEmpty()) return
+
+        if (machines.isEmpty()) {
+            activeBlocksCache.clear()
+            pendingFuelCache.clear()
+            pendingGpuCache.clear()
+            return
+        }
 
         val networkMiningPower = plugin.repositories.miningMachineRepo.calculateNetworkMiningPower()
         if (networkMiningPower <= 0L) return
@@ -61,25 +71,55 @@ class MiningMachineService(
         val shouldSaveMiningState = miningTickCount >= saveIntervalMiningTicks
         if (shouldSaveMiningState) miningTickCount = 0
 
+        val currentIds = machines.map { it.id }.toSet()
+        activeBlocksCache.keys.retainAll(currentIds)
+        pendingFuelCache.keys.retainAll(currentIds)
+        pendingGpuCache.keys.retainAll(currentIds)
+
         for (machine in machines) {
-            processMachine(
+            val id = machine.id
+            if (activeBlocksCache.containsKey(id)) {
+                val cachedBlock = activeBlocksCache[id]
+                // 新しいブロックに切り替わっていない場合のみ引き継ぐ
+                if (cachedBlock == null || cachedBlock.height == machine.miningBlock?.height) {
+                    machine.replaceMiningBlock(cachedBlock)
+                }
+            }
+            val pendingFuel = pendingFuelCache.getOrDefault(id, 0)
+            val pendingGpu = pendingGpuCache.getOrDefault(id, 0)
+
+            val wasSaved = processMachine(
                 machine = machine,
                 networkMiningPower = networkMiningPower,
-                shouldSaveMiningState = shouldSaveMiningState
+                shouldSaveMiningState = shouldSaveMiningState,
+                pendingFuel = pendingFuel,
+                pendingGpu = pendingGpu
             )
+
+            if (wasSaved) {
+                pendingFuelCache[id] = 0
+                pendingGpuCache[id] = 0
+                activeBlocksCache[id] = machine.miningBlock
+            } else {
+                pendingFuelCache[id] = pendingFuel + 1
+                pendingGpuCache[id] = pendingGpu + 1
+                activeBlocksCache[id] = machine.miningBlock
+            }
         }
     }
 
     private suspend fun processMachine(
         machine: MiningMachine,
         networkMiningPower: Long,
-        shouldSaveMiningState: Boolean
-    ) {
+        shouldSaveMiningState: Boolean,
+        pendingFuel: Int,
+        pendingGpu: Int
+    ): Boolean {
         try {
             machine.refreshStatus()
             if (machine.status != MiningMachineStatus.MINING) {
                 plugin.repositories.miningMachineRepo.save(machine)
-                return
+                return true
             }
 
             val latestBlock = plugin.repositories.blockRepo.getLatestBlock()
@@ -92,7 +132,7 @@ class MiningMachineService(
                     IllegalStateException("latest block not found"),
                     "machineId" to machine.id
                 )
-                return
+                return true
             }
 
             val miningBlock = machine.miningBlock
@@ -102,7 +142,7 @@ class MiningMachineService(
             if (miningBlock == null) {
                 machine.refreshStatus()
                 plugin.repositories.miningMachineRepo.save(machine)
-                return
+                return true
             }
 
             machine.replaceMiningBlock(miningBlock)
@@ -110,7 +150,11 @@ class MiningMachineService(
             val mined = tryMine(machine, miningBlock)
 
             machine.consumeGpuLife()
-            machine.consumeFuel(1)
+            machine.consumeFuel(pendingFuel + 1)
+
+            repeat(pendingGpu + 1) {
+                machine.consumeGpuLife()
+            }
 
             if (mined) {
                 val accepted = plugin.repositories.blockchainManager.acceptNewBlock(miningBlock)
@@ -140,13 +184,15 @@ class MiningMachineService(
 
                 machine.refreshStatus()
                 plugin.repositories.miningMachineRepo.save(machine)
-                return
+                return true
             }
 
             machine.refreshStatus()
             if (shouldSaveMiningState) {
                 plugin.repositories.miningMachineRepo.save(machine)
+                return true
             }
+            return false
         } catch (e: Exception) {
             plugin.logger.ccWarning(
                 LogComponent.MINING_MACHINE_REPOSITORY,
@@ -154,6 +200,7 @@ class MiningMachineService(
                 e,
                 "machineId" to machine.id
             )
+            return false
         }
     }
 
@@ -195,7 +242,8 @@ class MiningMachineService(
             } else {
                 "§7§k00000000"
             }
-            val message = "${plugin.pluginConfig.prefix}§a$minerName §aがブロックを採掘しました §7height=§f${block.height}"
+            val message =
+                "${plugin.pluginConfig.prefix}§a$minerName §aがブロックを採掘しました §7height=§f${block.height}"
             for (player in Bukkit.getOnlinePlayers()) {
                 player.sendMessage(message)
             }

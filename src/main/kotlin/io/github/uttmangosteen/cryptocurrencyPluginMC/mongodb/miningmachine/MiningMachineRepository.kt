@@ -2,6 +2,7 @@ package io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.miningmachine
 
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.Indexes
+import com.mongodb.client.model.ReplaceOneModel
 import com.mongodb.client.model.ReplaceOptions
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import io.github.uttmangosteen.cryptocurrencyPluginMC.LogComponent
@@ -58,6 +59,35 @@ class MiningMachineRepository(
                 "failed to save mining machine",
                 e,
                 "machineId" to machine.id
+            )
+            false
+        }
+    }
+
+    suspend fun saveAll(machines: List<MiningMachine>): Boolean {
+        if (machines.isEmpty()) return true
+
+        return try {
+            val requests = machines.map { machine ->
+                machine.normalizeGpuSlots()
+                machine.refreshStatus()
+
+                ReplaceOneModel(
+                    Filters.eq("_id", machine.id),
+                    machine.toDocument(),
+                    ReplaceOptions().upsert(true)
+                )
+            }
+
+            // DBに1回の通信で全部まとめて書き込む（圧倒的に速い）
+            val result = collection.bulkWrite(requests)
+            result.wasAcknowledged()
+        } catch (e: Exception) {
+            logger.ccWarning(
+                LogComponent.MINING_MACHINE_REPOSITORY,
+                "failed to bulk save mining machines",
+                e,
+                "machineCount" to machines.size
             )
             false
         }

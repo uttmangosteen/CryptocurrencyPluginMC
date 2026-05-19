@@ -9,6 +9,8 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.ccWarning
 import io.github.uttmangosteen.cryptocurrencyPluginMC.wallet.Account
 import io.github.uttmangosteen.cryptocurrencyPluginMC.wallet.Wallet
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.toList
 import org.bson.Document
 import java.util.logging.Logger
 
@@ -34,6 +36,22 @@ class WalletRepository(
     suspend fun getWallet(ownerUUID: String): Wallet? {
         // Walletを一度も作っていないプレイヤーの場合はnull
         return get(ownerUUID)
+    }
+
+    suspend fun getWallets(ownerUUIDs: List<String>): List<Wallet> {
+        if (ownerUUIDs.isEmpty()) return emptyList()
+        return try {
+            collection.find(Filters.`in`("_id", ownerUUIDs))
+                .map { it.toWallet() }
+                .toList()
+        } catch (e: Exception) {
+            logger.ccWarning(
+                LogComponent.WALLET_REPOSITORY,
+                "failed to get multiple wallets",
+                e
+            )
+            emptyList()
+        }
     }
 
     suspend fun createAccount(ownerUUID: String): Boolean? {

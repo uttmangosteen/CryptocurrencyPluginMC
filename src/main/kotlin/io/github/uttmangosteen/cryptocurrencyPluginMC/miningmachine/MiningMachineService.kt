@@ -4,6 +4,7 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.LogComponent
 import io.github.uttmangosteen.cryptocurrencyPluginMC.Main
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.Block
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.BlockFactory
+import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.policy.TextFormat.formatCoin
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccInfo
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccWarning
 import kotlinx.coroutines.Job
@@ -19,7 +20,6 @@ class MiningMachineService(
 
     private val activeBlocksCache = mutableMapOf<String, Block?>()
     private val pendingFuelCache = mutableMapOf<String, Int>()
-    private val pendingGpuCache = mutableMapOf<String, Int>()
 
     private val saveIntervalMiningTicks = plugin.pluginConfig.miningMachineSaveIntervalMiningTicks
         .coerceAtLeast(1)
@@ -60,7 +60,6 @@ class MiningMachineService(
         if (machines.isEmpty()) {
             activeBlocksCache.clear()
             pendingFuelCache.clear()
-            pendingGpuCache.clear()
             return
         }
 
@@ -74,37 +73,37 @@ class MiningMachineService(
         val currentIds = machines.map { it.id }.toSet()
         activeBlocksCache.keys.retainAll(currentIds)
         pendingFuelCache.keys.retainAll(currentIds)
-        pendingGpuCache.keys.retainAll(currentIds)
+
+        val machinesToSave = mutableListOf<MiningMachine>()
 
         for (machine in machines) {
             val id = machine.id
             if (activeBlocksCache.containsKey(id)) {
                 val cachedBlock = activeBlocksCache[id]
-                // 新しいブロックに切り替わっていない場合のみ引き継ぐ
                 if (cachedBlock == null || cachedBlock.height == machine.miningBlock?.height) {
                     machine.replaceMiningBlock(cachedBlock)
                 }
             }
             val pendingFuel = pendingFuelCache.getOrDefault(id, 0)
-            val pendingGpu = pendingGpuCache.getOrDefault(id, 0)
 
-            val wasSaved = processMachine(
+            val needsSave = processMachine(
                 machine = machine,
                 networkMiningPower = networkMiningPower,
                 shouldSaveMiningState = shouldSaveMiningState,
                 pendingFuel = pendingFuel,
-                pendingGpu = pendingGpu
             )
 
-            if (wasSaved) {
+            if (needsSave) {
+                machinesToSave.add(machine)
                 pendingFuelCache[id] = 0
-                pendingGpuCache[id] = 0
                 activeBlocksCache[id] = machine.miningBlock
             } else {
                 pendingFuelCache[id] = pendingFuel + 1
-                pendingGpuCache[id] = pendingGpu + 1
                 activeBlocksCache[id] = machine.miningBlock
             }
+        }
+        if (machinesToSave.isNotEmpty()) {
+            plugin.repositories.miningMachineRepo.saveAll(machinesToSave)
         }
     }
 
@@ -113,19 +112,14 @@ class MiningMachineService(
         networkMiningPower: Long,
         shouldSaveMiningState: Boolean,
         pendingFuel: Int,
-        pendingGpu: Int
     ): Boolean {
         try {
             machine.refreshStatus()
-            if (machine.status != MiningMachineStatus.MINING) {
-                plugin.repositories.miningMachineRepo.save(machine)
-                return true
-            }
+            if (machine.status != MiningMachineStatus.MINING) return true
 
             val latestBlock = plugin.repositories.blockRepo.getLatestBlock()
             if (latestBlock == null) {
                 machine.halt()
-                plugin.repositories.miningMachineRepo.save(machine)
                 plugin.logger.ccWarning(
                     LogComponent.MINING_MACHINE_REPOSITORY,
                     "mining halted because latest block was not found",
@@ -141,18 +135,15 @@ class MiningMachineService(
 
             if (miningBlock == null) {
                 machine.refreshStatus()
-                plugin.repositories.miningMachineRepo.save(machine)
                 return true
             }
 
             machine.replaceMiningBlock(miningBlock)
-
             val mined = tryMine(machine, miningBlock)
 
-            machine.consumeGpuLife()
-            machine.consumeFuel(pendingFuel + 1)
-
-            repeat(pendingGpu + 1) {
+            val consumeAmount = pendingFuel + 1
+            machine.consumeFuel(consumeAmount)
+            repeat(consumeAmount) {
                 machine.consumeGpuLife()
             }
 
@@ -183,16 +174,11 @@ class MiningMachineService(
                 }
 
                 machine.refreshStatus()
-                plugin.repositories.miningMachineRepo.save(machine)
                 return true
             }
 
             machine.refreshStatus()
-            if (shouldSaveMiningState) {
-                plugin.repositories.miningMachineRepo.save(machine)
-                return true
-            }
-            return false
+            return shouldSaveMiningState
         } catch (e: Exception) {
             plugin.logger.ccWarning(
                 LogComponent.MINING_MACHINE_REPOSITORY,
@@ -233,6 +219,7 @@ class MiningMachineService(
     }
 
     private fun notifyMined(machine: MiningMachine, block: Block) {
+        val prefix = plugin.pluginConfig.prefix
         plugin.runSync {
             val ownerUuid = machine.ownerUuid ?: return@runSync
             val owner = Bukkit.getPlayer(java.util.UUID.fromString(ownerUuid)) ?: return@runSync
@@ -246,6 +233,63 @@ class MiningMachineService(
                 "${plugin.pluginConfig.prefix}§a$minerName §aがブロックを採掘しました §7height=§f${block.height}"
             for (player in Bukkit.getOnlinePlayers()) {
                 player.sendMessage(message)
+            }
+        }
+        plugin.launchAsync {
+            val onlinePlayers = Bukkit.getOnlinePlayers().toList()
+            if (onlinePlayers.isEmpty()) return@launchAsync
+
+            val onlineUuids = onlinePlayers.map { it.uniqueId.toString() }
+            val wallets = plugin.repositories.walletRepo.getWallets(onlineUuids)
+            val walletMap = wallets.associateBy { it.ownerUUID }
+
+            for (player in onlinePlayers) {
+                val wallet = walletMap[player.uniqueId.toString()] ?: continue
+
+                val userPubKeys = wallet.accounts.map { it.publicKey }.toSet()
+                if (userPubKeys.isEmpty()) continue
+
+                val displayLines = mutableListOf<String>()
+                block.transactions.forEach { tx ->
+                    val senderPubKey = tx.inputs.firstOrNull()?.publicKey
+                    val isSender = senderPubKey in userPubKeys
+                    var isRelated = false
+                    val txLines = mutableListOf<String>()
+                    tx.outputs.forEach { output ->
+                        val receiver = output.receiverPubKey
+                        val amount = output.amount
+                        val isReceiver = receiver in userPubKeys
+
+                        when {
+                            senderPubKey == null && isReceiver -> {
+                                txLines.add("§a+${formatCoin(amount)} §7(coinbase)")
+                                isRelated = true
+                            }
+                            isSender && !isReceiver -> {
+                                txLines.add("§c-${formatCoin(amount)} §7-> §8$receiver")
+                                isRelated = true
+                            }
+                            isReceiver && !isSender -> {
+                                txLines.add("§a+${formatCoin(amount)} §7<- §8$senderPubKey")
+                                isRelated = true
+                            }
+                        }
+                    }
+                    if (isRelated) {
+                        val memo = tx.memo.takeIf { it.isNotBlank() } ?: "no memo"
+                        displayLines.add("§7memo: §f$memo")
+                        displayLines.addAll(txLines)
+                    }
+                }
+                if (displayLines.isNotEmpty()) {
+                    plugin.runSync {
+                        player.sendMessage("$prefix§f§l========== §8§lTransaction Confirmed! §f§l==========")
+                        displayLines.forEach { line ->
+                            player.sendMessage("$prefix$line")
+                        }
+                        player.sendMessage("$prefix§f§l============================================")
+                    }
+                }
             }
         }
     }

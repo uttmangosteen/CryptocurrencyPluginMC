@@ -47,6 +47,7 @@ class HistoryCommand(
                         val pagedGroups = groupedHistories
                             .chunked(8)
                             .getOrElse(page.coerceAtLeast(1) - 1) { emptyList() }
+                            .reversed()
 
                         sender.sendMessage("$prefix§f§l========== §8§lTransaction history [$page] §f§l==========")
 
@@ -86,9 +87,10 @@ class HistoryCommand(
                                 displayLines.forEach { line ->
                                     sender.sendMessage("$prefix$line")
                                 }
-                                sender.sendMessage("§f§l============================================")
                             }
                         }
+
+                        sender.sendMessage("$prefix§f§l============================================")
                     }
                 }
             }

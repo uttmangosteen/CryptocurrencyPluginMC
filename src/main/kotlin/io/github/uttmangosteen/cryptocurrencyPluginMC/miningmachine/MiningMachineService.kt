@@ -283,11 +283,11 @@ class MiningMachineService(
                 }
                 if (displayLines.isNotEmpty()) {
                     plugin.runSync {
-                        player.sendMessage("$prefix§f§l========== §8§lTransaction Confirmed! §f§l==========")
+                        player.sendMessage("$prefix§f§l========== §8§lTransaction Confirmed §f§l==========")
                         displayLines.forEach { line ->
                             player.sendMessage("$prefix$line")
                         }
-                        player.sendMessage("$prefix§f§l============================================")
+                        player.sendMessage("$prefix§f§l===========================================")
                     }
                 }
             }

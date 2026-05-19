@@ -15,6 +15,15 @@ object TextFormat {
         )
     }
 
+    fun formatKey(key: String, prefixLen: Int = 6, suffixLen: Int = 6): String {
+        if (key.length <= prefixLen + suffixLen + 3) {
+            return key
+        }
+        val prefix = key.take(prefixLen)
+        val suffix = key.takeLast(suffixLen)
+        return "$prefix...$suffix"
+    }
+
     fun parseCoin(value: String?): Long? {
         if (value == null) return null
 

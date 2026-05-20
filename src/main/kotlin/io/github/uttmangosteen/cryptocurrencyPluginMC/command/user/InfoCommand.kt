@@ -28,12 +28,12 @@ class InfoCommand(private val plugin: Main) {
             plugin.runSync {
                 player.sendMessage("$prefix§f§l========== §8§lBlockchain Status §f§l==========")
                 if (latestBlock != null) {
-                    player.sendMessage("$prefix §7height: §e${latestBlock.height}")
-                    player.sendMessage("$prefix §7latest hash: §a${latestBlock.hash ?: "unknown"}")
+                    player.sendMessage("$prefix§7height: §e${latestBlock.height}")
+                    player.sendMessage("$prefix§7latest hash: §a${latestBlock.hash ?: "unknown"}")
                 } else {
-                    player.sendMessage("$prefix §7blockchain: §c not started")
+                    player.sendMessage("$prefix§7blockchain: §c not started")
                 }
-                player.sendMessage("$prefix §7mempool size: §6${mempoolSize} TXs")
+                player.sendMessage("$prefix§7mempool size: §6${mempoolSize} TXs")
                 player.sendMessage("$prefix§f§l=======================================")
             }
         }
@@ -41,7 +41,6 @@ class InfoCommand(private val plugin: Main) {
 
     private fun showMempoolInfo(player: Player, args: Array<out String>) {
         val index = args.getOrNull(2)?.toIntOrNull() ?: 0
-        val page = args.getOrNull(3)?.toIntOrNull() ?: 1
 
         plugin.launchAsync {
             val wallet = plugin.repositories.walletRepo.getWallet(player.uniqueId.toString())
@@ -76,14 +75,9 @@ class InfoCommand(private val plugin: Main) {
                     return@runSync
                 }
 
-                val txPerPage = 8
-                val pagedEntries = pendingEntries
-                    .chunked(txPerPage)
-                    .getOrElse(page.coerceAtLeast(1) - 1) { emptyList() }
+                player.sendMessage("$prefix§f§l========== §8§lPending Transaction §f§l==========")
 
-                player.sendMessage("$prefix§f§l========== §8§lPending Transaction [$page] §f§l==========")
-
-                pagedEntries.forEach { entry ->
+                pendingEntries.forEach { entry ->
                     val tx = entry.transaction
                     val inputUtxos = tx.inputs.mapNotNull { input ->
                         utxoMap[
@@ -117,11 +111,6 @@ class InfoCommand(private val plugin: Main) {
             2 -> listOf("blockchain", "mempool").filter { it.startsWith(args[1]) }
             3 -> when (args[1]) {
                 "mempool" -> listOf("[index]").filter { it.startsWith(args[2]) }
-                else -> emptyList()
-            }
-
-            4 -> when (args[1]) {
-                "mempool" -> listOf("[page]").filter { it.startsWith(args[3]) }
                 else -> emptyList()
             }
 

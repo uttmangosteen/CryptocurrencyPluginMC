@@ -56,10 +56,16 @@ class MachineInfoCommand(
             }
         }
 
+        val miningBlock = machine.miningBlock
+        if (miningBlock != null) {
+            player.sendMessage("$prefix§7Block Info:")
+            player.sendMessage("$prefix §7- Height: §f${miningBlock.height}")
+            player.sendMessage("$prefix §7- TX Count: §f${miningBlock.transactions.size}")}
+
         player.sendMessage("$prefix§7txMode: §f${machine.createBlockMode}")
         player.sendMessage("$prefix§7shareName: §f${machine.shareNameOnMined}")
-        player.sendMessage("$prefix§7memo: §f${machine.memo.ifBlank { "§7no memo" }}")
-        player.sendMessage("$prefix§7defaultMemo: §f${machine.defaultMemo.ifBlank { "§7no memo" }}")
+        player.sendMessage("$prefix§7memo: §f${machine.memo}")
+        player.sendMessage("$prefix§7defaultMemo: §f${machine.defaultMemo}")
         player.sendMessage("$prefix§7rewardAccount: §8${machine.rewardAccountPubKey ?: "none"}")
         player.sendMessage("$prefix§f§l====================================")
     }

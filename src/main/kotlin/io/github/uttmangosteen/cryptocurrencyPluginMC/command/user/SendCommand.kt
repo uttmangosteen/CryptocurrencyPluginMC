@@ -23,6 +23,11 @@ class SendCommand(
 
     private val pendingSends = ConcurrentHashMap<UUID, MutableList<PendingSend>>()
 
+    companion object {
+        //1つのtxに入れられる送金
+        private const val MAX_SENDS_PER_TX = 8
+    }
+
     fun execute(sender: CommandSender, args: Array<out String>) {
         if (sender !is Player) return
         val action = args.getOrNull(1) ?: return
@@ -154,6 +159,11 @@ class SendCommand(
 
         if (sends.isEmpty()) {
             player.sendMessage("$prefix§c送金リストが空です")
+            return
+        }
+
+        if (sends.size > MAX_SENDS_PER_TX) {
+            player.sendMessage("$prefix§c1つのTransactionに入れられる送金は最大${MAX_SENDS_PER_TX}件です")
             return
         }
 
@@ -298,13 +308,19 @@ class SendCommand(
     }
 
     private fun addPendingSend(player: Player, receiverPubKey: String, amount: Long) {
-        pendingSends.computeIfAbsent(player.uniqueId) { mutableListOf() }
-            .add(
-                PendingSend(
-                    receiverPubKey = receiverPubKey,
-                    amount = amount
-                )
+        val list = pendingSends.computeIfAbsent(player.uniqueId) { mutableListOf() }
+
+        if (list.size >= MAX_SENDS_PER_TX) {
+            player.sendMessage("$prefix§c送金リストに追加できるのは最大${MAX_SENDS_PER_TX}件です")
+            return
+        }
+
+        list.add(
+            PendingSend(
+                receiverPubKey = receiverPubKey,
+                amount = amount
             )
+        )
     }
 
     fun getTabCompletions(args: Array<out String>): List<String> {

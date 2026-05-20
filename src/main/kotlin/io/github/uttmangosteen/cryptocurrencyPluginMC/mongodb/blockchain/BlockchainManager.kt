@@ -3,6 +3,7 @@ package io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain
 import com.mongodb.MongoCommandException
 import io.github.uttmangosteen.cryptocurrencyPluginMC.LogComponent
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.Block
+import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.OutPoint
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.policy.CoinbasePolicy
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.policy.DifficultyPolicy
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.transaction.Signer
@@ -38,6 +39,24 @@ class BlockchainManager(
 
             if (!block.isValid(latestBlock, expectedDifficulty)) return false
 
+            val allInputOutPoints = block.transactions
+                .filter { !it.isCoinbase }
+                .flatMap { tx ->
+                    tx.inputs.map { input ->
+                        OutPoint(
+                            txHash = input.prevTxHash,
+                            outputIndex = input.outputIndex
+                        )
+                    }
+                }
+
+            val resolvedInputUtxos = utxoRepo.findUtxos(
+                session = session,
+                outPoints = allInputOutPoints
+            )
+
+            if (resolvedInputUtxos.size != allInputOutPoints.distinct().size) return false
+
             var totalFees = 0L
 
             for (i in 1 until block.transactions.size) {
@@ -46,7 +65,13 @@ class BlockchainManager(
 
                 for (input in tx.inputs) {
                     if (Signer.normalizePublicKey(input.publicKey) == null) return false
-                    val utxo = utxoRepo.findUtxo(session, input.prevTxHash, input.outputIndex) ?: return false
+
+                    val outPoint = OutPoint(
+                        txHash = input.prevTxHash,
+                        outputIndex = input.outputIndex
+                    )
+
+                    val utxo = resolvedInputUtxos[outPoint] ?: return false
                     if (input.publicKey != utxo.receiverPubKey) return false
                     inputAmountSum = Math.addExact(inputAmountSum, utxo.amount)
                 }
@@ -92,7 +117,13 @@ class BlockchainManager(
             val utxoApplied = utxoRepo.applyTransactions(session, block.transactions)
             if (!utxoApplied) return false
 
-            val historyWritten = historyRepo.writeHistory(session, block.transactions, block.height, block.timestamp)
+            val historyWritten = historyRepo.writeHistory(
+                session = session,
+                transactions = block.transactions,
+                resolvedInputUtxos = resolvedInputUtxos,
+                height = block.height,
+                blockTimestamp = block.timestamp
+            )
             if (!historyWritten) return false
 
             val mempoolCleared = mempoolRepo.delete(session, block)
@@ -111,8 +142,8 @@ class BlockchainManager(
                 "totalChainSupply" to block.totalChainSupply,
                 "networkMiningPower" to block.networkMiningPower,
                 "difficulty" to block.difficulty
-                )
-                true
+            )
+            true
         } catch (e: Exception) {
             session.abortTransaction()
 

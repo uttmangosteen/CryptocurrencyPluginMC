@@ -33,7 +33,7 @@ commands:
       §f/cc send create <fee> [memo] §7- いまの送金リストをまとめてマイナー報酬を設定の上取引を作成 mempoolに登録 メモの長さは32文字まで
   
       §f/cc info blockchain §7- blockchainの状況を確認
-      §f/cc info mempool §7- mempoolの状況を確認
+      §f/cc info mempool [index] §7- [index]の口座のmempoolの状況を確認
       §f§l=========================================
     permission: cryptocurrency.user
   cryptocurrencymachine:

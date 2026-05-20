@@ -3,8 +3,8 @@ package io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine
 import io.github.uttmangosteen.cryptocurrencyPluginMC.LogComponent
 import io.github.uttmangosteen.cryptocurrencyPluginMC.Main
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.Block
-import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.BlockFactory
-import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.policy.TextFormat.formatCoin
+import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.OutPoint
+import io.github.uttmangosteen.cryptocurrencyPluginMC.command.user.TxMessageFactory
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccInfo
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccWarning
 import kotlinx.coroutines.Job
@@ -29,6 +29,8 @@ class MiningMachineService(
         plugin = plugin,
         mempoolRepository = plugin.repositories.mempoolRepo
     )
+
+    private val displayService = TxMessageFactory()
 
     fun start() {
         if (task != null) return
@@ -223,12 +225,8 @@ class MiningMachineService(
         plugin.runSync {
             val ownerUuid = machine.ownerUuid ?: return@runSync
             val owner = Bukkit.getPlayer(java.util.UUID.fromString(ownerUuid)) ?: return@runSync
+            val minerName = if (machine.shareNameOnMined) "§f${owner.name}" else "§7§k00000000"
 
-            val minerName = if (machine.shareNameOnMined) {
-                "§f${owner.name}"
-            } else {
-                "§7§k00000000"
-            }
             val message =
                 "${plugin.pluginConfig.prefix}§a$minerName §aがブロックを採掘しました §7height=§f${block.height}"
             for (player in Bukkit.getOnlinePlayers()) {
@@ -243,53 +241,54 @@ class MiningMachineService(
             val wallets = plugin.repositories.walletRepo.getWallets(onlineUuids)
             val walletMap = wallets.associateBy { it.ownerUUID }
 
+            val outPoints = block.transactions
+                .flatMap { tx ->
+                    tx.inputs.map { input ->
+                        OutPoint(
+                            txHash = input.prevTxHash,
+                            outputIndex = input.outputIndex
+                        )
+                    }
+                }
+                .distinct()
+
+            val utxoMap = plugin.repositories.utxoRepo.findUtxos(outPoints = outPoints)
+
             for (player in onlinePlayers) {
                 val wallet = walletMap[player.uniqueId.toString()] ?: continue
 
                 val userPubKeys = wallet.accounts.map { it.publicKey }.toSet()
                 if (userPubKeys.isEmpty()) continue
 
-                val displayLines = mutableListOf<String>()
                 block.transactions.forEach { tx ->
-                    val senderPubKey = tx.inputs.firstOrNull()?.publicKey
-                    val isSender = senderPubKey in userPubKeys
-                    var isRelated = false
-                    val txLines = mutableListOf<String>()
-                    tx.outputs.forEach { output ->
-                        val receiver = output.receiverPubKey
-                        val amount = output.amount
-                        val isReceiver = receiver in userPubKeys
+                    val related = tx.inputs.any { it.publicKey in userPubKeys } ||
+                            tx.outputs.any { it.receiverPubKey in userPubKeys }
 
-                        when {
-                            senderPubKey == null && isReceiver -> {
-                                txLines.add("§a+${formatCoin(amount)} §7(coinbase)")
-                                isRelated = true
-                            }
+                    if (!related) return@forEach
 
-                            isSender && !isReceiver -> {
-                                txLines.add("§c-${formatCoin(amount)} §7-> §8$receiver")
-                                isRelated = true
-                            }
-
-                            isReceiver && !isSender -> {
-                                txLines.add("§a+${formatCoin(amount)} §7<- §8$senderPubKey")
-                                isRelated = true
-                            }
-                        }
+                    val inputUtxos = tx.inputs.mapNotNull { input ->
+                        utxoMap[
+                            OutPoint(
+                                txHash = input.prevTxHash,
+                                outputIndex = input.outputIndex
+                            )
+                        ]
                     }
-                    if (isRelated) {
-                        val memo = tx.memo.takeIf { it.isNotBlank() } ?: "no memo"
-                        displayLines.add("§7memo: §f$memo")
-                        displayLines.addAll(txLines)
-                    }
-                }
-                if (displayLines.isNotEmpty()) {
-                    plugin.runSync {
-                        player.sendMessage("$prefix§f§l========== §8§lTransaction Confirmed §f§l==========")
-                        displayLines.forEach { line ->
-                            player.sendMessage("$prefix$line")
-                        }
-                        player.sendMessage("$prefix§f§l===========================================")
+
+                    val inputAmount = inputUtxos.sumOf { it.amount }
+                    val outputAmount = tx.outputs.sumOf { it.amount }
+                    val fee = if (tx.isCoinbase) 0L else inputAmount - outputAmount
+
+                    player.sendMessage("$prefix§f§l========== Transaction Confirmed ==========")
+
+                    displayService.buildMessages(
+                        prefix = prefix,
+                        tx = tx,
+                        targetPubKeys = userPubKeys,
+                        inputUtxos = inputUtxos,
+                        fee = fee
+                    ).forEach { message ->
+                        player.sendMessage(message)
                     }
                 }
             }

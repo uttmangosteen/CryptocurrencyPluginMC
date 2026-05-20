@@ -2,6 +2,7 @@ package io.github.uttmangosteen.cryptocurrencyPluginMC.command.admin
 
 import io.github.uttmangosteen.cryptocurrencyPluginMC.Main
 import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.gpu.GpuConfig
+import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.gpu.GpuItemFactory
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
@@ -10,6 +11,7 @@ class GetGpuCommand(
     private val gpuConfig: GpuConfig
 ) {
     private val prefix = plugin.pluginConfig.prefix
+    private val gpuItemFactory = GpuItemFactory(plugin)
 
     fun execute(sender: CommandSender, args: Array<out String>) {
         if (sender !is Player) return
@@ -23,7 +25,7 @@ class GetGpuCommand(
             return
         }
 
-        val item = gpu.createItem(plugin)
+        val item = gpuItemFactory.createItem(gpu)
         sender.inventory.addItem(item)
         sender.sendMessage("${prefix}§a${gpu.gpuName} §r§aを取得しました")
     }

@@ -11,6 +11,7 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.Block
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccInfo
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccWarning
 import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.CreateBlockMode
+import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.model.MempoolEntry
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.toDocument
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.toOutPoint
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.toTransaction

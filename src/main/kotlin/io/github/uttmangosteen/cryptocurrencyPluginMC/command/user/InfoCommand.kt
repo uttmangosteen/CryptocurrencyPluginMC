@@ -1,12 +1,13 @@
 package io.github.uttmangosteen.cryptocurrencyPluginMC.command.user
 
 import io.github.uttmangosteen.cryptocurrencyPluginMC.Main
-import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.policy.TextFormat.formatCoin
+import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.OutPoint
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
 class InfoCommand(private val plugin: Main) {
     private val prefix = plugin.pluginConfig.prefix
+    private val displayService = TxMessageFactory()
 
     fun execute(sender: CommandSender, args: Array<out String>) {
         if (sender !is Player) return
@@ -56,6 +57,19 @@ class InfoCommand(private val plugin: Main) {
             val targetPubKey = account.publicKey
             val pendingEntries = plugin.repositories.mempoolRepo.getPendingTransactionsFor(targetPubKey)
 
+            val outPoints = pendingEntries
+                .flatMap { entry ->
+                    entry.transaction.inputs.map { input ->
+                        OutPoint(
+                            txHash = input.prevTxHash,
+                            outputIndex = input.outputIndex
+                        )
+                    }
+                }
+                .distinct()
+
+            val utxoMap = plugin.repositories.utxoRepo.findUtxos(outPoints = outPoints)
+
             plugin.runSync {
                 if (pendingEntries.isEmpty()) {
                     player.sendMessage("$prefix§c未承認の取引履歴がありません。")
@@ -71,37 +85,28 @@ class InfoCommand(private val plugin: Main) {
 
                 pagedEntries.forEach { entry ->
                     val tx = entry.transaction
-                    val memo = if (tx.memo.isNullOrEmpty()) "no memo" else tx.memo
-                    val displayLines = mutableListOf<String>()
-                    tx.outputs.forEach { output ->
-                        val amount = output.amount
-                        val receiver = output.receiverPubKey
-                        val senderPubKey = tx.inputs.firstOrNull()?.publicKey
-                        when {
-                            senderPubKey == null -> {
-                                if (receiver == targetPubKey) {
-                                    displayLines.add("§a+${formatCoin(amount)} §7(coinbase)")
-                                }
-                            }
-
-                            senderPubKey == targetPubKey -> {
-                                if (receiver != targetPubKey) {
-                                    displayLines.add("§c-${formatCoin(amount)} §7-> §8$receiver")
-                                }
-                            }
-
-                            receiver == targetPubKey -> {
-                                displayLines.add("§a+${formatCoin(amount)} §7<- §8$senderPubKey")
-                            }
-                        }
+                    val inputUtxos = tx.inputs.mapNotNull { input ->
+                        utxoMap[
+                            OutPoint(
+                                txHash = input.prevTxHash,
+                                outputIndex = input.outputIndex
+                            )
+                        ]
                     }
-                    if (displayLines.isNotEmpty()) {
-                        player.sendMessage("$prefix§7fee: §f${formatCoin(entry.fee)} §8| §7memo: §f$memo")
-                        displayLines.forEach { line ->
-                            player.sendMessage("$prefix$line")
-                        }
+
+                    player.sendMessage("$prefix§f§l========== Pending Transaction ==========")
+
+                    displayService.buildMessages(
+                        prefix = prefix,
+                        tx = tx,
+                        targetPubKeys = setOf(targetPubKey),
+                        inputUtxos = inputUtxos,
+                        fee = entry.fee
+                    ).forEach { message ->
+                        player.sendMessage(message)
                     }
                 }
+
                 player.sendMessage("$prefix§f§l=========================================")
             }
         }

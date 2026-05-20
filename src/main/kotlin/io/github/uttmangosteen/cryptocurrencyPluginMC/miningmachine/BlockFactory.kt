@@ -1,10 +1,10 @@
-package io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain
+package io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine
 
 import io.github.uttmangosteen.cryptocurrencyPluginMC.Main
+import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.Block
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.policy.CoinbasePolicy
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.policy.DifficultyPolicy
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.transaction.Transaction
-import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.MiningMachine
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.repository.MempoolRepository
 import java.util.concurrent.ThreadLocalRandom
 

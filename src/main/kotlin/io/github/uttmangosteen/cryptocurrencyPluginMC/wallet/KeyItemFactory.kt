@@ -1,14 +1,13 @@
-package io.github.uttmangosteen.cryptocurrencyPluginMC.command.user
+package io.github.uttmangosteen.cryptocurrencyPluginMC.wallet
 
 import io.github.uttmangosteen.cryptocurrencyPluginMC.Main
-import io.github.uttmangosteen.cryptocurrencyPluginMC.wallet.Account
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 
-class PubKeyItemFactory(
+class KeyItemFactory(
     plugin: Main
 ) {
     private val legacySerializer = LegacyComponentSerializer.legacySection()

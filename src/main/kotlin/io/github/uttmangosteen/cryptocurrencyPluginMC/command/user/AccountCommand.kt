@@ -2,6 +2,7 @@ package io.github.uttmangosteen.cryptocurrencyPluginMC.command.user
 
 import io.github.uttmangosteen.cryptocurrencyPluginMC.Main
 import io.github.uttmangosteen.cryptocurrencyPluginMC.wallet.Account
+import io.github.uttmangosteen.cryptocurrencyPluginMC.wallet.KeyItemFactory
 import org.bukkit.Material
 import org.bukkit.Sound
 import org.bukkit.command.CommandSender
@@ -12,7 +13,7 @@ class AccountCommand(
     private val plugin: Main,
 ) {
     private val prefix = plugin.pluginConfig.prefix
-    private val publicKeyItemFactory = PubKeyItemFactory(plugin)
+    private val publicKeyItemFactory = KeyItemFactory(plugin)
 
     fun execute(sender: CommandSender, args: Array<out String>) {
         if (sender !is Player) return

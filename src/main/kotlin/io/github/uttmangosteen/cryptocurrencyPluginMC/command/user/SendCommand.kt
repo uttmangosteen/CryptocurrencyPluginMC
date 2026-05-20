@@ -6,8 +6,9 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.policy.TextForm
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.policy.TextFormat.formatCoin
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.transaction.Signer
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.transaction.Transaction
-import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.repository.MempoolEntry
+import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.model.MempoolEntry
 import io.github.uttmangosteen.cryptocurrencyPluginMC.wallet.Account
+import io.github.uttmangosteen.cryptocurrencyPluginMC.wallet.KeyItemFactory
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
@@ -18,7 +19,7 @@ class SendCommand(
     private val plugin: Main
 ) {
     private val prefix = plugin.pluginConfig.prefix
-    private val publicKeyItemFactory = PubKeyItemFactory(plugin)
+    private val publicKeyItemFactory = KeyItemFactory(plugin)
 
     private val pendingSends = ConcurrentHashMap<UUID, MutableList<PendingSend>>()
 
@@ -237,7 +238,11 @@ class SendCommand(
         val selectedUtxos = mutableListOf<Utxo>()
         var selectedAmount = 0L
 
-        for (utxo in plugin.repositories.utxoRepo.getAvailableUtxos(senderAccount.publicKey)) {
+        val availableUtxos = plugin.repositories.utxoRepo
+            .getAvailableUtxos(senderAccount.publicKey)
+            .sortedBy { it.amount }
+
+        for (utxo in availableUtxos) {
             selectedUtxos.add(utxo)
             selectedAmount = Math.addExact(selectedAmount, utxo.amount)
 

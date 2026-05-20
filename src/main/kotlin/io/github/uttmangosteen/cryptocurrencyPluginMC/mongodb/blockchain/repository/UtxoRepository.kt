@@ -13,6 +13,7 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.Utxo
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.transaction.Transaction
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccInfo
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccWarning
+import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.model.WalletState
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.toDocument
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.toOutPointId
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.toUtxo
@@ -197,6 +198,36 @@ class UtxoRepository(
         }
     }
 
+    suspend fun findUtxos(
+        session: ClientSession? = null,
+        outPoints: Collection<OutPoint>
+    ): Map<OutPoint, Utxo> {
+        if (outPoints.isEmpty()) return emptyMap()
+
+        val outPointIds = outPoints.map { it.toOutPointId() }
+
+        return try {
+            val findPublisher = if (session != null) {
+                collection.find(session, Filters.`in`("_id", outPointIds))
+            } else {
+                collection.find(Filters.`in`("_id", outPointIds))
+            }
+
+            findPublisher
+                .map { it.toUtxo() }
+                .toList()
+                .associateBy { it.outPoint }
+        } catch (e: Exception) {
+            logger.ccWarning(
+                LogComponent.UTXO_REPOSITORY,
+                "failed to find utxos",
+                e,
+                "requestedCount" to outPoints.size
+            )
+            emptyMap()
+        }
+    }
+
     private fun Transaction.toSpentOutPoints(): List<OutPoint> {
         if (isCoinbase) return emptyList()
 
@@ -222,11 +253,3 @@ class UtxoRepository(
         }
     }
 }
-
-data class WalletState(
-    val availableUtxos: List<Utxo>,
-    val pendingUtxos: List<Utxo>,
-    val balance: Long,
-    val pendingBalance: Long,
-    val totalBalance: Long
-)

@@ -126,7 +126,7 @@ class MempoolRepository(
                 }
 
                 CreateBlockMode.FEE_SORT -> {
-                    collection.find()
+                    collection.find(Filters.gt("fee", 0L))
                         .sort(Sorts.descending("fee"))
                         .limit(limit)
                         .map { it.toTransactionEntity() }
@@ -146,7 +146,12 @@ class MempoolRepository(
                     } else {
                         val mineHashes = mine.map { it.txHash }
 
-                        val others = collection.find(Filters.nin("_id", mineHashes))
+                        val others = collection.find(
+                            Filters.and(
+                                Filters.nin("_id", mineHashes),
+                                Filters.gt("fee", 0L)
+                            )
+                        )
                             .sort(Sorts.descending("fee"))
                             .limit(remaining)
                             .map { it.toTransactionEntity() }

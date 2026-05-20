@@ -38,10 +38,18 @@ class GpuItemFactory(
             editMeta { meta ->
                 meta.displayName(legacySerializer.deserialize(gpu.gpuName))
 
-                // TODO: ロア清書
+                val lifeColor = when {
+                    gpu.life > 0 -> "§a"
+                    gpu.life == 0 -> "§e"
+                    else -> "§c"
+                }
+
                 meta.lore(
                     listOf(
                         legacySerializer.deserialize(gpu.description),
+                        legacySerializer.deserialize("§flife: ${lifeColor}${gpu.life}"),
+                        legacySerializer.deserialize("§fbreakChance: §e${gpu.breakChance}"),
+                        legacySerializer.deserialize("§fpower: §e${gpu.power}"),
                     )
                 )
 

@@ -1,6 +1,7 @@
 package io.github.uttmangosteen.cryptocurrencyPluginMC.command.user
 
 import io.github.uttmangosteen.cryptocurrencyPluginMC.Main
+import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.policy.TextFormat.formatKey
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
@@ -8,7 +9,7 @@ class HistoryCommand(
     private val plugin: Main,
 ) {
     private val prefix = plugin.pluginConfig.prefix
-    private val displayService = TxMessageFactory()
+    private val txMassageFactory = TxMessageFactory()
 
     fun execute(sender: CommandSender, args: Array<out String>) {
         if (sender !is Player) return
@@ -35,7 +36,9 @@ class HistoryCommand(
             }
 
             val targetPubKeys = setOf(account.publicKey)
-            val histories = plugin.repositories.historyRepo.getHistory(account.publicKey)
+            val histories = plugin.repositories.historyRepo
+                .getHistory(account.publicKey)
+                .reversed()
 
             plugin.runSync {
                 if (histories.isEmpty()) {
@@ -43,17 +46,24 @@ class HistoryCommand(
                     return@runSync
                 }
 
-                val pagedHistories = histories
-                    .chunked(8)
-                    .getOrElse(page.coerceAtLeast(1) - 1) { emptyList() }
+                val pageSize = 5
+                val maxPage = (histories.size + pageSize - 1) / pageSize
 
-                sender.sendMessage("$prefix§f§l========== §8§lTransaction history [$page] §f§l==========")
+                if (page !in 1..maxPage) {
+                    sender.sendMessage("$prefix§cページが存在しません §7(1-$maxPage)")
+                    return@runSync
+                }
+
+                val toIndex = histories.size - ((page - 1) * pageSize)
+                val fromIndex = (toIndex - pageSize).coerceAtLeast(0)
+                val pagedHistories = histories.subList(fromIndex, toIndex)
+
+                sender.sendMessage("$prefix§f§l========== §8§lTransaction history [$page/$maxPage] §f§l==========")
 
                 pagedHistories.forEach { history ->
-                    sender.sendMessage("$prefix§f§l========== Transaction History ==========")
-                    sender.sendMessage("$prefix§7height: §f${history.height} §8| §7txHash: §8${history.txHash}")
+                    sender.sendMessage("$prefix§7height: §f${history.height} §8| §7txHash: §8${formatKey(history.txHash) }")
 
-                    displayService.buildMessages(
+                    txMassageFactory.buildMessages(
                         prefix = prefix,
                         tx = history.transaction,
                         targetPubKeys = targetPubKeys,
@@ -64,7 +74,7 @@ class HistoryCommand(
                     }
                 }
 
-                sender.sendMessage("$prefix§f§l============================================")
+                sender.sendMessage("$prefix§f§l=============================================")
             }
         }
     }

@@ -88,8 +88,6 @@ class InfoCommand(private val plugin: Main) {
                         ]
                     }
 
-                    player.sendMessage("$prefix§f§l========== Pending Transaction ==========")
-
                     displayService.buildMessages(
                         prefix = prefix,
                         tx = tx,

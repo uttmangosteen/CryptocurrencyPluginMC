@@ -30,7 +30,7 @@ class MiningMachineService(
         mempoolRepository = plugin.repositories.mempoolRepo
     )
 
-    private val displayService = TxMessageFactory()
+    private val txMessageFactory = TxMessageFactory()
 
     fun start() {
         if (task != null) return
@@ -282,7 +282,7 @@ class MiningMachineService(
 
                     player.sendMessage("$prefix§f§l========== Transaction Confirmed ==========")
 
-                    displayService.buildMessages(
+                    txMessageFactory.buildMessages(
                         prefix = prefix,
                         tx = tx,
                         targetPubKeys = userPubKeys,
@@ -291,6 +291,7 @@ class MiningMachineService(
                     ).forEach { message ->
                         player.sendMessage(message)
                     }
+                    player.sendMessage("$prefix§f§l===========================================")
                 }
             }
         }

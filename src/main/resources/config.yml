@@ -8,7 +8,7 @@ plugin:
   verbose-logging: true
 
 blockchain:
-  mempool-limit-per-block: 100
+  mempool-limit-per-block: 10
 
 
 mining-machine:

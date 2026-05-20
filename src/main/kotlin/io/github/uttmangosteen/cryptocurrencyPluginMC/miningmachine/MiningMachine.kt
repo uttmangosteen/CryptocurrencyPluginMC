@@ -158,16 +158,15 @@ data class MiningMachine(
 
     fun refreshStatus() {
         val oldStatus = status
+        val activeGpuCount = gpuSlots.count { it != null && it.isActive() }
         status = when {
             !enabled -> MiningMachineStatus.DISABLED
             rewardAccountPubKey == null -> MiningMachineStatus.IDLE
-            fuelAmount <= 0 -> MiningMachineStatus.IDLE
-            !hasActiveGpu() -> MiningMachineStatus.IDLE
+            activeGpuCount == 0 -> MiningMachineStatus.IDLE
+            fuelAmount < activeGpuCount -> MiningMachineStatus.IDLE
             else -> MiningMachineStatus.MINING
         }
-        if (oldStatus != status) {
-            isDirty = true
-        }
+        if (oldStatus != status) isDirty = true
     }
 
     fun halt() {

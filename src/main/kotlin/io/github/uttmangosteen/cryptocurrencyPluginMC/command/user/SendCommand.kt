@@ -83,7 +83,7 @@ class SendCommand(
                 }
 
                 addPendingSend(player, targetAccount.publicKey, amount)
-                player.sendMessage("$prefix§a送金リストに追加しました: §f$name §7-> §a${formatCoin(amount)}")
+                player.sendMessage("$prefix§a送金リストに追加しました: §a${formatCoin(amount)} §7-> §f$name")
             }
         }
     }
@@ -104,7 +104,7 @@ class SendCommand(
         }
 
         addPendingSend(player, pubKey, amount)
-        player.sendMessage("$prefix§a送金リストに追加しました: §8$pubKey §7-> §a${formatCoin(amount)}")
+        player.sendMessage("$prefix§a送金リストに追加しました: §a${formatCoin(amount)} §7-> §8${pubKey}")
     }
 
     private fun list(player: Player) {

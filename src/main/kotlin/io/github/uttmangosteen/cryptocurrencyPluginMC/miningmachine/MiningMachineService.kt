@@ -144,6 +144,7 @@ class MiningMachineService(
         try {
             machine.refreshStatus()
             if (machine.status != MiningMachineStatus.MINING) {
+                plugin.repositories.miningMachineRepo.save(machine)
                 activeMachines.remove(machine.id)
                 return
             }
@@ -154,6 +155,7 @@ class MiningMachineService(
             //燃料がなかったら掘れない(idle移行してメモリから消す)
             if (machine.fuelAmount < activeGpuCount) {
                 machine.halt()
+                plugin.repositories.miningMachineRepo.save(machine)
                 activeMachines.remove(machine.id)
                 return
             }

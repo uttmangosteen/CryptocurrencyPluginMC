@@ -7,7 +7,7 @@ import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
 class GetGpuCommand(
-    private val plugin: Main,
+    plugin: Main,
     private val gpuConfig: GpuConfig
 ) {
     private val prefix = plugin.pluginConfig.prefix

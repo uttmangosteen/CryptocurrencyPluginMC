@@ -3,9 +3,7 @@ package io.github.uttmangosteen.cryptocurrencyPluginMC.command.miner
 import io.github.uttmangosteen.cryptocurrencyPluginMC.Main
 import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.gpu.Gpu
 import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.gpu.GpuItemFactory
-import org.bukkit.Material
 import org.bukkit.entity.Player
-import org.bukkit.inventory.ItemStack
 
 class MachineGpuCommand(
     private val plugin: Main

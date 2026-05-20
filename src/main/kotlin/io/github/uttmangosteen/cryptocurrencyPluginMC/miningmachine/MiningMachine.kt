@@ -25,6 +25,10 @@ data class MiningMachine(
 
     var gpuSlots: MutableList<Gpu?> = MutableList(MAX_GPU_SLOTS) { null },
 ) {
+    //DBと状態がズレているか?
+    @Transient
+    var isDirty: Boolean = false
+
     companion object {
         const val MAX_GPU_SLOTS = 8
         const val MAX_USERS = 4
@@ -54,25 +58,32 @@ data class MiningMachine(
         if (userUuids.size >= MAX_USERS) return false
         if (uuid in userUuids) return false
         userUuids.add(uuid)
+        isDirty = true
         return true
     }
 
     fun removeUser(uuid: String): Boolean {
         if (uuid.isBlank()) return false
         if (isOwner(uuid)) return false
-        return userUuids.remove(uuid)
+        val removed = userUuids.remove(uuid)
+        if (removed) isDirty = true
+        return removed
     }
 
     //DBとの兼ね合いでnull埋め手動
     fun normalizeGpuSlots() {
+        var changed = false
         if (gpuSlots.size < MAX_GPU_SLOTS) {
             repeat(MAX_GPU_SLOTS - gpuSlots.size) {
                 gpuSlots.add(null)
             }
+            changed = true
         }
         if (gpuSlots.size > MAX_GPU_SLOTS) {
             gpuSlots = gpuSlots.take(MAX_GPU_SLOTS).toMutableList()
+            changed = true
         }
+        if (changed) isDirty = true
     }
 
     fun setGpu(slot: Int, gpu: Gpu): Boolean {
@@ -83,6 +94,7 @@ data class MiningMachine(
 
         gpuSlots[slot] = gpu
         refreshStatus()
+        isDirty = true
         return true
     }
 
@@ -93,6 +105,7 @@ data class MiningMachine(
         val gpu = gpuSlots[slot] ?: return null
         gpuSlots[slot] = null
         refreshStatus()
+        isDirty = true
         return gpu
     }
 
@@ -113,6 +126,7 @@ data class MiningMachine(
         val added = fuelAmount + amount
         fuelAmount = added.coerceAtMost(MAX_FUEL_AMOUNT)
         refreshStatus()
+        isDirty = true
         return true
     }
 
@@ -121,6 +135,7 @@ data class MiningMachine(
         if (fuelAmount < amount) return false
         fuelAmount -= amount
         refreshStatus()
+        isDirty = true
         return true
     }
 
@@ -128,6 +143,7 @@ data class MiningMachine(
         if (enabled) {
             enabled = false
             status = MiningMachineStatus.DISABLED
+            isDirty = true
             return true
         }
 
@@ -136,10 +152,12 @@ data class MiningMachine(
         if (fuelAmount <= 0) return false
         enabled = true
         status = MiningMachineStatus.MINING
+        isDirty = true
         return true
     }
 
     fun refreshStatus() {
+        val oldStatus = status
         status = when {
             !enabled -> MiningMachineStatus.DISABLED
             rewardAccountPubKey == null -> MiningMachineStatus.IDLE
@@ -147,28 +165,35 @@ data class MiningMachine(
             !hasActiveGpu() -> MiningMachineStatus.IDLE
             else -> MiningMachineStatus.MINING
         }
+        if (oldStatus != status) {
+            isDirty = true
+        }
     }
 
     fun halt() {
         enabled = false
         status = MiningMachineStatus.DISABLED
         miningBlock = null
+        isDirty = true
     }
 
     fun setRewardAccountPubKey(publicKey: String): Boolean {
         rewardAccountPubKey = publicKey
         refreshStatus()
+        isDirty = true
         return true
     }
 
     fun setDefaultMemo(value: String): Boolean {
         defaultMemo = value
         if (memo.isBlank()) memo = defaultMemo
+        isDirty = true
         return true
     }
 
     fun setMiningMemo(value: String): Boolean {
         memo = value
+        isDirty = true
         return true
     }
 
@@ -179,23 +204,27 @@ data class MiningMachine(
             CreateBlockMode.FEE_SORT -> CreateBlockMode.MINE_AND_FEE_SORT
             CreateBlockMode.MINE_AND_FEE_SORT -> CreateBlockMode.NONE
         }
+        isDirty = true
         return createBlockMode
     }
 
     fun toggleShareNameOnMined(): Boolean {
         shareNameOnMined = !shareNameOnMined
+        isDirty = true
         return shareNameOnMined
     }
 
     fun replaceMiningBlock(block: Block?) {
         miningBlock = block
         refreshStatus()
+        isDirty = true
     }
 
     fun consumeGpuLife() {
         normalizeGpuSlots()
         gpuSlots.filterNotNull().forEach { it.consumeLife() }
         refreshStatus()
+        isDirty = true
     }
 }
 

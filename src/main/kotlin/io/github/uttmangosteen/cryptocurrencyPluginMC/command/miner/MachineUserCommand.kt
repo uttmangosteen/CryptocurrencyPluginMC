@@ -24,13 +24,13 @@ class MachineUserCommand(
         val targetUuid = Bukkit.getOfflinePlayer(name).uniqueId.toString()
 
         plugin.launchAsync {
-            val updated = plugin.repositories.miningMachineRepo.updateMachine(
+            val updated = plugin.miningMachineService?.modifyMachineExternal(
                 machineId = machineId,
                 requesterUuid = player.uniqueId.toString(),
                 requireOwner = true
             ) { machine ->
                 machine.addUser(targetUuid)
-            }
+            } ?: false
 
             plugin.runSync {
                 if (updated) {
@@ -46,13 +46,13 @@ class MachineUserCommand(
         val targetUuid = Bukkit.getOfflinePlayer(name).uniqueId.toString()
 
         plugin.launchAsync {
-            val updated = plugin.repositories.miningMachineRepo.updateMachine(
+            val updated = plugin.miningMachineService?.modifyMachineExternal(
                 machineId = machineId,
                 requesterUuid = player.uniqueId.toString(),
                 requireOwner = true
             ) { machine ->
                 machine.removeUser(targetUuid)
-            }
+            } ?: false
 
             plugin.runSync {
                 if (updated) {

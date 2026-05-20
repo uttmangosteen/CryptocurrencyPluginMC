@@ -36,29 +36,29 @@ class MachineBlockCommand(
     private fun setRewardPubKey(player: Player, machineId: String, index: Int) {
         plugin.launchAsync {
             val account = plugin.repositories.walletRepo.getWallet(player.uniqueId.toString())
-                ?.accounts
-                ?.getOrNull(index)
+                ?.accounts?.getOrNull(index)
 
             if (account == null) {
                 plugin.runSync {
-                    player.sendMessage("$prefix§c指定された口座がありません")
+                    player.sendMessage("$prefix§c指定されたインデックスの口座が見つかりません")
                 }
                 return@launchAsync
             }
 
-            val updated = plugin.repositories.miningMachineRepo.updateMachine(
+            val pubKey = account.publicKey
+            val updated = plugin.miningMachineService?.modifyMachineExternal(
                 machineId = machineId,
-                requesterUuid = player.uniqueId.toString()
+                requesterUuid = player.uniqueId.toString(),
+                requireOwner = false
             ) { machine ->
-                machine.setRewardAccountPubKey(account.publicKey)
-            }
+                machine.setRewardAccountPubKey(pubKey)
+            } ?: false
 
             plugin.runSync {
                 if (updated) {
-                    player.sendMessage("$prefix§a報酬受取口座を設定しました")
-                    player.sendMessage("$prefix§7rewardPubKey: §8${account.publicKey}")
+                    player.sendMessage("$prefix§a報酬受け取り口座を設定しました: §7$pubKey")
                 } else {
-                    player.sendMessage("$prefix§c報酬受取口座の設定に失敗しました")
+                    player.sendMessage("$prefix§c報酬口座の設定に失敗しました")
                 }
             }
         }
@@ -66,16 +66,17 @@ class MachineBlockCommand(
 
     private fun setDefaultMemo(player: Player, machineId: String, memo: String) {
         plugin.launchAsync {
-            val updated = plugin.repositories.miningMachineRepo.updateMachine(
+            val updated = plugin.miningMachineService?.modifyMachineExternal(
                 machineId = machineId,
-                requesterUuid = player.uniqueId.toString()
+                requesterUuid = player.uniqueId.toString(),
+                requireOwner = false
             ) { machine ->
                 machine.setDefaultMemo(memo)
-            }
+            } ?: false
 
             plugin.runSync {
                 if (updated) {
-                    player.sendMessage("$prefix§aデフォルトメモを設定しました")
+                    player.sendMessage("$prefix§aデフォルトメモを設定しました: §f$memo")
                 } else {
                     player.sendMessage("$prefix§cデフォルトメモの設定に失敗しました")
                 }
@@ -85,18 +86,19 @@ class MachineBlockCommand(
 
     private fun setMemo(player: Player, machineId: String, memo: String) {
         plugin.launchAsync {
-            val updated = plugin.repositories.miningMachineRepo.updateMachine(
+            val updated = plugin.miningMachineService?.modifyMachineExternal(
                 machineId = machineId,
-                requesterUuid = player.uniqueId.toString()
+                requesterUuid = player.uniqueId.toString(),
+                requireOwner = false
             ) { machine ->
                 machine.setMiningMemo(memo)
-            }
+            } ?: false
 
             plugin.runSync {
                 if (updated) {
-                    player.sendMessage("$prefix§a採掘ブロックメモを設定しました")
+                    player.sendMessage("$prefix§a次回の採掘メモを設定しました: §f$memo")
                 } else {
-                    player.sendMessage("$prefix§c採掘ブロックメモ設定に失敗しました")
+                    player.sendMessage("$prefix§c採掘メモの設定に失敗しました")
                 }
             }
         }
@@ -104,36 +106,37 @@ class MachineBlockCommand(
 
     private fun txMode(player: Player, machineId: String) {
         plugin.launchAsync {
-            var modeName = ""
-
-            val updated = plugin.repositories.miningMachineRepo.updateMachine(
+            var newMode = ""
+            val updated = plugin.miningMachineService?.modifyMachineExternal(
                 machineId = machineId,
-                requesterUuid = player.uniqueId.toString()
+                requesterUuid = player.uniqueId.toString(),
+                requireOwner = false
             ) { machine ->
-                modeName = machine.toggleCreateBlockMode().name
+                newMode = machine.toggleCreateBlockMode().name
                 true
-            }
+            } ?: false
 
             plugin.runSync {
                 if (updated) {
-                    player.sendMessage("$prefix§aTx収集モード: §f$modeName")
+                    player.sendMessage("$prefix§aTX収集モードを変更しました: §f$newMode")
                 } else {
-                    player.sendMessage("$prefix§cTx収集モード切り替えに失敗しました")
+                    player.sendMessage("$prefix§cTX収集モードの変更に失敗しました")
                 }
             }
         }
     }
 
-    //Block nullにすると、次のmineで勝手にBlock作成
+    //block = nullなら次回勝手に作成なのでnull入れるだけでよい
     private fun recreateBlock(player: Player, machineId: String) {
         plugin.launchAsync {
-            val updated = plugin.repositories.miningMachineRepo.updateMachine(
+            val updated = plugin.miningMachineService?.modifyMachineExternal(
                 machineId = machineId,
-                requesterUuid = player.uniqueId.toString()
+                requesterUuid = player.uniqueId.toString(),
+                requireOwner = false
             ) { machine ->
                 machine.replaceMiningBlock(null)
                 true
-            }
+            } ?: false
 
             plugin.runSync {
                 if (updated) {

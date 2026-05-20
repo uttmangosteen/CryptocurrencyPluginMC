@@ -1,14 +1,14 @@
 gpus:
-  test_normal:
-    name: "§r§lTEST_GPU"
+  madeon_op_100000:
+    name: "§r§f§lMadeon OP 100000"
     description: "§7デバック用GPU"
     material: IRON_INGOT
     custom-model-data: 0
     life: 100
     break-chance: 0.01
     power: 1
-  test_advance:
-    name: "§r§lTEST-GPU-ADVANCE"
+  maforce_op_999999:
+    name: "§r§f§lMaForce OP 999999"
     description: "§7デバック用GPU"
     material: GOLD_INGOT
     custom-model-data: 0

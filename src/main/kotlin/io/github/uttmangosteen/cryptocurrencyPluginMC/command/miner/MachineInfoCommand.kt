@@ -16,7 +16,7 @@ class MachineInfoCommand(
 
     private fun info(player: Player, machineId: String) {
         plugin.launchAsync {
-            val machine = plugin.repositories.miningMachineRepo.get(machineId)
+            val machine = plugin.miningMachineService?.getMachine(machineId)
 
             plugin.runSync {
                 if (machine == null) {
@@ -41,6 +41,21 @@ class MachineInfoCommand(
         player.sendMessage("$prefix§7status: §f${machine.status}")
         player.sendMessage("$prefix§7fuel: §f${machine.fuelAmount}")
         player.sendMessage("$prefix§7gpuPower: §f${machine.totalGpuPower()}")
+
+        player.sendMessage("$prefix§7GPU Status:")
+        machine.gpuSlots.forEachIndexed { index, gpu ->
+            if (gpu == null) {
+                player.sendMessage("$prefix§8[$index] -")
+            } else {
+                val (color, statusText) = when {
+                    gpu.life > 0 -> "§a" to "Active"
+                    gpu.life == 0 -> "§e" to "EndOfLife"
+                    else -> "§c" to "Broken"
+                }
+                player.sendMessage("$prefix§7[$index] §f${gpu.gpuName} §7Power: §a${gpu.power} §7Life: $color${gpu.life} §7($statusText)")
+            }
+        }
+
         player.sendMessage("$prefix§7txMode: §f${machine.createBlockMode}")
         player.sendMessage("$prefix§7shareName: §f${machine.shareNameOnMined}")
         player.sendMessage("$prefix§7memo: §f${machine.memo.ifBlank { "§7no memo" }}")

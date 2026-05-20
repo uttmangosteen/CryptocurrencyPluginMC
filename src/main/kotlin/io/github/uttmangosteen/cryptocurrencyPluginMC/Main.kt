@@ -26,9 +26,10 @@ class Main : JavaPlugin() {
     lateinit var pluginConfig: PluginConfig
         private set
 
+    var miningMachineService: MiningMachineService? = null
+        private set
+
     private val pluginScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    
-    private var miningMachineService: MiningMachineService? = null
 
     override fun onEnable() {
         saveDefaultConfig()

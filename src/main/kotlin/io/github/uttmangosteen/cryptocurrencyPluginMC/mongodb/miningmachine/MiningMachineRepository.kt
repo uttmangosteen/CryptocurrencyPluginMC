@@ -24,9 +24,6 @@ class MiningMachineRepository(
 
     suspend fun setup() {
         collection.createIndex(Indexes.ascending("userUuids"))
-        collection.createIndex(Indexes.ascending("enabled"))
-        collection.createIndex(Indexes.ascending("status"))
-        collection.createIndex(Indexes.ascending("rewardAccountPubKey"))
 
         logger.ccInfo(LogComponent.MINING_MACHINE_REPOSITORY, "setup completed")
     }
@@ -78,8 +75,6 @@ class MiningMachineRepository(
                     ReplaceOptions().upsert(true)
                 )
             }
-
-            // DBに1回の通信で全部まとめて書き込む（圧倒的に速い）
             val result = collection.bulkWrite(requests)
             result.wasAcknowledged()
         } catch (e: Exception) {
@@ -133,31 +128,6 @@ class MiningMachineRepository(
         }
     }
 
-    suspend fun updateMachine(
-        machineId: String,
-        requesterUuid: String,
-        requireOwner: Boolean = false,
-        block: (MiningMachine) -> Boolean
-    ): Boolean {
-        if (machineId.isBlank()) return false
-        if (requesterUuid.isBlank()) return false
-
-        val machine = get(machineId) ?: return false
-
-        val allowed = if (requireOwner) {
-            machine.isOwner(requesterUuid)
-        } else {
-            machine.canAccess(requesterUuid)
-        }
-
-        if (!allowed) return false
-
-        val changed = block(machine)
-        if (!changed) return false
-
-        return save(machine)
-    }
-
     suspend fun getRunnableMachines(): List<MiningMachine> {
         return try {
             collection.find(
@@ -180,21 +150,6 @@ class MiningMachineRepository(
                 e
             )
             emptyList()
-        }
-    }
-
-    suspend fun calculateNetworkMiningPower(): Long {
-        return try {
-            getRunnableMachines().fold(0L) { sum, machine ->
-                Math.addExact(sum, machine.totalGpuPower().toLong())
-            }
-        } catch (e: Exception) {
-            logger.ccWarning(
-                LogComponent.MINING_MACHINE_REPOSITORY,
-                "failed to calculate network mining power",
-                e
-            )
-            0L
         }
     }
 }

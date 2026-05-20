@@ -32,19 +32,20 @@ class MachineFuelCommand(
         val fuelAmount = fuelPerItem * amount
 
         plugin.launchAsync {
-            val updated = plugin.repositories.miningMachineRepo.updateMachine(
+            val updated = plugin.miningMachineService?.modifyMachineExternal(
                 machineId = machineId,
-                requesterUuid = player.uniqueId.toString()
+                requesterUuid = player.uniqueId.toString(),
+                requireOwner = false
             ) { machine ->
                 machine.addFuel(fuelAmount)
-            }
+            } ?: false
 
             plugin.runSync {
                 if (updated) {
                     item.amount = 0
-                    player.sendMessage("$prefix§a燃料を投入しました: §f$fuelAmount")
+                    player.sendMessage("$prefix§a燃料を §f$fuelAmount §a追加しました")
                 } else {
-                    player.sendMessage("$prefix§c燃料投入に失敗しました")
+                    player.sendMessage("$prefix§c燃料の追加に失敗しました")
                 }
             }
         }

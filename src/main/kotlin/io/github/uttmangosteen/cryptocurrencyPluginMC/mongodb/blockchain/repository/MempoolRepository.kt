@@ -169,6 +169,36 @@ class MempoolRepository(
         }
     }
 
+    suspend fun getMempoolSize(): Long {
+        return try {
+            collection.countDocuments()
+        } catch (e: Exception) {
+            logger.ccWarning(
+                LogComponent.MEMPOOL_REPOSITORY,
+                "failed to get mempool size",
+                e
+            )
+            0L
+        }
+    }
+
+    suspend fun getPendingTransactionsFor(pubKey: String): List<MempoolEntry> {
+        return try {
+            collection.find(Filters.eq("pubkeyList", pubKey))
+                .sort(Sorts.descending("timestamp"))
+                .map { it.toTransactionEntity() }
+                .toList()
+        } catch (e: Exception) {
+            logger.ccWarning(
+                LogComponent.MEMPOOL_REPOSITORY,
+                "failed to get pending txs for pubkey",
+                e,
+                "pubKey" to pubKey
+            )
+            emptyList()
+        }
+    }
+
     private fun MempoolEntry.toDocument(): Document {
         return Document("_id", txHash)
 

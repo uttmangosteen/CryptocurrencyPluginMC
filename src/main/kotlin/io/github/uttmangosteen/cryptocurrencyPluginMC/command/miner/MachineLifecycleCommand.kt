@@ -32,7 +32,6 @@ class MachineLifecycleCommand(
     private fun create(player: Player) {
         plugin.launchAsync {
             val machine = plugin.repositories.miningMachineRepo.create(player.uniqueId.toString())
-
             plugin.runSync {
                 if (machine != null) {
                     player.sendMessage("$prefix§a採掘機を作成しました")
@@ -46,16 +45,22 @@ class MachineLifecycleCommand(
 
     private fun remove(player: Player, machineId: String) {
         plugin.launchAsync {
-            val removed = plugin.repositories.miningMachineRepo.delete(
-                machineId = machineId,
-                requesterUuid = player.uniqueId.toString()
-            )
+            val uuid = player.uniqueId.toString()
+
+            // メモリにあったらhaltして消す
+            plugin.miningMachineService?.modifyMachineExternal(machineId, uuid, requireOwner = true) { machine ->
+                machine.halt()
+                true
+            }
+
+            // DBから完全に削除
+            val deleted = plugin.repositories.miningMachineRepo.delete(machineId, uuid)
 
             plugin.runSync {
-                if (removed) {
-                    player.sendMessage("$prefix§a採掘機を撤去しました")
+                if (deleted) {
+                    player.sendMessage("$prefix§a採掘機(§f$machineId§a)を削除しました")
                 } else {
-                    player.sendMessage("$prefix§c採掘機の撤去に失敗しました")
+                    player.sendMessage("$prefix§c削除に失敗しました(存在しないかオーナーではありません)")
                 }
             }
         }
@@ -65,14 +70,15 @@ class MachineLifecycleCommand(
         plugin.launchAsync {
             var enabled = false
 
-            val updated = plugin.repositories.miningMachineRepo.updateMachine(
+            val updated = plugin.miningMachineService?.modifyMachineExternal(
                 machineId = machineId,
-                requesterUuid = player.uniqueId.toString()
+                requesterUuid = player.uniqueId.toString(),
+                requireOwner = false
             ) { machine ->
                 val toggled = machine.toggleEnabled()
                 enabled = machine.enabled
                 toggled
-            }
+            } ?: false
 
             plugin.runSync {
                 if (updated) {
@@ -82,8 +88,7 @@ class MachineLifecycleCommand(
                         player.sendMessage("$prefix§c採掘機を停止しました")
                     }
                 } else {
-                    player.sendMessage("$prefix§c採掘機の電源切り替えに失敗しました")
-                    player.sendMessage("$prefix§7起動する場合は、GPU、燃料、報酬口座を確認してください")
+                    player.sendMessage("$prefix§c採掘機の電源切り替えに失敗しました。GPU、燃料、報酬口座を確認してください")
                 }
             }
         }
@@ -93,13 +98,14 @@ class MachineLifecycleCommand(
         plugin.launchAsync {
             var enabled = false
 
-            val updated = plugin.repositories.miningMachineRepo.updateMachine(
+            val updated = plugin.miningMachineService?.modifyMachineExternal(
                 machineId = machineId,
-                requesterUuid = player.uniqueId.toString()
+                requesterUuid = player.uniqueId.toString(),
+                requireOwner = false
             ) { machine ->
                 enabled = machine.toggleShareNameOnMined()
                 true
-            }
+            } ?: false
 
             plugin.runSync {
                 if (updated) {

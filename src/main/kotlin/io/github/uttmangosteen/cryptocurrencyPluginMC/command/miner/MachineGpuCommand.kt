@@ -32,19 +32,20 @@ class MachineGpuCommand(
         }
 
         plugin.launchAsync {
-            val updated = plugin.repositories.miningMachineRepo.updateMachine(
+            val updated = plugin.miningMachineService?.modifyMachineExternal(
                 machineId = machineId,
-                requesterUuid = player.uniqueId.toString()
+                requesterUuid = player.uniqueId.toString(),
+                requireOwner = false
             ) { machine ->
                 machine.setGpu(slot, gpu)
-            }
+            } ?: false
 
             plugin.runSync {
                 if (updated) {
                     item.amount -= 1
-                    player.sendMessage("$prefix§aGPUをslot $slot に設置しました")
+                    player.sendMessage("$prefix§aGPUをslot $slot にセットしました")
                 } else {
-                    player.sendMessage("$prefix§cGPUの設置に失敗しました")
+                    player.sendMessage("$prefix§cGPUのセットに失敗しました")
                 }
             }
         }
@@ -54,14 +55,15 @@ class MachineGpuCommand(
         plugin.launchAsync {
             var takenGpu: Gpu? = null
 
-            val updated = plugin.repositories.miningMachineRepo.updateMachine(
+            val updated = plugin.miningMachineService?.modifyMachineExternal(
                 machineId = machineId,
-                requesterUuid = player.uniqueId.toString()
+                requesterUuid = player.uniqueId.toString(),
+                requireOwner = false
             ) { machine ->
-                val gpu = machine.takeGpu(slot) ?: return@updateMachine false
+                val gpu = machine.takeGpu(slot) ?: return@modifyMachineExternal false
                 takenGpu = gpu
                 true
-            }
+            } ?: false
 
             plugin.runSync {
                 val gpu = takenGpu

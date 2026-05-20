@@ -176,28 +176,6 @@ class UtxoRepository(
         }
     }
 
-    suspend fun findUtxo(session: ClientSession, prevTxHash: String, outputIndex: Int): Utxo? {
-        return try {
-            val outPointId = OutPoint(
-                txHash = prevTxHash,
-                outputIndex = outputIndex
-            ).toOutPointId()
-
-            collection.find(session, Filters.eq("_id", outPointId))
-                .firstOrNull()
-                ?.toUtxo()
-        } catch (e: Exception) {
-            logger.ccWarning(
-                LogComponent.UTXO_REPOSITORY,
-                "failed to find utxo",
-                e,
-                "prevTxHash" to prevTxHash,
-                "outputIndex" to outputIndex
-            )
-            null
-        }
-    }
-
     suspend fun findUtxos(
         session: ClientSession? = null,
         outPoints: Collection<OutPoint>

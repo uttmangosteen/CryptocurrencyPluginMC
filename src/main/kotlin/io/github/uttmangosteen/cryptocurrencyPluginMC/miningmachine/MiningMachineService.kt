@@ -231,6 +231,7 @@ class MiningMachineService(
                 "${plugin.pluginConfig.prefix}§a$minerName §aがブロックを採掘しました §7height=§f${block.height}"
             for (player in Bukkit.getOnlinePlayers()) {
                 player.sendMessage(message)
+                player.playSound(player.location, "note.pling", 1f, 0.5f)
             }
         }
         plugin.launchAsync {

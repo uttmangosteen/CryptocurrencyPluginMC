@@ -2,6 +2,7 @@ package io.github.uttmangosteen.cryptocurrencyPluginMC.command.miner
 
 import io.github.uttmangosteen.cryptocurrencyPluginMC.Main
 import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.gpu.Gpu
+import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.gpu.GpuItemFactory
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
@@ -10,6 +11,7 @@ class MachineGpuCommand(
     private val plugin: Main
 ) {
     private val prefix = plugin.pluginConfig.prefix
+    private val gpuItemFactory = GpuItemFactory(plugin)
 
     fun execute(player: Player, args: Array<out String>) {
         val action = args.getOrNull(1) ?: return
@@ -24,7 +26,7 @@ class MachineGpuCommand(
 
     private fun setGpu(player: Player, machineId: String, slot: Int) {
         val item = player.inventory.itemInMainHand
-        val gpu = readGpuFromItem(item)
+        val gpu = gpuItemFactory.readGpu(item)
 
         if (gpu == null) {
             player.sendMessage("$prefix§c有効なGPUアイテムを手に持ってください")
@@ -73,25 +75,13 @@ class MachineGpuCommand(
                     return@runSync
                 }
 
-                val item = gpu.createItem(plugin)
+                val item = gpuItemFactory.createItem(gpu)
                 val overflow = player.inventory.addItem(item)
                 overflow.values.forEach { player.world.dropItemNaturally(player.location, it) }
 
                 player.sendMessage("$prefix§aGPUをslot $slot から取り外しました")
             }
         }
-    }
-
-    private fun readGpuFromItem(item: ItemStack?): Gpu? {
-        val reader = Gpu(
-            gpuName = "",
-            material = Material.IRON_INGOT.name,
-            description = "",
-            life = 0,
-            breakChance = 0.0,
-            power = 1
-        )
-        return reader.createGpu(item, plugin)
     }
 
     fun getTabCompletions(args: Array<out String>): List<String> {

@@ -23,12 +23,14 @@ class MachineInfoCommand(
                     player.sendMessage("$prefix§c指定された採掘機が見つかりません")
                     return@runSync
                 }
-                if (!machine.canAccess(player.uniqueId.toString()) && !player.isOp) {
-                    player.sendMessage("$prefix§c権限がありません")
-                    return@runSync
-                }
+                    if (!machine.canAccess(player.uniqueId.toString()) &&
+                        !player.hasPermission("cryptocurrency.admin")
+                    ) {
+                        player.sendMessage("$prefix§c権限がありません")
+                        return@runSync
+                    }
 
-                sendMachineInfo(player, machine)
+                    sendMachineInfo(player, machine)
             }
         }
     }

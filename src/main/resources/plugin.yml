@@ -21,7 +21,6 @@ commands:
       §f/cc account getPrivateKeyItem <index> [itemMemo] §7- 口座の秘密鍵付き公開鍵アイテムを取得、§c取扱注意
       §f/cc account register [pubKey] §7- pubKey省略で手に持った鍵アイテムをWalletに登録する　pubKey平文指定も可
       
-      
       §f/cc balance [index] §7- 口座の状況を確認
   
       §f/cc history [index] [page] §7- 口座の取引履歴を確認

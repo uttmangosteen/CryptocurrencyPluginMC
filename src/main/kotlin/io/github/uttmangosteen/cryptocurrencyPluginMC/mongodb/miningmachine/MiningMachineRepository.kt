@@ -106,13 +106,17 @@ class MiningMachineRepository(
         }
     }
 
-    suspend fun delete(machineId: String, requesterUuid: String): Boolean {
+    suspend fun delete(
+        machineId: String,
+        requesterUuid: String,
+        bypassPermission: Boolean = false
+    ): Boolean {
         if (machineId.isBlank()) return false
         if (requesterUuid.isBlank()) return false
 
         return try {
             val machine = get(machineId) ?: return false
-            if (!machine.isOwner(requesterUuid)) return false
+            if (!bypassPermission && !machine.isOwner(requesterUuid)) return false
 
             val result = collection.deleteOne(Filters.eq("_id", machineId))
             result.wasAcknowledged() && result.deletedCount == 1L

@@ -5,7 +5,7 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.command.miner.MachineBlock
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.miner.MachineFuelCommand
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.miner.MachineGpuCommand
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.miner.MachineInfoCommand
-import io.github.uttmangosteen.cryptocurrencyPluginMC.command.miner.MachineLifecycleCommand
+import io.github.uttmangosteen.cryptocurrencyPluginMC.command.miner.MachineSettingCommand
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.miner.MachineUserCommand
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
@@ -16,7 +16,7 @@ import org.bukkit.entity.Player
 class MinerCommand(
     private val plugin: Main,
 ) : CommandExecutor, TabCompleter {
-    private val lifecycleCommand = MachineLifecycleCommand(plugin)
+    private val lifecycleCommand = MachineSettingCommand(plugin)
     private val infoCommand = MachineInfoCommand(plugin)
     private val gpuCommand = MachineGpuCommand(plugin)
     private val userCommand = MachineUserCommand(plugin)

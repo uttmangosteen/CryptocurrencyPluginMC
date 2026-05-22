@@ -10,6 +10,7 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.ccWarning
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
 import org.bukkit.Bukkit
+import org.bukkit.Sound
 import org.bukkit.scheduler.BukkitTask
 import java.util.concurrent.ConcurrentHashMap
 
@@ -55,10 +56,11 @@ class MiningMachineService(
         )
     }
 
-    suspend fun modifyMachineExternal(
+    suspend fun modifyMachine(
         machineId: String,
         requesterUuid: String,
         requireOwner: Boolean = false,
+        bypassPermission: Boolean = false,
         block: (MiningMachine) -> Boolean
     ): Boolean {
         if (machineId.isBlank() || requesterUuid.isBlank()) return false
@@ -67,7 +69,12 @@ class MiningMachineService(
         val machine = activeMachines[machineId] ?: plugin.repositories.miningMachineRepo.get(machineId) ?: return false
 
         // 権限チェック
-        val allowed = if (requireOwner) machine.isOwner(requesterUuid) else machine.canAccess(requesterUuid)
+        val allowed = bypassPermission || if (requireOwner) {
+            machine.isOwner(requesterUuid)
+        } else {
+            machine.canAccess(requesterUuid)
+        }
+
         if (!allowed) return false
 
         // マシンの状態を変更（isDirty = true）
@@ -231,7 +238,7 @@ class MiningMachineService(
                 "${plugin.pluginConfig.prefix}§a$minerName §aがブロックを採掘しました §7height=§f${block.height}"
             for (player in Bukkit.getOnlinePlayers()) {
                 player.sendMessage(message)
-                player.playSound(player.location, "note.pling", 1f, 0.5f)
+                player.playSound(player.location, Sound.BLOCK_NOTE_BLOCK_BIT, 1f, 2f)
             }
         }
         plugin.launchAsync {

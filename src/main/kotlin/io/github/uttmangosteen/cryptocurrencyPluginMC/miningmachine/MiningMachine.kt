@@ -49,6 +49,7 @@ data class MiningMachine(
         return ownerUuid == uuid
     }
 
+
     fun canAccess(uuid: String): Boolean {
         return uuid in userUuids
     }

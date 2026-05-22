@@ -24,10 +24,11 @@ class MachineUserCommand(
         val targetUuid = Bukkit.getOfflinePlayer(name).uniqueId.toString()
 
         plugin.launchAsync {
-            val updated = plugin.miningMachineService?.modifyMachineExternal(
+            val updated = plugin.miningMachineService?.modifyMachine(
                 machineId = machineId,
                 requesterUuid = player.uniqueId.toString(),
-                requireOwner = true
+                requireOwner = true,
+                bypassPermission = player.hasPermission("cryptocurrency.admin")
             ) { machine ->
                 machine.addUser(targetUuid)
             } ?: false
@@ -46,10 +47,11 @@ class MachineUserCommand(
         val targetUuid = Bukkit.getOfflinePlayer(name).uniqueId.toString()
 
         plugin.launchAsync {
-            val updated = plugin.miningMachineService?.modifyMachineExternal(
+            val updated = plugin.miningMachineService?.modifyMachine(
                 machineId = machineId,
                 requesterUuid = player.uniqueId.toString(),
-                requireOwner = true
+                requireOwner = true,
+                bypassPermission = player.hasPermission("cryptocurrency.admin")
             ) { machine ->
                 machine.removeUser(targetUuid)
             } ?: false

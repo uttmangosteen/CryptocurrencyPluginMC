@@ -32,10 +32,11 @@ class MachineGpuCommand(
         }
 
         plugin.launchAsync {
-            val updated = plugin.miningMachineService?.modifyMachineExternal(
+            val updated = plugin.miningMachineService?.modifyMachine(
                 machineId = machineId,
                 requesterUuid = player.uniqueId.toString(),
-                requireOwner = false
+                requireOwner = false,
+                bypassPermission = player.hasPermission("cryptocurrency.admin")
             ) { machine ->
                 machine.setGpu(slot, gpu)
             } ?: false
@@ -55,12 +56,13 @@ class MachineGpuCommand(
         plugin.launchAsync {
             var takenGpu: Gpu? = null
 
-            val updated = plugin.miningMachineService?.modifyMachineExternal(
+            val updated = plugin.miningMachineService?.modifyMachine(
                 machineId = machineId,
                 requesterUuid = player.uniqueId.toString(),
-                requireOwner = false
+                requireOwner = false,
+                bypassPermission = player.hasPermission("cryptocurrency.admin")
             ) { machine ->
-                val gpu = machine.takeGpu(slot) ?: return@modifyMachineExternal false
+                val gpu = machine.takeGpu(slot) ?: return@modifyMachine false
                 takenGpu = gpu
                 true
             } ?: false

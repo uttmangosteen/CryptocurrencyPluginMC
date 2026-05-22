@@ -46,10 +46,11 @@ class MachineBlockCommand(
             }
 
             val pubKey = account.publicKey
-            val updated = plugin.miningMachineService?.modifyMachineExternal(
+            val updated = plugin.miningMachineService?.modifyMachine(
                 machineId = machineId,
                 requesterUuid = player.uniqueId.toString(),
-                requireOwner = false
+                requireOwner = false,
+                bypassPermission = player.hasPermission("cryptocurrency.admin")
             ) { machine ->
                 machine.setRewardAccountPubKey(pubKey)
             } ?: false
@@ -66,10 +67,11 @@ class MachineBlockCommand(
 
     private fun setDefaultMemo(player: Player, machineId: String, memo: String) {
         plugin.launchAsync {
-            val updated = plugin.miningMachineService?.modifyMachineExternal(
+            val updated = plugin.miningMachineService?.modifyMachine(
                 machineId = machineId,
                 requesterUuid = player.uniqueId.toString(),
-                requireOwner = false
+                requireOwner = false,
+                bypassPermission = player.hasPermission("cryptocurrency.admin")
             ) { machine ->
                 machine.setDefaultMemo(memo)
             } ?: false
@@ -86,10 +88,11 @@ class MachineBlockCommand(
 
     private fun setMemo(player: Player, machineId: String, memo: String) {
         plugin.launchAsync {
-            val updated = plugin.miningMachineService?.modifyMachineExternal(
+            val updated = plugin.miningMachineService?.modifyMachine(
                 machineId = machineId,
                 requesterUuid = player.uniqueId.toString(),
-                requireOwner = false
+                requireOwner = false,
+                bypassPermission = player.hasPermission("cryptocurrency.admin")
             ) { machine ->
                 machine.setMiningMemo(memo)
             } ?: false
@@ -107,10 +110,11 @@ class MachineBlockCommand(
     private fun txMode(player: Player, machineId: String) {
         plugin.launchAsync {
             var newMode = ""
-            val updated = plugin.miningMachineService?.modifyMachineExternal(
+            val updated = plugin.miningMachineService?.modifyMachine(
                 machineId = machineId,
                 requesterUuid = player.uniqueId.toString(),
-                requireOwner = false
+                requireOwner = false,
+                bypassPermission = player.hasPermission("cryptocurrency.admin")
             ) { machine ->
                 newMode = machine.toggleCreateBlockMode().name
                 true
@@ -129,10 +133,11 @@ class MachineBlockCommand(
     //block = nullなら次回勝手に作成なのでnull入れるだけでよい
     private fun recreateBlock(player: Player, machineId: String) {
         plugin.launchAsync {
-            val updated = plugin.miningMachineService?.modifyMachineExternal(
+            val updated = plugin.miningMachineService?.modifyMachine(
                 machineId = machineId,
                 requesterUuid = player.uniqueId.toString(),
-                requireOwner = false
+                requireOwner = false,
+                bypassPermission = player.hasPermission("cryptocurrency.admin")
             ) { machine ->
                 machine.replaceMiningBlock(null)
                 true

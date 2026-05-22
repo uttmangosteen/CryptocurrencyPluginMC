@@ -32,10 +32,11 @@ class MachineFuelCommand(
         val fuelAmount = fuelPerItem * amount
 
         plugin.launchAsync {
-            val updated = plugin.miningMachineService?.modifyMachineExternal(
+            val updated = plugin.miningMachineService?.modifyMachine(
                 machineId = machineId,
                 requesterUuid = player.uniqueId.toString(),
-                requireOwner = false
+                requireOwner = false,
+                bypassPermission = player.hasPermission("cryptocurrency.admin")
             ) { machine ->
                 machine.addFuel(fuelAmount)
             } ?: false

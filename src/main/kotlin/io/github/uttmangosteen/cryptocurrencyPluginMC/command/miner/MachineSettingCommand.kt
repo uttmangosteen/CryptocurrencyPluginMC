@@ -3,7 +3,7 @@ package io.github.uttmangosteen.cryptocurrencyPluginMC.command.miner
 import io.github.uttmangosteen.cryptocurrencyPluginMC.Main
 import org.bukkit.entity.Player
 
-class MachineLifecycleCommand(
+class MachineSettingCommand(
     private val plugin: Main
 ) {
     private val prefix = plugin.pluginConfig.prefix
@@ -48,13 +48,22 @@ class MachineLifecycleCommand(
             val uuid = player.uniqueId.toString()
 
             // メモリにあったらhaltして消す
-            plugin.miningMachineService?.modifyMachineExternal(machineId, uuid, requireOwner = true) { machine ->
+            plugin.miningMachineService?.modifyMachine(
+                machineId = machineId,
+                requesterUuid = uuid,
+                requireOwner = true,
+                bypassPermission = player.hasPermission("cryptocurrency.admin")
+            ) { machine ->
                 machine.halt()
                 true
             }
 
             // DBから完全に削除
-            val deleted = plugin.repositories.miningMachineRepo.delete(machineId, uuid)
+            val deleted = plugin.repositories.miningMachineRepo.delete(
+                machineId = machineId,
+                requesterUuid = uuid,
+                bypassPermission = player.hasPermission("cryptocurrency.admin")
+            )
 
             plugin.runSync {
                 if (deleted) {
@@ -70,10 +79,11 @@ class MachineLifecycleCommand(
         plugin.launchAsync {
             var enabled = false
 
-            val updated = plugin.miningMachineService?.modifyMachineExternal(
+            val updated = plugin.miningMachineService?.modifyMachine(
                 machineId = machineId,
                 requesterUuid = player.uniqueId.toString(),
-                requireOwner = false
+                requireOwner = false,
+                bypassPermission = player.hasPermission("cryptocurrency.admin")
             ) { machine ->
                 val toggled = machine.toggleEnabled()
                 enabled = machine.enabled
@@ -98,10 +108,11 @@ class MachineLifecycleCommand(
         plugin.launchAsync {
             var enabled = false
 
-            val updated = plugin.miningMachineService?.modifyMachineExternal(
+            val updated = plugin.miningMachineService?.modifyMachine(
                 machineId = machineId,
                 requesterUuid = player.uniqueId.toString(),
-                requireOwner = false
+                requireOwner = false,
+                bypassPermission = player.hasPermission("cryptocurrency.admin")
             ) { machine ->
                 enabled = machine.toggleShareNameOnMined()
                 true

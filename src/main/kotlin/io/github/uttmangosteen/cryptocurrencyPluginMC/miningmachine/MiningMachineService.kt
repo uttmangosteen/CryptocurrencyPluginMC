@@ -87,7 +87,14 @@ class MiningMachineService(
             machine.isDirty = false
             machine.refreshStatus()
             if (machine.status == MiningMachineStatus.MINING) {
+                val wasActive = activeMachines.containsKey(machine.id)
                 activeMachines[machine.id] = machine
+
+                if (!wasActive) {
+                    activeMachines.values.forEach { machine ->
+                        machine.replaceMiningBlock(null)
+                    }
+                }
             } else {
                 activeMachines.remove(machine.id)
             }
@@ -133,8 +140,16 @@ class MiningMachineService(
         val shouldSaveMiningState = miningTickCount >= saveIntervalMiningTicks
         if (shouldSaveMiningState) miningTickCount = 0
 
+        val latestBlock = plugin.repositories.blockRepo.getLatestBlock() ?: return
+
         for (machine in activeMachines.values) {
-            processMachine(machine, networkMiningPower)
+            val mined = processMachine(machine, networkMiningPower, latestBlock)
+            if (mined) {
+                activeMachines.values.forEach { machine ->
+                    machine.replaceMiningBlock(null)
+                }
+                break
+            }
         }
 
         if (shouldSaveMiningState) {
@@ -148,34 +163,33 @@ class MiningMachineService(
 
     private suspend fun processMachine(
         machine: MiningMachine,
-        networkMiningPower: Long
-    ) {
+        networkMiningPower: Long,
+        latestBlock: Block
+    ): Boolean {
         try {
             machine.refreshStatus()
             if (machine.status != MiningMachineStatus.MINING) {
                 plugin.repositories.miningMachineRepo.save(machine)
                 activeMachines.remove(machine.id)
-                return
+                return false
             }
 
             val activeGpuCount = machine.gpuSlots.count { it != null && it.isActive() }
-            if (activeGpuCount == 0) return
+            if (activeGpuCount == 0) return false
 
             //燃料がなかったら掘れない(idle移行してメモリから消す)
             if (machine.fuelAmount < activeGpuCount) {
                 machine.halt()
                 plugin.repositories.miningMachineRepo.save(machine)
                 activeMachines.remove(machine.id)
-                return
+                return false
             }
-
-            val latestBlock = plugin.repositories.blockRepo.getLatestBlock() ?: return
 
             val miningBlock = machine.miningBlock
                 ?.takeIf { it.height == latestBlock.height + 1 && it.previousHash == latestBlock.hash }
                 ?: blockFactory.createMiningBlock(latestBlock, networkMiningPower, machine)
 
-            if (miningBlock == null) return
+            if (miningBlock == null) return false
             machine.replaceMiningBlock(miningBlock)
 
             // 燃料消費とGPU耐久値減少
@@ -188,18 +202,16 @@ class MiningMachineService(
                 val accepted = plugin.repositories.blockchainManager.acceptNewBlock(miningBlock)
                 if (accepted) {
                     notifyMined(machine, miningBlock)
-                    val newLatestBlock = plugin.repositories.blockRepo.getLatestBlock()
-                    if (newLatestBlock != null) {
-                        val nextBlock = blockFactory.createMiningBlock(newLatestBlock, networkMiningPower, machine)
-                        machine.replaceMiningBlock(nextBlock)
-                    } else {
-                        machine.replaceMiningBlock(null)
-                    }
+                    machine.replaceMiningBlock(null)
+                    machine.refreshStatus()
+                    return true
                 } else {
                     machine.replaceMiningBlock(null)
                 }
                 machine.refreshStatus()
             }
+
+            return false
 
         } catch (e: Exception) {
             plugin.logger.ccWarning(
@@ -208,6 +220,7 @@ class MiningMachineService(
                 e,
                 "machineId" to machine.id
             )
+            return false
         }
     }
 

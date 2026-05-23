@@ -30,16 +30,25 @@ data class PluginConfig(
 
         fun load(config: FileConfiguration): PluginConfig {
             return PluginConfig(
-                mongodbConnectionString = config.safeString("mongodb.connection-string", DEFAULT_MONGODB_CONNECTION_STRING),
+                mongodbConnectionString = config.safeString(
+                    "mongodb.connection-string",
+                    DEFAULT_MONGODB_CONNECTION_STRING
+                ),
                 mongodbDatabase = config.safeString("mongodb.database", DEFAULT_MONGODB_DATABASE),
 
                 prefix = config.safeString("plugin.prefix", DEFAULT_PREFIX),
                 enable = config.getBoolean("plugin.enable", DEFAULT_ENABLE),
                 verboseLogging = config.getBoolean("plugin.verbose-logging", DEFAULT_VERBOSE_LOGGING),
 
-                mempoolLimitPerBlock = config.safeInt("blockchain.mempool-limit-per-block", DEFAULT_MEMPOOL_LIMIT_PER_BLOCK),
+                mempoolLimitPerBlock = config.safeInt(
+                    "blockchain.mempool-limit-per-block",
+                    DEFAULT_MEMPOOL_LIMIT_PER_BLOCK
+                ),
 
-                miningMachineMiningDelayTicks = config.safeInt("mining-machine.delay-ticks", DEFAULT_MINING_MACHINE_DELAY_TICKS),
+                miningMachineMiningDelayTicks = config.safeInt(
+                    "mining-machine.delay-ticks",
+                    DEFAULT_MINING_MACHINE_DELAY_TICKS
+                ),
                 miningMachineSaveIntervalMiningTicks = config.safeInt(
                     "mining-machine.save-interval-mining-ticks",
                     DEFAULT_MINING_MACHINE_SAVE_INTERVAL_MINING_TICKS

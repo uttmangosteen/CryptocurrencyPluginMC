@@ -32,7 +32,7 @@ data class MiningMachine(
     companion object {
         const val MAX_GPU_SLOTS = 8
         const val MAX_USERS = 4
-        const val MAX_FUEL_AMOUNT = 100000
+        const val MAX_FUEL_AMOUNT = 999999
 
         fun create(ownerUuid: String): MiningMachine {
             return MiningMachine(
@@ -48,7 +48,6 @@ data class MiningMachine(
     fun isOwner(uuid: String): Boolean {
         return ownerUuid == uuid
     }
-
 
     fun canAccess(uuid: String): Boolean {
         return uuid in userUuids

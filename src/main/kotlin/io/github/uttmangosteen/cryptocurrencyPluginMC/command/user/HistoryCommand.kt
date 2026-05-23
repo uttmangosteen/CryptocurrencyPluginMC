@@ -61,7 +61,7 @@ class HistoryCommand(
                 sender.sendMessage("$prefix§f§l========== §8§lTransaction history [$page/$maxPage] §f§l==========")
 
                 pagedHistories.forEach { history ->
-                    sender.sendMessage("$prefix§7height: §f${history.height} §8| §7txHash: §8${formatKey(history.txHash) }")
+                    sender.sendMessage("$prefix§7height: §f${history.height} §8| §7txHash: §8${formatKey(history.txHash)}")
 
                     txMassageFactory.buildMessages(
                         prefix = prefix,

@@ -72,9 +72,21 @@ class UtxoRepository(
         val allUtxos = getAllUtxos(publicKey)
         val (pending, available) = allUtxos.partition { it.lockedByTxId != null }
 
-        val balance = try { available.sumAmounts() } catch (_: ArithmeticException) { 0L }
-        val pendingBalance = try { pending.sumAmounts() } catch (_: ArithmeticException) { 0L }
-        val totalBalance = try { addExact(balance, pendingBalance) } catch (_: ArithmeticException) { 0L }
+        val balance = try {
+            available.sumAmounts()
+        } catch (_: ArithmeticException) {
+            0L
+        }
+        val pendingBalance = try {
+            pending.sumAmounts()
+        } catch (_: ArithmeticException) {
+            0L
+        }
+        val totalBalance = try {
+            addExact(balance, pendingBalance)
+        } catch (_: ArithmeticException) {
+            0L
+        }
 
         return WalletState(
             availableUtxos = available,

@@ -56,7 +56,7 @@ object Signer {
                 initVerify(publicKey)
                 update(messageHex.hexToByteArray())
             }.verify(signatureHex.hexToByteArray())
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }

@@ -23,14 +23,14 @@ class MachineInfoCommand(
                     player.sendMessage("$prefix§c指定された採掘機が見つかりません")
                     return@runSync
                 }
-                    if (!machine.canAccess(player.uniqueId.toString()) &&
-                        !player.hasPermission("cryptocurrency.admin")
-                    ) {
-                        player.sendMessage("$prefix§c権限がありません")
-                        return@runSync
-                    }
+                if (!machine.canAccess(player.uniqueId.toString()) &&
+                    !player.hasPermission("cryptocurrency.admin")
+                ) {
+                    player.sendMessage("$prefix§c権限がありません")
+                    return@runSync
+                }
 
-                    sendMachineInfo(player, machine)
+                sendMachineInfo(player, machine)
             }
         }
     }
@@ -62,7 +62,8 @@ class MachineInfoCommand(
         if (miningBlock != null) {
             player.sendMessage("$prefix§7Block Info:")
             player.sendMessage("$prefix §7- Height: §f${miningBlock.height}")
-            player.sendMessage("$prefix §7- TX Count: §f${miningBlock.transactions.size}")}
+            player.sendMessage("$prefix §7- TX Count: §f${miningBlock.transactions.size}")
+        }
 
         player.sendMessage("$prefix§7txMode: §f${machine.createBlockMode}")
         player.sendMessage("$prefix§7shareName: §f${machine.shareNameOnMined}")

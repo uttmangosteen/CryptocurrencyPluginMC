@@ -19,11 +19,13 @@ class KeyItemFactory(
         return ItemStack(Material.PAPER).apply {
             editMeta { meta ->
                 meta.displayName(legacySerializer.deserialize(memo))
-                meta.lore(listOf(
-                    legacySerializer.deserialize("§f§l公開鍵共有用アイテム"),
-                    legacySerializer.deserialize("§7publicKey:"),
-                    legacySerializer.deserialize("§8${account.publicKey}")
-                ))
+                meta.lore(
+                    listOf(
+                        legacySerializer.deserialize("§f§l公開鍵共有用アイテム"),
+                        legacySerializer.deserialize("§7publicKey:"),
+                        legacySerializer.deserialize("§8${account.publicKey}")
+                    )
+                )
                 meta.persistentDataContainer.set(publicKeyKey, PersistentDataType.STRING, account.publicKey)
             }
         }
@@ -35,14 +37,16 @@ class KeyItemFactory(
         return ItemStack(Material.PAPER).apply {
             editMeta { meta ->
                 meta.displayName(legacySerializer.deserialize(memo))
-                meta.lore(listOf(
-                    legacySerializer.deserialize("§c§l秘密鍵付き公開鍵共有用アイテム"),
-                    legacySerializer.deserialize("§4§k§na§4§n落とすな、絶対に。§4§k§na"),
-                    legacySerializer.deserialize("§7publicKey:"),
-                    legacySerializer.deserialize("§8${account.publicKey}"),
-                    legacySerializer.deserialize("§7privateKey:"),
-                    legacySerializer.deserialize("§8$privateKeyHex")
-                ))
+                meta.lore(
+                    listOf(
+                        legacySerializer.deserialize("§c§l秘密鍵付き公開鍵共有用アイテム"),
+                        legacySerializer.deserialize("§4§k§na§4§n落とすな、絶対に。§4§k§na"),
+                        legacySerializer.deserialize("§7publicKey:"),
+                        legacySerializer.deserialize("§8${account.publicKey}"),
+                        legacySerializer.deserialize("§7privateKey:"),
+                        legacySerializer.deserialize("§8$privateKeyHex")
+                    )
+                )
                 meta.persistentDataContainer.set(publicKeyKey, PersistentDataType.STRING, account.publicKey)
                 meta.persistentDataContainer.set(privateKeyKey, PersistentDataType.STRING, privateKeyHex)
             }

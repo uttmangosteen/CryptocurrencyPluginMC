@@ -2,6 +2,7 @@ package io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.policy
 
 object TextFormat {
     const val COIN_NAME: String = "MNC"
+
     //1MNC = 10万Takashi という仮設定
     const val COIN_FRACTION_DIGITS: Int = 5
 

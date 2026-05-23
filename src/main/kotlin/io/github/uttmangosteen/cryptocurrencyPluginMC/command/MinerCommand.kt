@@ -77,6 +77,7 @@ class MinerCommand(
                 "remove", "info", "open", "toggle", "shareName", "fuel" -> {
                     if (args.size == 2) listOf("<machineId>").filter { it.startsWith(args[1]) } else emptyList()
                 }
+
                 else -> emptyList()
             }
         }

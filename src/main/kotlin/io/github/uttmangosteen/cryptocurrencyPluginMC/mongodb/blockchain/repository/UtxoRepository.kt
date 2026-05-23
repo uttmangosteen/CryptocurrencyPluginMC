@@ -17,7 +17,6 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.model.W
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.toDocument
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.toOutPointId
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.toUtxo
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import org.bson.Document

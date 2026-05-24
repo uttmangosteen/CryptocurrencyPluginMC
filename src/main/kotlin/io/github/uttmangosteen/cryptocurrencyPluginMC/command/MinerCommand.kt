@@ -15,6 +15,7 @@ import org.bukkit.entity.Player
 
 class MinerCommand(
     private val plugin: Main,
+    private val commandRateLimiter: CommandRateLimiter,
 ) : CommandExecutor, TabCompleter {
     private val lifecycleCommand = MachineSettingCommand(plugin)
     private val infoCommand = MachineInfoCommand(plugin)
@@ -32,6 +33,12 @@ class MinerCommand(
         if (!plugin.pluginConfig.enable) return true
         if (!sender.hasPermission("cryptocurrency.miner")) return true
         if (sender !is Player) return true
+
+        if (!commandRateLimiter.tryAcquire(sender)) {
+            sender.sendMessage("${plugin.pluginConfig.prefix}§cコマンドの実行が速すぎます")
+            return true
+        }
+
         if (args.isEmpty()) return false
 
         when (args[0]) {

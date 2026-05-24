@@ -1,6 +1,7 @@
 package io.github.uttmangosteen.cryptocurrencyPluginMC
 
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.AdminCommand
+import io.github.uttmangosteen.cryptocurrencyPluginMC.command.CommandRateLimiter
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.MinerCommand
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.UserCommand
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.MongoDatabaseProvider
@@ -67,11 +68,13 @@ class Main : JavaPlugin() {
     }
 
     private fun registerCommands(gpuConfig: GpuConfig) {
-        val userCommand = UserCommand(this@Main)
+        val commandRateLimiter = CommandRateLimiter(pluginConfig.commandRateLimitMillis)
+
+        val userCommand = UserCommand(this@Main, commandRateLimiter)
         getCommand("cryptocurrency")?.tabCompleter = userCommand
         getCommand("cryptocurrency")?.setExecutor(userCommand)
 
-        val minerCommand = MinerCommand(this@Main)
+        val minerCommand = MinerCommand(this@Main, commandRateLimiter)
         getCommand("cryptocurrencymachine")?.setExecutor(minerCommand)
         getCommand("cryptocurrencymachine")?.tabCompleter = minerCommand
 

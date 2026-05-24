@@ -145,7 +145,7 @@ class MiningMachineRepository(
                 .map { it.toMiningMachine() }
                 .toList()
                 .filter { machine ->
-                    machine.hasActiveGpu() && machine.rewardAccountPubKey != null
+                    machine.hasActiveGpu()
                 }
         } catch (e: Exception) {
             logger.ccWarning(

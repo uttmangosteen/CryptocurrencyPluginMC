@@ -53,6 +53,31 @@ data class MiningMachine(
         return uuid in userUuids
     }
 
+    fun activeGpuCount(): Int {
+        var count = 0
+        for (gpu in gpuSlots) {
+            if (gpu != null && gpu.isActive()) count++
+        }
+        return count
+    }
+
+    fun totalGpuPower(): Int {
+        var power = 0
+        for (gpu in gpuSlots) {
+            if (gpu != null && gpu.isActive()) {
+                power += gpu.power.coerceAtLeast(0)
+            }
+        }
+        return power
+    }
+
+    fun hasActiveGpu(): Boolean {
+        for (gpu in gpuSlots) {
+            if (gpu != null && gpu.isActive() && gpu.power > 0) return true
+        }
+        return false
+    }
+
     fun addUser(uuid: String): Boolean {
         if (uuid.isBlank()) return false
         if (userUuids.size >= MAX_USERS) return false
@@ -109,22 +134,12 @@ data class MiningMachine(
         return gpu
     }
 
-    fun totalGpuPower(): Int {
-        normalizeGpuSlots()
-        return gpuSlots
-            .filterNotNull()
-            .filter { it.isActive() }
-            .sumOf { it.power.coerceAtLeast(0) }
-    }
-
-    fun hasActiveGpu(): Boolean {
-        return totalGpuPower() > 0
-    }
-
     fun addFuel(amount: Int): Boolean {
         if (amount <= 0) return false
+        val oldFuelAmount = fuelAmount
         val added = fuelAmount + amount
         fuelAmount = added.coerceAtMost(MAX_FUEL_AMOUNT)
+        if (fuelAmount == oldFuelAmount) return false
         refreshStatus()
         isDirty = true
         return true
@@ -158,7 +173,7 @@ data class MiningMachine(
 
     fun refreshStatus() {
         val oldStatus = status
-        val activeGpuCount = gpuSlots.count { it != null && it.isActive() }
+        val activeGpuCount = activeGpuCount()
         status = when {
             !enabled -> MiningMachineStatus.DISABLED
             rewardAccountPubKey == null -> MiningMachineStatus.IDLE
@@ -214,14 +229,27 @@ data class MiningMachine(
     }
 
     fun replaceMiningBlock(block: Block?) {
+        if (miningBlock === block) return
         miningBlock = block
         refreshStatus()
         isDirty = true
     }
 
+    fun clearMiningBlock(): Boolean {
+        if (miningBlock == null) return false
+        miningBlock = null
+        isDirty = true
+        return true
+    }
+
     fun consumeGpuLife() {
-        normalizeGpuSlots()
-        gpuSlots.filterNotNull().forEach { it.consumeLife() }
+        var changed = false
+        for (gpu in gpuSlots) {
+            if (gpu == null) continue
+            gpu.consumeLife()
+            changed = true
+        }
+        if (!changed) return
         refreshStatus()
         isDirty = true
     }

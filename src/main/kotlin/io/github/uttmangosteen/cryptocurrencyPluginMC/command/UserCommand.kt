@@ -14,6 +14,7 @@ import kotlin.text.startsWith
 
 class UserCommand(
     private val plugin: Main,
+    private val commandRateLimiter: CommandRateLimiter,
 ) : CommandExecutor, TabCompleter {
     private val accountCommand = AccountCommand(plugin)
     private val balanceCommand = BalanceCommand(plugin)
@@ -29,6 +30,11 @@ class UserCommand(
     ): Boolean {
         if (!plugin.pluginConfig.enable) return true
         if (!sender.hasPermission("cryptocurrency.user")) return true
+
+        if (!commandRateLimiter.tryAcquire(sender)) {
+            sender.sendMessage("${plugin.pluginConfig.prefix}§cコマンドの実行が速すぎます")
+            return true
+        }
 
         if (args.isEmpty()) return false
 

@@ -68,38 +68,31 @@ class MiningMachineService(
         // メモリ上に稼働中のマシンがあればそれを、無ければDBから取得
         val machine = activeMachines[machineId] ?: plugin.repositories.miningMachineRepo.get(machineId) ?: return false
 
-        // 権限チェック
-        val allowed = bypassPermission || if (requireOwner) {
-            machine.isOwner(requesterUuid)
-        } else {
-            machine.canAccess(requesterUuid)
-        }
+        // 権限チェック | ブロック更新有無
+        val allowed =
+            bypassPermission || if (requireOwner) machine.isOwner(requesterUuid) else machine.canAccess(requesterUuid)
+        if (!allowed || !block(machine)) return false
 
-        if (!allowed) return false
+        machine.refreshStatus()
+        if (!plugin.repositories.miningMachineRepo.save(machine)) return false
+        machine.isDirty = false
+        if (machine.status == MiningMachineStatus.MINING) {
+            val wasActive = activeMachines.containsKey(machine.id)
+            activeMachines[machine.id] = machine
 
-        // マシンの状態を変更（isDirty = true）
-        val changed = block(machine)
-        if (!changed) return false
-
-        // 即時単独saveがいるか?
-        val saved = plugin.repositories.miningMachineRepo.save(machine)
-        if (saved) {
-            machine.isDirty = false
-            machine.refreshStatus()
-            if (machine.status == MiningMachineStatus.MINING) {
-                val wasActive = activeMachines.containsKey(machine.id)
-                activeMachines[machine.id] = machine
-
-                if (!wasActive) {
-                    activeMachines.values.forEach { machine ->
-                        machine.replaceMiningBlock(null)
-                    }
-                }
-            } else {
-                activeMachines.remove(machine.id)
+            if (!wasActive) {
+                clearActiveMiningBlocks()
             }
+        } else {
+            activeMachines.remove(machine.id)
         }
-        return saved
+        return true
+    }
+
+    private fun clearActiveMiningBlocks() {
+        activeMachines.values.forEach { machine ->
+            machine.clearMiningBlock()
+        }
     }
 
     suspend fun getMachine(machineId: String): MiningMachine? {
@@ -113,12 +106,17 @@ class MiningMachineService(
         runningJob?.cancel()
         runningJob = null
 
-        val machinesToSave = activeMachines.values.filter { it.isDirty }
+        val machinesToSave = ArrayList<MiningMachine>()
+        for (machine in activeMachines.values) {
+            if (machine.isDirty) machinesToSave.add(machine)
+        }
+
         if (machinesToSave.isNotEmpty()) {
             plugin.logger.ccInfo(
                 LogComponent.MINING_MACHINE_REPOSITORY,
                 "Saving ${machinesToSave.size} active mining machines to database on plugin stop..."
             )
+
             // メインスレッド
             runBlocking {
                 val saved = plugin.repositories.miningMachineRepo.saveAll(machinesToSave)
@@ -131,7 +129,13 @@ class MiningMachineService(
     private suspend fun tick() {
         if (activeMachines.isEmpty()) return
 
-        val networkMiningPower = activeMachines.values.fold(0L) { sum, machine ->
+        val runnableMachines = activeMachines.values.filter { machine ->
+            machine.hasActiveGpu() && machine.rewardAccountPubKey != null
+        }
+
+        if (runnableMachines.isEmpty()) return
+
+        val networkMiningPower = runnableMachines.fold(0L) { sum, machine ->
             Math.addExact(sum, machine.totalGpuPower().toLong())
         }
         if (networkMiningPower <= 0L) return
@@ -145,15 +149,17 @@ class MiningMachineService(
         for (machine in activeMachines.values) {
             val mined = processMachine(machine, networkMiningPower, latestBlock)
             if (mined) {
-                activeMachines.values.forEach { machine ->
-                    machine.replaceMiningBlock(null)
-                }
+                clearActiveMiningBlocks()
                 break
             }
         }
 
         if (shouldSaveMiningState) {
-            val machinesToSave = activeMachines.values.filter { it.isDirty }
+            val machinesToSave = ArrayList<MiningMachine>()
+            for (machine in activeMachines.values) {
+                if (machine.isDirty) machinesToSave.add(machine)
+            }
+
             if (machinesToSave.isNotEmpty()) {
                 val saved = plugin.repositories.miningMachineRepo.saveAll(machinesToSave)
                 if (saved) machinesToSave.forEach { it.isDirty = false }
@@ -174,7 +180,7 @@ class MiningMachineService(
                 return false
             }
 
-            val activeGpuCount = machine.gpuSlots.count { it != null && it.isActive() }
+            val activeGpuCount = machine.activeGpuCount()
             if (activeGpuCount == 0) return false
 
             //燃料がなかったら掘れない(idle移行してメモリから消す)

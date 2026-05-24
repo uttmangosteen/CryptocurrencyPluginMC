@@ -78,7 +78,7 @@ class InfoCommand(private val plugin: Main) {
                 player.sendMessage("$prefix§f§l========== §8§lPending Transaction §f§l==========")
 
                 pendingEntries.forEach { entry ->
-                    player.sendMessage("$prefix§8§l----------------------------------------------------------")
+                    player.sendMessage("$prefix§8§l----------------------------------------------------")
                     val tx = entry.transaction
                     val inputUtxos = tx.inputs.mapNotNull { input ->
                         utxoMap[

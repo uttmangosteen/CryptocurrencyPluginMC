@@ -315,7 +315,7 @@ class MiningMachineService(
                             player.sendMessage(message)
                         }
                     }
-                    player.sendMessage("$prefix§f§l===========================================")
+                    player.sendMessage("$prefix§f§l==========================================")
                 }
             }
         }

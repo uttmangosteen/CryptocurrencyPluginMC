@@ -7,7 +7,7 @@ import org.bukkit.entity.Player
 
 class InfoCommand(private val plugin: Main) {
     private val prefix = plugin.pluginConfig.prefix
-    private val displayService = TxMessageFactory()
+    private val txMessageFactory = TxMessageFactory()
 
     fun execute(sender: CommandSender, args: Array<out String>) {
         if (sender !is Player) return
@@ -78,6 +78,7 @@ class InfoCommand(private val plugin: Main) {
                 player.sendMessage("$prefix§f§l========== §8§lPending Transaction §f§l==========")
 
                 pendingEntries.forEach { entry ->
+                    player.sendMessage("$prefix§8§l----------------------------------------------------------")
                     val tx = entry.transaction
                     val inputUtxos = tx.inputs.mapNotNull { input ->
                         utxoMap[
@@ -88,7 +89,7 @@ class InfoCommand(private val plugin: Main) {
                         ]
                     }
 
-                    displayService.buildMessages(
+                    txMessageFactory.buildMessages(
                         prefix = prefix,
                         tx = tx,
                         targetPubKeys = setOf(targetPubKey),

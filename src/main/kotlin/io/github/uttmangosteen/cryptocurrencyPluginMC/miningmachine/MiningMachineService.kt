@@ -259,63 +259,61 @@ class MiningMachineService(
                 player.sendMessage(message)
                 player.playSound(player.location, Sound.BLOCK_NOTE_BLOCK_BIT, 1f, 2f)
             }
-        }
-        plugin.launchAsync {
-            val onlinePlayers = Bukkit.getOnlinePlayers().toList()
-            if (onlinePlayers.isEmpty()) return@launchAsync
+            plugin.launchAsync {
+                val onlinePlayers = Bukkit.getOnlinePlayers().toList()
+                if (onlinePlayers.isEmpty()) return@launchAsync
 
-            val onlineUuids = onlinePlayers.map { it.uniqueId.toString() }
-            val wallets = plugin.repositories.walletRepo.getWallets(onlineUuids)
-            val walletMap = wallets.associateBy { it.ownerUUID }
+                val onlineUuids = onlinePlayers.map { it.uniqueId.toString() }
+                val wallets = plugin.repositories.walletRepo.getWallets(onlineUuids)
+                val walletMap = wallets.associateBy { it.ownerUUID }
 
-            val outPoints = block.transactions
-                .flatMap { tx ->
-                    tx.inputs.map { input ->
-                        OutPoint(
-                            txHash = input.prevTxHash,
-                            outputIndex = input.outputIndex
-                        )
-                    }
-                }
-                .distinct()
-
-            val utxoMap = plugin.repositories.utxoRepo.findUtxos(outPoints = outPoints)
-
-            for (player in onlinePlayers) {
-                val wallet = walletMap[player.uniqueId.toString()] ?: continue
-
-                val userPubKeys = wallet.accounts.map { it.publicKey }.toSet()
-                if (userPubKeys.isEmpty()) continue
-
-                block.transactions.forEach { tx ->
-                    val related = tx.inputs.any { it.publicKey in userPubKeys } ||
-                            tx.outputs.any { it.receiverPubKey in userPubKeys }
-
-                    if (!related) return@forEach
-
-                    val inputUtxos = tx.inputs.mapNotNull { input ->
-                        utxoMap[
+                val outPoints = block.transactions
+                    .flatMap { tx ->
+                        tx.inputs.map { input ->
                             OutPoint(
                                 txHash = input.prevTxHash,
                                 outputIndex = input.outputIndex
                             )
-                        ]
+                        }
                     }
+                    .distinct()
 
-                    val inputAmount = inputUtxos.sumOf { it.amount }
-                    val outputAmount = tx.outputs.sumOf { it.amount }
-                    val fee = if (tx.isCoinbase) 0L else inputAmount - outputAmount
+                val utxoMap = plugin.repositories.utxoRepo.findUtxos(outPoints = outPoints)
 
-                    player.sendMessage("$prefix§f§l========== Transaction Confirmed ==========")
+                for (player in onlinePlayers) {
+                    val wallet = walletMap[player.uniqueId.toString()] ?: continue
 
-                    txMessageFactory.buildMessages(
-                        prefix = prefix,
-                        tx = tx,
-                        targetPubKeys = userPubKeys,
-                        inputUtxos = inputUtxos,
-                        fee = fee
-                    ).forEach { message ->
-                        player.sendMessage(message)
+                    val userPubKeys = wallet.accounts.map { it.publicKey }.toSet()
+                    if (userPubKeys.isEmpty()) continue
+
+                    player.sendMessage("$prefix§f§l========== §e§lTransaction Confirmed §f§l==========")
+                    block.transactions.forEach { tx ->
+                        player.sendMessage("$prefix§8§l-------------------------------------------------------")
+                        val related =
+                            tx.inputs.any { it.publicKey in userPubKeys } || tx.outputs.any { it.receiverPubKey in userPubKeys }
+
+                        if (!related) return@forEach
+
+                        val inputUtxos = tx.inputs.mapNotNull { input ->
+                            utxoMap[
+                                OutPoint(
+                                    txHash = input.prevTxHash,
+                                    outputIndex = input.outputIndex
+                                )
+                            ]
+                        }
+                        val inputAmount = inputUtxos.sumOf { it.amount }
+                        val outputAmount = tx.outputs.sumOf { it.amount }
+                        val fee = if (tx.isCoinbase) 0L else inputAmount - outputAmount
+                        txMessageFactory.buildMessages(
+                            prefix = prefix,
+                            tx = tx,
+                            targetPubKeys = userPubKeys,
+                            inputUtxos = inputUtxos,
+                            fee = fee
+                        ).forEach { message ->
+                            player.sendMessage(message)
+                        }
                     }
                     player.sendMessage("$prefix§f§l===========================================")
                 }

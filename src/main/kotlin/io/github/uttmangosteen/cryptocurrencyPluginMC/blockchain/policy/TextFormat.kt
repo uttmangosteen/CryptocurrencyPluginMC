@@ -7,9 +7,18 @@ object TextFormat {
     const val COIN_FRACTION_DIGITS: Int = 5
 
     fun formatCoin(amount: Long): String {
-        val whole = amount / CoinbasePolicy.COIN_SCALE
-        val fraction = amount % CoinbasePolicy.COIN_SCALE
-        return "%d.%0${COIN_FRACTION_DIGITS}d %s".format(
+        val sign = if (amount < 0L) "-" else ""
+        val absoluteAmount = if (amount == Long.MIN_VALUE) {
+            Long.MAX_VALUE
+        } else {
+            kotlin.math.abs(amount)
+        }
+
+        val whole = absoluteAmount / CoinbasePolicy.COIN_SCALE
+        val fraction = absoluteAmount % CoinbasePolicy.COIN_SCALE
+
+        return "%s%d.%0${COIN_FRACTION_DIGITS}d %s".format(
+            sign,
             whole,
             fraction,
             COIN_NAME

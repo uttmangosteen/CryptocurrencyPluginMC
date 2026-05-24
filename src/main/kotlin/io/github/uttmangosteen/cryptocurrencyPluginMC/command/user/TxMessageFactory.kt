@@ -12,7 +12,6 @@ class TxMessageFactory {
         inputUtxos: List<Utxo>,
         fee: Long
     ): List<String> {
-        val separate = "$prefix§8§l--------------------------------------------------------------"
         val messages = mutableListOf<String>()
 
         val memo = tx.memo.takeIf { it.isNotBlank() } ?: "no memo"
@@ -24,7 +23,6 @@ class TxMessageFactory {
                 .sumOf { it.amount }
 
             messages += "$prefix§a[MINE] +${TextFormat.formatCoin(receivedAmount)} §7(Coinbase)"
-            messages += separate
             return messages
         }
 
@@ -39,7 +37,6 @@ class TxMessageFactory {
 
             messages += "$prefix§a[RECEIVE] +${TextFormat.formatCoin(receivedAmount)}"
             messages += "$prefix §7└§8$senderPubKey"
-            messages += separate
             return messages
         }
 
@@ -73,7 +70,6 @@ class TxMessageFactory {
 
         val changeDetail = if (selfReceiveAmount > 0) "Change + Self" else "Change"
         messages += "$prefix §7└§f[RETURN] ${TextFormat.formatCoin(returnAmount)} §8($changeDetail)"
-        messages += separate
         return messages
     }
 

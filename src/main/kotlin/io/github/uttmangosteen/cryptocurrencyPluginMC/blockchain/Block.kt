@@ -3,6 +3,7 @@ package io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.transaction.Transaction
 import java.math.BigInteger
 import java.nio.ByteBuffer
+import java.security.MessageDigest
 
 data class Block(
     val height: Int,
@@ -21,12 +22,28 @@ data class Block(
     var hash: String? = null
 ) {
     private val headerBytes = prepareHeaderBytes()
+    private val baseDigest: MessageDigest by lazy {
+        val digest = MessageDigest.getInstance("SHA-256")
+        digest.update(headerBytes)
+        digest
+    }
+
+    val targetBytes = calculateTargetBytes(this.difficulty)
 
     fun calculateHash(nonce: Long): ByteArray {
-        val buffer = ByteBuffer.allocate(this.headerBytes.size + 8)
-            .put(this.headerBytes)
-            .putLong(nonce)
-        return buffer.array().sha256()
+        val digest = baseDigest.clone() as MessageDigest
+
+        val nonceBytes = ByteArray(8)
+        nonceBytes[0] = (nonce ushr 56).toByte()
+        nonceBytes[1] = (nonce ushr 48).toByte()
+        nonceBytes[2] = (nonce ushr 40).toByte()
+        nonceBytes[3] = (nonce ushr 32).toByte()
+        nonceBytes[4] = (nonce ushr 24).toByte()
+        nonceBytes[5] = (nonce ushr 16).toByte()
+        nonceBytes[6] = (nonce ushr 8).toByte()
+        nonceBytes[7] = nonce.toByte()
+
+        return digest.digest(nonceBytes)
     }
 
     companion object {
@@ -44,12 +61,28 @@ data class Block(
             return buffer.array().sha256().toHexString()
         }
 
-        // 1/diffで採掘成功
-        fun isMined(hashBytes: ByteArray, diff: Long): Boolean {
-            if (diff <= 0) return false
-            val hashValue = BigInteger(1, hashBytes)
+        fun calculateTargetBytes(diff: Long): ByteArray {
+            if (diff <= 0) return ByteArray(32) { 0 }
             val target = MAX_HASH_VALUE.divide(BigInteger.valueOf(diff))
-            return hashValue <= target
+            val targetBytes = target.toByteArray()
+            val result = ByteArray(32)
+            if (targetBytes.size == 33) {
+                System.arraycopy(targetBytes, 1, result, 0, 32)
+            } else if (targetBytes.size <= 32) {
+                System.arraycopy(targetBytes, 0, result, 32 - targetBytes.size, targetBytes.size)
+            }
+            return result
+        }
+
+        // 1/diffで採掘成功
+        fun isMined(hashBytes: ByteArray, targetBytes: ByteArray): Boolean {
+            for (i in 0 until 32) {
+                val h = hashBytes[i].toInt() and 0xFF
+                val t = targetBytes[i].toInt() and 0xFF
+                if (h < t) return true
+                if (h > t) return false
+            }
+            return true
         }
 
         fun createGenesis(): Block {
@@ -109,7 +142,7 @@ data class Block(
         if (blockHash != calculatedHashBytes.toHexString()) return false
 
         //　hash がクリアできてるか
-        if (!isMined(calculatedHashBytes, difficulty)) return false
+        if (!isMined(calculatedHashBytes, targetBytes)) return false
 
         if (transactions.isEmpty()) return false
 

@@ -68,7 +68,7 @@ class MiningMachineService(
         // メモリ上に稼働中のマシンがあればそれを、無ければDBから取得
         val machine = activeMachines[machineId] ?: plugin.repositories.miningMachineRepo.get(machineId) ?: return false
 
-        // 権限チェック | ブロック更新有無
+        // 権限チェック & ブロック更新有無
         val allowed =
             bypassPermission || if (requireOwner) machine.isOwner(requesterUuid) else machine.canAccess(requesterUuid)
         if (!allowed || !block(machine)) return false
@@ -80,9 +80,7 @@ class MiningMachineService(
             val wasActive = activeMachines.containsKey(machine.id)
             activeMachines[machine.id] = machine
 
-            if (!wasActive) {
-                clearActiveMiningBlocks()
-            }
+            if (!wasActive) clearActiveMiningBlocks()
         } else {
             activeMachines.remove(machine.id)
         }
@@ -90,9 +88,7 @@ class MiningMachineService(
     }
 
     private fun clearActiveMiningBlocks() {
-        activeMachines.values.forEach { machine ->
-            machine.clearMiningBlock()
-        }
+        activeMachines.values.forEach { machine -> machine.clearMiningBlock() }
     }
 
     suspend fun getMachine(machineId: String): MiningMachine? {
@@ -114,7 +110,7 @@ class MiningMachineService(
         if (machinesToSave.isNotEmpty()) {
             plugin.logger.ccInfo(
                 LogComponent.MINING_MACHINE_REPOSITORY,
-                "Saving ${machinesToSave.size} active mining machines to database on plugin stop..."
+                "saving ${machinesToSave.size} active mining machines to database on plugin stop"
             )
 
             // メインスレッド
@@ -254,7 +250,7 @@ class MiningMachineService(
             val minerName = if (machine.shareNameOnMined) "§f${owner.name}" else "§7§k00000000"
 
             val message =
-                "${plugin.pluginConfig.prefix}§a$minerName §aがブロックを採掘しました §7height=§f${block.height}"
+                "$prefix§a$minerName §aがブロックを採掘しました §7height=§f${block.height}"
             for (player in Bukkit.getOnlinePlayers()) {
                 player.sendMessage(message)
                 player.playSound(player.location, Sound.BLOCK_NOTE_BLOCK_BIT, 1f, 2f)

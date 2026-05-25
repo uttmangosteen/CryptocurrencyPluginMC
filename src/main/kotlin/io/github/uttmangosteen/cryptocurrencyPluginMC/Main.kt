@@ -4,6 +4,7 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.command.AdminCommand
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.CommandRateLimiter
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.MinerCommand
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.UserCommand
+import io.github.uttmangosteen.cryptocurrencyPluginMC.gui.Event
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.MongoDatabaseProvider
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.MongoRepositories
 import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.MiningMachineService
@@ -48,6 +49,8 @@ class Main : JavaPlugin() {
             logger = logger,
             miningDelayTicks = pluginConfig.miningMachineMiningDelayTicks
         )
+
+        server.pluginManager.registerEvents(Event(), this)
 
         pluginScope.launch {
             try {

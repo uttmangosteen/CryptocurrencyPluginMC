@@ -4,13 +4,19 @@ import net.kyori.adventure.text.Component
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.InventoryClickEvent
+import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
 
-abstract class Gui(val size: Int, val title: Component) : InventoryHolder {
+abstract class Gui(rows: Int, val title: Component) : InventoryHolder {
+    val size: Int = rows.coerceIn(1, 6) * 9
     private val inventory: Inventory = Bukkit.createInventory(this, size, title)
     private val actions = mutableMapOf<Int, (InventoryClickEvent) -> Unit>()
+
+    open val cancelClicks: Boolean = true
+
+    var parentGuiOpener: (() -> Unit)? = null
 
     override fun getInventory(): Inventory = inventory
 
@@ -25,5 +31,13 @@ abstract class Gui(val size: Int, val title: Component) : InventoryHolder {
 
     fun open(player: Player) {
         player.openInventory(inventory)
+    }
+
+    open fun onClick(event: InventoryClickEvent) {
+        actions[event.slot]?.invoke(event)
+    }
+
+    open fun onClose(e: InventoryCloseEvent): Boolean {
+        return false
     }
 }

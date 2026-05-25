@@ -232,7 +232,7 @@ class MiningMachineService(
 
         repeat(power) {
             val hashBytes = block.calculateHash(block.nonce)
-            if (Block.isMined(hashBytes, block.difficulty)) {
+            if (Block.isMined(hashBytes, block.targetBytes)) {
                 block.hash = hashBytes.toHexString()
                 return true
             }
@@ -250,7 +250,7 @@ class MiningMachineService(
             val minerName = if (machine.shareNameOnMined) "§f${owner.name}" else "§7§k00000000"
 
             val message =
-                "$prefix§a$minerName §aがブロックを採掘しました §7height=§f${block.height}"
+                "$prefix§a$minerName §aが§f ${block.height} §a番目のブロックを証明しました！"
             for (player in Bukkit.getOnlinePlayers()) {
                 player.sendMessage(message)
                 player.playSound(player.location, Sound.BLOCK_NOTE_BLOCK_BIT, 1f, 2f)

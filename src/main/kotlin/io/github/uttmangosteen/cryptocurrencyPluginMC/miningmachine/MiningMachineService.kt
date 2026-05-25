@@ -246,11 +246,11 @@ class MiningMachineService(
         val prefix = plugin.pluginConfig.prefix
         plugin.runSync {
             val ownerUuid = machine.ownerUuid ?: return@runSync
-            val owner = Bukkit.getPlayer(java.util.UUID.fromString(ownerUuid)) ?: return@runSync
-            val minerName = if (machine.shareNameOnMined) "§f${owner.name}" else "§7§k00000000"
+            val owner = Bukkit.getOfflinePlayer(java.util.UUID.fromString(ownerUuid))
+            val minerName = if (machine.shareNameOnMined) "${owner.name}" else "§k00000000"
 
             val message =
-                "$prefix§a$minerName §aが§f ${block.height} §a番目のブロックを証明しました！"
+                "$prefix§e§l§ka §f§l$minerName §a§lが§f§l ${block.height} §a§l番目のブロックを証明しました！§e§l§ka"
             for (player in Bukkit.getOnlinePlayers()) {
                 player.sendMessage(message)
                 player.playSound(player.location, Sound.BLOCK_NOTE_BLOCK_BIT, 1f, 2f)

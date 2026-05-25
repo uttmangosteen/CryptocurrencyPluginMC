@@ -16,19 +16,6 @@ class GpuItemFactory(
     private val breakChanceKey = NamespacedKey(plugin, "gpu_break_chance")
     private val powerKey = NamespacedKey(plugin, "gpu_power")
 
-    // machine表示用アイテム
-    fun createMachineDisplayItem(gpu: Gpu): ItemStack {
-        val material = Material.matchMaterial(gpu.material) ?: Material.IRON_INGOT
-
-        return ItemStack(material).apply {
-            editMeta { meta ->
-                meta.displayName(legacySerializer.deserialize(gpu.gpuName))
-                // TODO: MachineGUI作成時要調整
-                meta.displayName(legacySerializer.deserialize("§"))
-            }
-        }
-    }
-
     // アイテム化
     @Suppress("UnstableApiUsage")
     fun createItem(gpu: Gpu): ItemStack {

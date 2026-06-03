@@ -3,7 +3,6 @@ package io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.transaction.Transaction
 import java.math.BigInteger
 import java.nio.ByteBuffer
-import java.security.MessageDigest
 
 data class Block(
     val height: Int,
@@ -22,29 +21,8 @@ data class Block(
     var hash: String? = null
 ) {
     private val headerBytes = prepareHeaderBytes()
-    private val baseDigest: MessageDigest by lazy {
-        val digest = MessageDigest.getInstance("SHA-256")
-        digest.update(headerBytes)
-        digest
-    }
 
     val targetBytes = calculateTargetBytes(this.difficulty)
-
-    fun calculateHash(nonce: Long): ByteArray {
-        val digest = baseDigest.clone() as MessageDigest
-
-        val nonceBytes = ByteArray(8)
-        nonceBytes[0] = (nonce ushr 56).toByte()
-        nonceBytes[1] = (nonce ushr 48).toByte()
-        nonceBytes[2] = (nonce ushr 40).toByte()
-        nonceBytes[3] = (nonce ushr 32).toByte()
-        nonceBytes[4] = (nonce ushr 24).toByte()
-        nonceBytes[5] = (nonce ushr 16).toByte()
-        nonceBytes[6] = (nonce ushr 8).toByte()
-        nonceBytes[7] = nonce.toByte()
-
-        return digest.digest(nonceBytes)
-    }
 
     companion object {
         private const val MEMO_MAX_LENGTH = 32
@@ -55,9 +33,7 @@ data class Block(
         private fun calculateTransactionsRoot(txs: List<Transaction>): String {
             if (txs.isEmpty()) return ByteArray(32).toHexString()
             val buffer = ByteBuffer.allocate(txs.size * 32)
-            txs.forEach { tx ->
-                buffer.put(tx.txHash.hexToByteArray())
-            }
+            txs.forEach { tx -> buffer.put(tx.txHash.hexToByteArray()) }
             return buffer.array().sha256().toHexString()
         }
 
@@ -98,9 +74,8 @@ data class Block(
                 nonce = 0L,
                 hash = null
             )
-            val hashBytes = genesisBlock.calculateHash(genesisBlock.nonce)
-            genesisBlock.hash = hashBytes.toHexString()
-
+            //絶対採掘成功
+            genesisBlock.tryMine()
             return genesisBlock
         }
     }
@@ -126,7 +101,53 @@ data class Block(
         return buffer.array()
     }
 
-    //Block自身でできるチェックしか含まれていない点に注意されたい
+
+
+    //自身のnonceを探す
+    fun tryMine(times: Int = 1): Boolean {
+        if (times <= 0) return false
+
+        val digest = localDigest.get()
+
+        val nonceBytes = ByteArray(8)
+        val hashResult = ByteArray(32)
+        var currentNonce = this.nonce
+
+        repeat(times) {
+            digest.reset()
+            digest.update(headerBytes)
+
+            currentNonce.writeTo(nonceBytes)
+
+            digest.update(nonceBytes)
+            digest.digest(hashResult, 0, 32)
+
+            if (isMined(hashResult, targetBytes)) {
+                this.nonce = currentNonce
+                this.hash = hashResult.toHexString()
+                return true
+            }
+            currentNonce++
+        }
+
+        this.nonce = currentNonce
+        return false
+    }
+
+
+    private fun calculateHash(targetNonce: Long): ByteArray {
+        val digest = localDigest.get()
+        digest.reset()
+        digest.update(headerBytes)
+
+        val nonceBytes = ByteArray(8)
+        targetNonce.writeTo(nonceBytes)
+
+        digest.update(nonceBytes)
+        return digest.digest()
+    }
+
+    //Block自身でできるチェックしか含まれていない点に注意
     fun isValid(latestBlock: Block, expectedDifficulty: Long): Boolean {
         if (this.height != latestBlock.height + 1) return false
         if (this.previousHash != latestBlock.hash) return false
@@ -172,4 +193,16 @@ data class Block(
         }
         return true
     }
+}
+
+//Long(64)→Byte(8)Array変換
+private fun Long.writeTo(dest: ByteArray) {
+    dest[0] = (this ushr 56).toByte()
+    dest[1] = (this ushr 48).toByte()
+    dest[2] = (this ushr 40).toByte()
+    dest[3] = (this ushr 32).toByte()
+    dest[4] = (this ushr 24).toByte()
+    dest[5] = (this ushr 16).toByte()
+    dest[6] = (this ushr 8).toByte()
+    dest[7] = this.toByte()
 }

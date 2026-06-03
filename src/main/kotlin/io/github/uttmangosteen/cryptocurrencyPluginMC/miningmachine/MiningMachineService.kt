@@ -229,17 +229,7 @@ class MiningMachineService(
     private fun tryMine(machine: MiningMachine, block: Block): Boolean {
         val power = machine.totalGpuPower()
         if (power <= 0) return false
-
-        repeat(power) {
-            val hashBytes = block.calculateHash(block.nonce)
-            if (Block.isMined(hashBytes, block.targetBytes)) {
-                block.hash = hashBytes.toHexString()
-                return true
-            }
-            block.nonce++
-        }
-
-        return false
+        return block.tryMine(power)
     }
 
     private fun notifyMined(machine: MiningMachine, block: Block) {

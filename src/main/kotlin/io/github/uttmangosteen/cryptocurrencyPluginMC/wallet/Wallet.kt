@@ -40,7 +40,7 @@ class Wallet(
     }
 
     companion object {
-        private const val MAX_ACCOUNTS = 6
+        private const val MAX_ACCOUNTS = 8
 
         fun create(ownerUUID: String): Wallet {
             return Wallet(

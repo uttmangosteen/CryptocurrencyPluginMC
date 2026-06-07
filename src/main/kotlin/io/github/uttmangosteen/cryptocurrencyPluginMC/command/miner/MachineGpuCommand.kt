@@ -2,14 +2,15 @@ package io.github.uttmangosteen.cryptocurrencyPluginMC.command.miner
 
 import io.github.uttmangosteen.cryptocurrencyPluginMC.Main
 import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.gpu.Gpu
-import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.gpu.GpuItemFactory
+import io.github.uttmangosteen.cryptocurrencyPluginMC.item.GpuItems
+import io.github.uttmangosteen.cryptocurrencyPluginMC.item.ItemKeys
 import org.bukkit.entity.Player
 
 class MachineGpuCommand(
     private val plugin: Main
 ) {
     private val prefix = plugin.pluginConfig.prefix
-    private val gpuItemFactory = GpuItemFactory(plugin)
+    private val gpuKeys = ItemKeys.gpu(plugin)
 
     fun execute(player: Player, args: Array<out String>) {
         val action = args.getOrNull(1) ?: return
@@ -24,7 +25,7 @@ class MachineGpuCommand(
 
     private fun setGpu(player: Player, machineId: String, slot: Int) {
         val item = player.inventory.itemInMainHand
-        val gpu = gpuItemFactory.readGpu(item)
+        val gpu = GpuItems.read(item, gpuKeys)
 
         if (gpu == null) {
             player.sendMessage("$prefix§c有効なGPUアイテムを手に持ってください")
@@ -75,7 +76,7 @@ class MachineGpuCommand(
                     return@runSync
                 }
 
-                val item = gpuItemFactory.createItem(gpu)
+                val item = GpuItems.create(gpu, gpuKeys)
                 val overflow = player.inventory.addItem(item)
                 overflow.values.forEach { player.world.dropItemNaturally(player.location, it) }
 

@@ -6,9 +6,10 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.policy.TextForm
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.policy.TextFormat.formatCoin
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.transaction.Signer
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.transaction.Transaction
+import io.github.uttmangosteen.cryptocurrencyPluginMC.item.ItemKeys
+import io.github.uttmangosteen.cryptocurrencyPluginMC.item.KeyItems
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.model.MempoolEntry
 import io.github.uttmangosteen.cryptocurrencyPluginMC.wallet.Account
-import io.github.uttmangosteen.cryptocurrencyPluginMC.wallet.KeyItemFactory
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
@@ -19,7 +20,7 @@ class SendCommand(
     private val plugin: Main
 ) {
     private val prefix = plugin.pluginConfig.prefix
-    private val publicKeyItemFactory = KeyItemFactory(plugin)
+    private val keyItemKeys = ItemKeys.keyItem(plugin)
 
     private val pendingSends = ConcurrentHashMap<UUID, MutableList<PendingSend>>()
 
@@ -98,8 +99,9 @@ class SendCommand(
         val pubKey = if (pubKeyArg != null) {
             Signer.normalizePublicKey(pubKeyArg)
         } else {
-            publicKeyItemFactory.readAccount(
-                itemStack = player.inventory.itemInMainHand,
+            KeyItems.readAccount(
+                item = player.inventory.itemInMainHand,
+                keys = keyItemKeys,
                 memo = ""
             )?.publicKey
         }

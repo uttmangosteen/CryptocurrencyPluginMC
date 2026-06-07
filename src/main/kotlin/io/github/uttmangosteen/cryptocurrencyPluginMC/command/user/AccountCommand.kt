@@ -1,8 +1,9 @@
 package io.github.uttmangosteen.cryptocurrencyPluginMC.command.user
 
 import io.github.uttmangosteen.cryptocurrencyPluginMC.Main
+import io.github.uttmangosteen.cryptocurrencyPluginMC.item.ItemKeys
+import io.github.uttmangosteen.cryptocurrencyPluginMC.item.KeyItems
 import io.github.uttmangosteen.cryptocurrencyPluginMC.wallet.Account
-import io.github.uttmangosteen.cryptocurrencyPluginMC.wallet.KeyItemFactory
 import org.bukkit.Material
 import org.bukkit.Sound
 import org.bukkit.command.CommandSender
@@ -13,7 +14,7 @@ class AccountCommand(
     private val plugin: Main,
 ) {
     private val prefix = plugin.pluginConfig.prefix
-    private val publicKeyItemFactory = KeyItemFactory(plugin)
+    private val keyItemKeys = ItemKeys.keyItem(plugin)
 
     fun execute(sender: CommandSender, args: Array<out String>) {
         if (sender !is Player) return
@@ -158,7 +159,7 @@ class AccountCommand(
                     return@runSync
                 }
 
-                val item = publicKeyItemFactory.create(account, memo)
+                val item = KeyItems.create(account, memo, keyItemKeys)
                 val overflow = player.inventory.addItem(item)
                 overflow.values.forEach { player.world.dropItemNaturally(player.location, it) }
                 playWriteSound(player)
@@ -189,7 +190,7 @@ class AccountCommand(
                     return@runSync
                 }
 
-                val item = publicKeyItemFactory.createWithPrivateKey(account, memo)
+                val item = KeyItems.createWithPrivateKey(account, memo, keyItemKeys)
 
                 if (item == null) {
                     player.inventory.addItem(ItemStack(Material.PAPER, 1))
@@ -239,8 +240,9 @@ class AccountCommand(
             }
             watchAccount
         } else {
-            val itemAccount = publicKeyItemFactory.readAccount(
-                itemStack = player.inventory.itemInMainHand,
+            val itemAccount = KeyItems.readAccount(
+                item = player.inventory.itemInMainHand,
+                keys = keyItemKeys,
                 memo = "§7registered item"
             )
             if (itemAccount == null) {

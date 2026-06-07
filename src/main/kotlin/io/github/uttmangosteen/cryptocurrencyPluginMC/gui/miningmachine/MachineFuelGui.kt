@@ -4,13 +4,20 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.LogComponent
 import io.github.uttmangosteen.cryptocurrencyPluginMC.Main
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccInfo
 import io.github.uttmangosteen.cryptocurrencyPluginMC.gui.Gui
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.event.inventory.InventoryCloseEvent
 
 class MachineFuelGui(
     private val plugin: Main,
     private val machineId: String
-) : Gui(6, LegacyComponentSerializer.legacySection().deserialize("§c§l燃料投入口")) {
+) : Gui(
+    6,
+    Component.text("燃料投入口")
+        .color(NamedTextColor.RED)
+        .decorate(TextDecoration.BOLD)
+) {
     override val cancelClicks: Boolean = false
 
     val prefix = plugin.pluginConfig.prefix

@@ -1,8 +1,8 @@
 package io.github.uttmangosteen.cryptocurrencyPluginMC.item
 
 import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.format.TextColor
 import net.kyori.adventure.text.format.TextDecoration
+import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.inventory.ItemStack
@@ -10,17 +10,18 @@ import org.bukkit.persistence.PersistentDataContainer
 import org.bukkit.plugin.java.JavaPlugin
 
 object Items {
-    fun text(
-        content: String,
-        color: TextColor? = null,
-        vararg decorations: TextDecoration
-    ): Component {
-        var component = Component.text(content)
-        if (color != null) component = component.color(color)
-        decorations.forEach { decoration ->
-            component = component.decorate(decoration)
+    private val miniMessage = MiniMessage.miniMessage()
+
+    fun miniMessage(text: String): Component {
+        return runCatching {
+            miniMessage.deserialize("<!i>$text")
+        }.getOrElse {
+            Component.text(text)
         }
-        return component
+    }
+
+    fun miniMessageList(lines: List<String>): List<Component> {
+        return lines.map { miniMessage(it) }
     }
 
     @Suppress("UnstableApiUsage")
@@ -34,8 +35,8 @@ object Items {
     ): ItemStack {
         return ItemStack(material, amount).apply {
             editMeta { meta ->
-                if (name != null) meta.displayName(name)
-                if (lore != null) meta.lore(lore)
+                if (name != null) meta.displayName(name.removeDefaultItalic())
+                if (lore != null) meta.lore(lore.map { it.removeDefaultItalic() })
 
                 if (customModelData != null) {
                     val cmd = meta.customModelDataComponent
@@ -54,11 +55,22 @@ object Items {
         if (item == null || item.type.isAir) return null
         return item.itemMeta?.persistentDataContainer
     }
+
+    private fun Component.removeDefaultItalic(): Component {
+        return if (this.decoration(TextDecoration.ITALIC) == TextDecoration.State.NOT_SET) this.decoration(
+            TextDecoration.ITALIC,
+            false
+        ) else this
+    }
 }
 
 object ItemKeys {
     fun gpu(plugin: JavaPlugin): GpuKeys {
         return GpuKeys(
+            name = NamespacedKey(plugin, "gpu_name"),
+            description = NamespacedKey(plugin, "gpu_description"),
+            material = NamespacedKey(plugin, "gpu_material"),
+            customModelData = NamespacedKey(plugin, "gpu_custom_model_data"),
             life = NamespacedKey(plugin, "gpu_life"),
             breakChance = NamespacedKey(plugin, "gpu_break_chance"),
             power = NamespacedKey(plugin, "gpu_power")

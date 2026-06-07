@@ -1,7 +1,10 @@
 package io.github.uttmangosteen.cryptocurrencyPluginMC.command.miner
 
 import io.github.uttmangosteen.cryptocurrencyPluginMC.Main
+import io.github.uttmangosteen.cryptocurrencyPluginMC.item.Items
 import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.MiningMachine
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.entity.Player
 
 class MachineInfoCommand(
@@ -49,12 +52,22 @@ class MachineInfoCommand(
             if (gpu == null) {
                 player.sendMessage("$prefix§8[$index] -")
             } else {
-                val (color, statusText) = when {
-                    gpu.life > 0 -> "§a" to "Active"
-                    gpu.life == 0 -> "§e" to "EndOfLife"
-                    else -> "§c" to "Broken"
+                val (lifeColor, statusText) = when {
+                    gpu.life > 0 -> NamedTextColor.GREEN to "Active"
+                    gpu.life == 0 -> NamedTextColor.YELLOW to "EndOfLife"
+                    else -> NamedTextColor.RED to "Broken"
                 }
-                player.sendMessage("$prefix§7[$index] §f${gpu.gpuName} §7Power: §a${gpu.power} §7Life: $color${gpu.life} §7($statusText)")
+
+                player.sendMessage(
+                    Component.text(prefix)
+                        .append(Component.text("[$index] ", NamedTextColor.GRAY))
+                        .append(Items.miniMessage(gpu.gpuName))
+                        .append(Component.text(" Power: ", NamedTextColor.GRAY))
+                        .append(Component.text(gpu.power.toString(), NamedTextColor.GREEN))
+                        .append(Component.text(" Life: ", NamedTextColor.GRAY))
+                        .append(Component.text(gpu.life.toString(), lifeColor))
+                        .append(Component.text(" ($statusText)", NamedTextColor.GRAY))
+                )
             }
         }
 

@@ -63,7 +63,6 @@ class AdminCommand(
         alias: String,
         args: Array<out String>
     ): List<String> {
-        if (command.name != "cryptocurrencyadmin") return emptyList()
         if (!sender.hasPermission("cryptocurrency.admin")) return emptyList()
 
         return when (args.size) {

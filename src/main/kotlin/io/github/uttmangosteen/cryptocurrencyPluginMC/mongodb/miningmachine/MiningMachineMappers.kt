@@ -75,10 +75,10 @@ fun Gpu.toDocument(): Document {
 
 fun Document.toGpu(): Gpu {
     return Gpu(
-        gpuName = getString("gpuName") ?: "§c§l名称未設定",
+        gpuName = getString("gpuName") ?: "<red><bold>名称未設定",
         material = getString("material") ?: "IRON_INGOT",
         customModelData = get("customModelData", Number::class.java)?.toFloat() ?: 0f,
-        description = getString("description") ?: "§c§l説明未設定",
+        description = getString("description") ?: "<red><bold>説明未設定",
         life = get("life", Number::class.java)?.toInt() ?: -1,
         breakChance = get("breakChance", Number::class.java)?.toDouble() ?: 0.0,
         power = get("power", Number::class.java)?.toInt() ?: 0

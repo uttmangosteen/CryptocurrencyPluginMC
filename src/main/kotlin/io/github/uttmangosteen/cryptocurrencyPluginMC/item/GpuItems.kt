@@ -1,14 +1,16 @@
 package io.github.uttmangosteen.cryptocurrencyPluginMC.item
 
 import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.gpu.Gpu
-import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 
 data class GpuKeys(
+    val name: NamespacedKey,
+    val description: NamespacedKey,
+    val material: NamespacedKey,
+    val customModelData: NamespacedKey,
     val life: NamespacedKey,
     val breakChance: NamespacedKey,
     val power: NamespacedKey
@@ -17,67 +19,54 @@ data class GpuKeys(
 object GpuItems {
     fun create(gpu: Gpu, keys: GpuKeys): ItemStack {
         val lifeColor = when {
-            gpu.life > 0 -> NamedTextColor.GREEN
-            gpu.life == 0 -> NamedTextColor.YELLOW
-            else -> NamedTextColor.RED
+            gpu.life > 0 -> "<green>"
+            gpu.life == 0 -> "<yellow>"
+            else -> "<red>"
         }
 
         return Items.create(
             material = Material.matchMaterial(gpu.material) ?: Material.IRON_INGOT,
-            name = Component.text(gpu.gpuName),
+            name = Items.miniMessage(gpu.gpuName),
             lore = listOf(
-                Component.text(gpu.description),
-                Component.text("life: ", NamedTextColor.WHITE)
-                    .append(Component.text(gpu.life.toString(), lifeColor)),
-                Component.text("breakChance: ", NamedTextColor.WHITE)
-                    .append(Component.text(gpu.breakChance.toString(), NamedTextColor.YELLOW)),
-                Component.text("power: ", NamedTextColor.WHITE)
-                    .append(Component.text(gpu.power.toString(), NamedTextColor.YELLOW))
+                Items.miniMessage(gpu.description),
+                Items.miniMessage("<gray>life: ${lifeColor}${gpu.life}"),
+                Items.miniMessage("<gray>breakChance: <yellow>${gpu.breakChance}"),
+                Items.miniMessage("<gray>power: <yellow>${gpu.power}")
             ),
             customModelData = if (gpu.customModelData != 0f) gpu.customModelData else null
         ) { pdc ->
+            pdc.set(keys.name, PersistentDataType.STRING, gpu.gpuName)
+            pdc.set(keys.description, PersistentDataType.STRING, gpu.description)
+            pdc.set(keys.material, PersistentDataType.STRING, gpu.material)
+            pdc.set(keys.customModelData, PersistentDataType.FLOAT, gpu.customModelData)
             pdc.set(keys.life, PersistentDataType.INTEGER, gpu.life)
             pdc.set(keys.breakChance, PersistentDataType.DOUBLE, gpu.breakChance)
             pdc.set(keys.power, PersistentDataType.INTEGER, gpu.power)
         }
     }
 
-    @Suppress("UnstableApiUsage")
     fun read(item: ItemStack?, keys: GpuKeys): Gpu? {
         if (item == null || item.type.isAir) return null
 
         val meta = item.itemMeta ?: return null
         val pdc = meta.persistentDataContainer
 
+        val gpuName = pdc.get(keys.name, PersistentDataType.STRING) ?: return null
+        val description = pdc.get(keys.description, PersistentDataType.STRING) ?: return null
+        val material = pdc.get(keys.material, PersistentDataType.STRING) ?: item.type.name
+        val customModelData = pdc.get(keys.customModelData, PersistentDataType.FLOAT) ?: 0f
         val life = pdc.get(keys.life, PersistentDataType.INTEGER) ?: return null
         val breakChance = pdc.get(keys.breakChance, PersistentDataType.DOUBLE) ?: return null
         val power = pdc.get(keys.power, PersistentDataType.INTEGER) ?: return null
 
-        val gpuName = meta.displayName()
-            ?.let { plainText(it) }
-            ?: "名称未設定"
-
-        val description = meta.lore()
-            ?.firstOrNull()
-            ?.let { plainText(it) }
-            ?: "説明未設定"
-
-        val customModelData = meta.customModelDataComponent.floats.firstOrNull() ?: 0f
-
         return Gpu(
             gpuName = gpuName,
-            material = item.type.name,
+            material = material,
             customModelData = customModelData,
             description = description,
             life = life,
             breakChance = breakChance,
             power = power
         )
-    }
-
-    private fun plainText(component: Component): String {
-        return component.children().fold(component.toString()) { text, child ->
-            text + child.toString()
-        }
     }
 }

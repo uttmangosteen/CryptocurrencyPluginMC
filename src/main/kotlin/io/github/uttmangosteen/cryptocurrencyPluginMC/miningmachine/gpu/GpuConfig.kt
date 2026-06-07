@@ -27,13 +27,13 @@ class GpuConfig(
             val gpuType = section.getKeys(false).mapNotNull { key ->
                 val path = "gpus.$key"
 
-                val gpuName = config.getString("$path.name") ?: return@mapNotNull null
-                val materialName = config.getString("$path.material", Material.NETHER_STAR.name)
-                    ?.uppercase()
+                val gpuName = config.getString("$path.name", "<red><bold>名称未設定") ?: return@mapNotNull null
+                val materialName = config.getString("$path.material", Material.NETHER_STAR.name)?.uppercase()
                     ?: Material.NETHER_STAR.name
                 val material = Material.matchMaterial(materialName) ?: return@mapNotNull null
                 val customModelData: Float = config.getDouble("$path.custom-model-data", 0.0).toFloat()
-                val description = config.getString("$path.description", "§c§l名称未設定") ?: return@mapNotNull null
+                val description =
+                    config.getString("$path.description", "<red><bold>説明未設定") ?: return@mapNotNull null
                 val life = config.getInt("$path.life", -1)
                 val breakChance = config.getDouble("$path.break-chance", 0.0)
                 val power = config.getInt("$path.power", 0)

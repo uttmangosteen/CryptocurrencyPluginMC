@@ -6,6 +6,7 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.command.user.BalanceComman
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.user.HistoryCommand
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.user.InfoCommand
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.user.SendCommand
+import io.github.uttmangosteen.cryptocurrencyPluginMC.command.user.WalletCommand
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -16,6 +17,7 @@ class UserCommand(
     private val plugin: Main,
     private val commandRateLimiter: CommandRateLimiter,
 ) : CommandExecutor, TabCompleter {
+    private val walletCommand = WalletCommand(plugin)
     private val accountCommand = AccountCommand(plugin)
     private val balanceCommand = BalanceCommand(plugin)
     private val historyCommand = HistoryCommand(plugin)
@@ -39,6 +41,7 @@ class UserCommand(
         if (args.isEmpty()) return false
 
         when (args[0]) {
+            "wallet" -> walletCommand.execute(sender)
             "account" -> accountCommand.execute(sender, args)
             "balance" -> balanceCommand.execute(sender, args)
             "history" -> historyCommand.execute(sender, args)
@@ -55,7 +58,6 @@ class UserCommand(
         alias: String,
         args: Array<out String>
     ): List<String> {
-        if (command.name != "cryptocurrency") return emptyList()
         if (!sender.hasPermission("cryptocurrency.user")) return emptyList()
 
         return when (args.size) {

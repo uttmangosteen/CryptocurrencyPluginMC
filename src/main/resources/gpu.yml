@@ -1,15 +1,15 @@
 gpus:
   madeon_op_100000:
-    name: "§r§f§lMadeon OP 100000"
-    description: "§7デバック用GPU"
+    name: "<reset><white><bold>Madeon OP 100000"
+    description: "<gray>TEST用GPU"
     material: IRON_INGOT
     custom-model-data: 0
     life: 100
     break-chance: 0.01
     power: 1
   maforce_op_999999:
-    name: "§r§f§lMaForce OP 999999"
-    description: "§7デバック用GPU"
+    name: "<reset><white><bold>MaForce OP 999999"
+    description: "<gray>TEST用GPU"
     material: GOLD_INGOT
     custom-model-data: 0
     life: 10000

@@ -24,8 +24,7 @@ class AccountCommand(
             "create" -> create(sender)
             "delete" -> {
                 if (args.size < 3) return
-                val index = args[2].toIntOrNull() ?: return
-                delete(sender, index)
+                delete(sender, args[2])
             }
 
             "list" -> list(sender)
@@ -36,21 +35,22 @@ class AccountCommand(
             }
 
             "memo" -> {
-                if (args.size < 4) return
+                if (args.size < 3) return
                 val index = args[2].toIntOrNull() ?: return
-                memo(sender, index, args[3])
+                val memo = args.getOrNull(3).orEmpty()
+                memo(sender, index, memo)
             }
 
             "getPubKeyItem" -> {
                 if (args.size < 3) return
                 val index = args[2].toIntOrNull() ?: return
-                getPubKeyItem(sender, index, args.getOrElse(3) { "no memo" })
+                getPubKeyItem(sender, index)
             }
 
             "getPrivateKeyItem" -> {
                 if (args.size < 3) return
                 val index = args[2].toIntOrNull() ?: return
-                getPrivateKeyItem(sender, index, args.getOrElse(3) { "no memo" })
+                getPrivateKeyItem(sender, index)
             }
 
             "register" -> register(sender, args.getOrNull(2))
@@ -73,9 +73,12 @@ class AccountCommand(
         }
     }
 
-    private fun delete(player: Player, index: Int) {
+    private fun delete(player: Player, publicKey: String) {
         plugin.launchAsync {
-            val deleted = plugin.repositories.walletRepo.forgetAccount(player.uniqueId.toString(), index)
+            val deleted = plugin.repositories.walletRepo.forgetAccount(
+                ownerUUID = player.uniqueId.toString(),
+                publicKey = publicKey
+            )
 
             plugin.runSync {
                 if (deleted) {
@@ -125,11 +128,13 @@ class AccountCommand(
     }
 
     private fun memo(player: Player, index: Int, memo: String) {
+        val normalizedMemo = memo.ifBlank { "" }
+
         plugin.launchAsync {
             val updated = plugin.repositories.walletRepo.updateMemo(
                 ownerUUID = player.uniqueId.toString(),
                 index = index,
-                memo = memo
+                memo = normalizedMemo
             )
 
             plugin.runSync {
@@ -142,7 +147,7 @@ class AccountCommand(
         }
     }
 
-    private fun getPubKeyItem(player: Player, index: Int, memo: String = "no memo") {
+    private fun getPubKeyItem(player: Player, index: Int) {
         plugin.launchAsync {
             val account = plugin.repositories.walletRepo.getWallet(player.uniqueId.toString())
                 ?.accounts
@@ -159,7 +164,11 @@ class AccountCommand(
                     return@runSync
                 }
 
-                val item = KeyItems.create(account, memo, keyItemKeys)
+                val item = KeyItems.create(
+                    account = account,
+                    ownerName = player.name,
+                    keys = keyItemKeys
+                )
                 val overflow = player.inventory.addItem(item)
                 overflow.values.forEach { player.world.dropItemNaturally(player.location, it) }
                 playWriteSound(player)
@@ -168,7 +177,7 @@ class AccountCommand(
         }
     }
 
-    private fun getPrivateKeyItem(player: Player, index: Int, memo: String = "no memo") {
+    private fun getPrivateKeyItem(player: Player, index: Int) {
         plugin.launchAsync {
             val account = plugin.repositories.walletRepo.getWallet(player.uniqueId.toString())
                 ?.accounts
@@ -190,7 +199,11 @@ class AccountCommand(
                     return@runSync
                 }
 
-                val item = KeyItems.createWithPrivateKey(account, memo, keyItemKeys)
+                val item = KeyItems.createWithPrivateKey(
+                    account = account,
+                    ownerName = player.name,
+                    keys = keyItemKeys
+                )
 
                 if (item == null) {
                     player.inventory.addItem(ItemStack(Material.PAPER, 1))
@@ -289,19 +302,23 @@ class AccountCommand(
             ).filter { it.startsWith(args[1]) }
 
             3 -> when (args[1]) {
-                "delete", "main", "memo", "getPubKeyItem", "getPrivateKeyItem" -> {
+                "delete" -> listOf("<pubKey>").filter { it.startsWith(args[2]) }
+                "main", "memo", "getPubKeyItem", "getPrivateKeyItem" -> {
                     listOf("<index>").filter { it.startsWith(args[2]) }
                 }
 
                 "register" -> listOf("[pubKey]").filter { it.startsWith(args[2]) }
-
                 else -> emptyList()
             }
 
             4 -> when (args[1]) {
-                "memo" -> listOf("<memo>").filter { it.startsWith(args[3]) }
-                "getPubKeyItem", "getPrivateKeyItem" -> {
-                    listOf("[itemMemo]").filter { it.startsWith(args[3]) }
+                "memo" -> {
+                    val index = args[2].toIntOrNull()
+                    if (index == null) {
+                        emptyList()
+                    } else {
+                        listOf("[memo]").filter { it.startsWith(args[3]) }
+                    }
                 }
 
                 else -> emptyList()

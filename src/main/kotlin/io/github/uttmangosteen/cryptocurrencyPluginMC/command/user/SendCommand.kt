@@ -39,7 +39,7 @@ class SendCommand(
                 val name = args.getOrNull(3)
 
                 if (amount == null || name == null) {
-                    sender.sendMessage("$prefix§c/cc send byName <amount> <name>")
+                    sender.sendMessage("$prefix§c送金額もしくは名前が不正です")
                     return
                 }
 
@@ -50,7 +50,7 @@ class SendCommand(
                 val amount = TextFormat.parseCoin(args.getOrNull(2))
 
                 if (amount == null) {
-                    sender.sendMessage("$prefix§c/cc send byPubKey <amount> [pubKey]")
+                    sender.sendMessage("$prefix§c送金額が指定されていません")
                     return
                 }
 
@@ -68,7 +68,7 @@ class SendCommand(
                 val fee = TextFormat.parseCoin(args.getOrNull(2))
 
                 if (fee == null) {
-                    sender.sendMessage("$prefix§c/cc send create <fee> [memo]")
+                    sender.sendMessage("$prefix§c手数料が指定されていません")
                     return
                 }
 
@@ -79,10 +79,13 @@ class SendCommand(
     }
 
     private fun byName(player: Player, amount: Long, name: String) {
+        if (amount <= 0L) {
+            player.sendMessage("$prefix§c送金額は正の数を指定してください")
+            return
+        }
         plugin.launchAsync {
             val targetUuid = Bukkit.getOfflinePlayer(name).uniqueId.toString()
             val targetAccount = plugin.repositories.walletRepo.getMainAccount(targetUuid)
-
             plugin.runSync {
                 if (targetAccount == null) {
                     player.sendMessage("$prefix§c$name のメイン口座が見つかりません")

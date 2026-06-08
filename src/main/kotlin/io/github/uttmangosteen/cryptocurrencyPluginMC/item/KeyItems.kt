@@ -17,11 +17,16 @@ data class KeyItemKeys(
 object KeyItems {
     fun create(
         account: Account,
-        memo: String,
+        ownerName: String,
         keys: KeyItemKeys,
         privateKey: String? = null
     ): ItemStack {
         val isPrivate = privateKey != null
+        val itemName = if (isPrivate) {
+            "$ownerName が書き残した秘密鍵付き公開鍵"
+        } else {
+            "$ownerName が書き残した公開鍵"
+        }
 
         val lore = mutableListOf(
             if (isPrivate) {
@@ -45,7 +50,7 @@ object KeyItems {
 
         return Items.create(
             material = Material.PAPER,
-            name = Component.text(memo),
+            name = Component.text(itemName),
             lore = lore
         ) { pdc ->
             pdc.set(keys.public, PersistentDataType.STRING, account.publicKey)
@@ -57,11 +62,11 @@ object KeyItems {
 
     fun createWithPrivateKey(
         account: Account,
-        memo: String,
+        ownerName: String,
         keys: KeyItemKeys
     ): ItemStack? {
         val privateKey = account.privateKey ?: return null
-        return create(account, memo, keys, privateKey)
+        return create(account, ownerName, keys, privateKey)
     }
 
     fun readAccount(

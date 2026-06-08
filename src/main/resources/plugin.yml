@@ -10,15 +10,15 @@ commands:
     aliases: [ cc ] #CryptoCurrency
     usage: |
       §f§l========== §8§lCryptocurrency help §f§l==========
-      §c§l× §f/cc wallet §7- 自分の財布を開く(GUI)
+      §f/cc wallet §7- 自分の財布を開く(GUI)
       
       §f/cc account create §7- 口座作成、財布に登録
-      §f/cc account delete <index> §7- 財布から口座を削除 pubKeyを保存していなかったら、一生触れなくなる
+      §f/cc account delete <pubkey> §7- 財布から口座を削除 pubKey,privateKeyを保存していなかったら、一生触れなくなる
       §f/cc account list §7- 財布に登録されている口座リスト
       §f/cc account main <index> §7- メイン口座を口座リストの中から切り替え
-      §f/cc account memo <index> <memo> §7- 口座のメモを編集
-      §f/cc account getPubKeyItem <index> [itemMemo] §7- 口座の公開鍵アイテムを取得、公開鍵指定用の補助アイテム
-      §f/cc account getPrivateKeyItem <index> [itemMemo] §7- 口座の秘密鍵付き公開鍵アイテムを取得、§c取扱注意
+      §f/cc account memo <index> [memo] §7- 口座のメモを編集
+      §f/cc account getPubKeyItem <index> §7- 口座の公開鍵アイテムを取得、公開鍵指定用の補助アイテム
+      §f/cc account getPrivateKeyItem <index> §7- 口座の秘密鍵付き公開鍵アイテムを取得、§c取扱注意
       §f/cc account register [pubKey] §7- pubKey省略で手に持った鍵アイテムをWalletに登録する　pubKey平文指定も可
       
       §f/cc balance [index] §7- 口座の状況を確認

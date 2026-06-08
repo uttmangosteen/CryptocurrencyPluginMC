@@ -72,9 +72,9 @@ class WalletRepository(
         return true
     }
 
-    suspend fun forgetAccount(ownerUUID: String, index: Int): Boolean {
+    suspend fun forgetAccount(ownerUUID: String, publicKey: String): Boolean {
         return updateWallet(ownerUUID) { wallet ->
-            wallet.deleteAccount(index)
+            wallet.deleteAccount(publicKey)
         }
     }
 

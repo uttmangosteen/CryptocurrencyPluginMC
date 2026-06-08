@@ -1,21 +1,20 @@
 package io.github.uttmangosteen.cryptocurrencyPluginMC.gui.wallet
 
+import io.github.uttmangosteen.cryptocurrencyPluginMC.Main
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.policy.TextFormat
 import io.github.uttmangosteen.cryptocurrencyPluginMC.gui.Gui
+import io.github.uttmangosteen.cryptocurrencyPluginMC.item.ItemKeys
 import io.github.uttmangosteen.cryptocurrencyPluginMC.item.Items
+import io.github.uttmangosteen.cryptocurrencyPluginMC.item.KeyItems
 import io.github.uttmangosteen.cryptocurrencyPluginMC.wallet.Wallet
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextDecoration
-import org.bukkit.DyeColor
 import org.bukkit.Material
-import org.bukkit.block.banner.Pattern
-import org.bukkit.block.banner.PatternType
 import org.bukkit.entity.Player
-import org.bukkit.inventory.ItemFlag
-import org.bukkit.inventory.meta.BannerMeta
 
 class WalletGui(
+    private val plugin: Main,
     private val wallet: Wallet
 ) : Gui(
     5,
@@ -23,6 +22,8 @@ class WalletGui(
         .color(NamedTextColor.DARK_GRAY)
         .decorate(TextDecoration.BOLD)
 ) {
+    private val keyItemKeys = ItemKeys.keyItem(plugin)
+
     init {
         update()
     }
@@ -39,9 +40,12 @@ class WalletGui(
             name = Component.empty()
         )
         private val addAccountItem = Items.create(
-            material = Material.CRAFTING_TABLE,
+            material = Material.FEATHER,
             name = Component.text("口座を追加する", NamedTextColor.GREEN, TextDecoration.BOLD),
-            lore = listOf(Component.text("▶ クリックして新しい口座を作成", NamedTextColor.YELLOW))
+            lore = listOf(
+                Component.text("▶ クリックして新しい口座を作成", NamedTextColor.YELLOW),
+                Component.text("▶ 鍵アイテムをMainHandに持っている場合はそれを登録", NamedTextColor.AQUA)
+            )
         )
     }
 
@@ -59,7 +63,17 @@ class WalletGui(
                 if (index == wallet.accounts.size) {
                     setItem(slot, addAccountItem) { event ->
                         val player = event.whoClicked as Player
-                        player.performCommand("cc account create")
+                        val itemAccount = KeyItems.readAccount(
+                            item = player.inventory.itemInMainHand,
+                            keys = keyItemKeys
+                        )
+
+                        if (itemAccount != null) {
+                            player.performCommand("cc account register")
+                        } else {
+                            player.performCommand("cc account create")
+                        }
+
                         player.closeInventory()
                     }
                 } else setItem(slot, spaceItem)
@@ -67,25 +81,31 @@ class WalletGui(
             }
 
             val isMain = index == 0
-            val titleText = account.memo.ifEmpty { "口座 #${index}" }
+            val isWatchOnly = account.privateKey == null
+            val titleText = "口座 #${index}"
+            val memoText = account.memo.ifBlank { "no memo" }
 
             val lore = mutableListOf<Component>()
-            if (isMain) lore.add(Component.text("[メイン(受け取り用)口座]", NamedTextColor.GREEN))
+            lore.add(Component.text(memoText, NamedTextColor.GRAY))
+
+            var tagsComponent = Component.empty()
+            if (isMain) tagsComponent = tagsComponent.append(Component.text("[Main] ", NamedTextColor.GREEN))
+            if (isWatchOnly) tagsComponent = tagsComponent.append(Component.text("[Watch] ", NamedTextColor.YELLOW))
+            if (isMain || isWatchOnly) lore.add(tagsComponent)
+
             lore.add(Component.text("PublicKey:", NamedTextColor.GRAY))
             lore.add(Component.text(TextFormat.formatKey(account.publicKey), NamedTextColor.DARK_GRAY))
             lore.add(Component.text("▶ クリックして詳細を開く", NamedTextColor.YELLOW))
 
             val item = Items.create(
                 material = Material.PAPER,
-                name = Component.text(titleText)
-                    .color(if (isMain) NamedTextColor.AQUA else NamedTextColor.WHITE)
-                    .decorate(TextDecoration.BOLD),
+                name = Component.text(titleText, NamedTextColor.WHITE, TextDecoration.BOLD),
                 lore = lore
             )
 
             setItem(slot, item) { event ->
                 val player = event.whoClicked as Player
-                val accountGui = WalletAccountGui(wallet, index)
+                val accountGui = WalletAccountGui(plugin, wallet, index)
                 accountGui.parentGuiOpener = {
                     player.performCommand("cc wallet")
                 }

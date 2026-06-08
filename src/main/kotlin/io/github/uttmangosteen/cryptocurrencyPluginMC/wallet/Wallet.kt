@@ -18,8 +18,9 @@ class Wallet(
         return true
     }
 
-    fun deleteAccount(index: Int): Boolean {
-        if (index !in accounts.indices) return false
+    fun deleteAccount(publicKey: String): Boolean {
+        val index = accounts.indexOfFirst { it.publicKey == publicKey }
+        if (index < 0) return false
         accounts.removeAt(index)
         return true
     }

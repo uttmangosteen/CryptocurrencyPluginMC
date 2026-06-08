@@ -17,7 +17,7 @@ class WalletCommand(
                 ?: Wallet.create(sender.uniqueId.toString())
 
             plugin.runSync {
-                WalletGui(wallet).open(sender)
+                WalletGui(plugin, wallet).open(sender)
             }
         }
     }

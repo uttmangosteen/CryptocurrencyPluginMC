@@ -20,10 +20,6 @@ object Items {
         }
     }
 
-    fun miniMessageList(lines: List<String>): List<Component> {
-        return lines.map { miniMessage(it) }
-    }
-
     @Suppress("UnstableApiUsage")
     fun create(
         material: Material,

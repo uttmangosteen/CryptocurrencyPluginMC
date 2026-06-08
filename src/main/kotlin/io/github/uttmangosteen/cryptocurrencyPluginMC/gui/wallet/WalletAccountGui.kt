@@ -19,7 +19,7 @@ class WalletAccountGui(
     private val wallet: Wallet,
     private val accountIndex: Int
 ) : Gui(
-    3,
+    2,
     Component.text("口座の詳細")
         .color(NamedTextColor.DARK_GRAY)
         .decorate(TextDecoration.BOLD)
@@ -40,14 +40,18 @@ class WalletAccountGui(
         private val getPubKeyItem = Items.create(
             material = Material.TRIAL_KEY,
             name = Component.text("公開鍵を書き出す", NamedTextColor.AQUA, TextDecoration.BOLD),
-            lore = listOf(Component.text("▶ クリックして書き出す", NamedTextColor.YELLOW))
+            lore = listOf(
+                Component.text("▶ クリックして書き出す", NamedTextColor.YELLOW),
+                Component.text("紙が1枚必要です", NamedTextColor.GRAY)
+            )
         )
         private val getPrivateKeyItem = Items.create(
             material = Material.OMINOUS_TRIAL_KEY,
             name = Component.text("秘密鍵付き公開鍵を書き出す", NamedTextColor.RED, TextDecoration.BOLD),
             lore = listOf(
                 Component.text("▶ クリックして書き出す", NamedTextColor.YELLOW),
-                Component.text("取扱注意", NamedTextColor.DARK_RED, TextDecoration.BOLD)
+                Component.text("取扱注意", NamedTextColor.DARK_RED, TextDecoration.BOLD),
+                Component.text("紙が1枚必要です", NamedTextColor.GRAY)
             )
         )
         private val deleteItem = Items.create(
@@ -62,7 +66,7 @@ class WalletAccountGui(
                     NamedTextColor.DARK_RED,
                     TextDecoration.BOLD,
                     TextDecoration.UNDERLINED
-                ),
+                )
             )
         )
         private val createSendItem = Items.create(
@@ -79,7 +83,7 @@ class WalletAccountGui(
             lore = listOf(
                 Component.text("この口座は現在メインではありません", NamedTextColor.GRAY),
                 Component.text("送金を作成するには、先にメインに設定してください", NamedTextColor.GRAY),
-                Component.text("上の「メイン口座に設定」から切り替えできます", NamedTextColor.YELLOW)
+                Component.text("上の「口座をメイン(#0)に設定」から切り替えできます", NamedTextColor.YELLOW)
             )
         )
         private val needPrivateKeyItem = Items.create(
@@ -95,6 +99,22 @@ class WalletAccountGui(
             lore = listOf(
                 Component.text("▶ クリックしてメモを編集", NamedTextColor.YELLOW),
                 Component.text("/cc account memo <index> [memo]", NamedTextColor.GRAY)
+            )
+        )
+        private val historyItem = Items.create(
+            material = Material.BOOK,
+            name = Component.text("取引履歴を確認", NamedTextColor.AQUA, TextDecoration.BOLD),
+            lore = listOf(
+                Component.text("▶ クリックして取引履歴の案内を表示", NamedTextColor.YELLOW),
+                Component.text("証明された取引の確認はこちらから", NamedTextColor.YELLOW)
+            )
+        )
+        private val mempoolInfoItem = Items.create(
+            material = Material.PAINTING,
+            name = Component.text("Mempoolの状況を確認", NamedTextColor.GOLD, TextDecoration.BOLD),
+            lore = listOf(
+                Component.text("▶ クリックしてMempoolを確認", NamedTextColor.YELLOW),
+                Component.text("送信した取引の確認はこちらから", NamedTextColor.YELLOW)
             )
         )
     }
@@ -136,25 +156,23 @@ class WalletAccountGui(
                 TextFormat.formatKey(account.privateKey),
                 NamedTextColor.DARK_GRAY
             )
-            else Component.text("[Watch Only]", NamedTextColor.YELLOW)
+            else Component.text("null", NamedTextColor.DARK_GRAY)
         )
 
         val state = walletState
-        infoLore.add(Component.empty())
-        infoLore.add(Component.text("Balance:", NamedTextColor.GRAY))
         if (state == null) {
-            infoLore.add(Component.text("loading...", NamedTextColor.DARK_GRAY))
+            infoLore.add(Component.text("残高を取得できませんでした", NamedTextColor.DARK_GRAY))
         } else {
             infoLore.add(
-                Component.text("Total: ", NamedTextColor.GRAY)
+                Component.text("総額　: ", NamedTextColor.GRAY)
                     .append(Component.text(TextFormat.formatCoin(state.totalBalance), NamedTextColor.GREEN))
             )
             infoLore.add(
-                Component.text("Available: ", NamedTextColor.GRAY)
+                Component.text("利用可: ", NamedTextColor.GRAY)
                     .append(Component.text(TextFormat.formatCoin(state.balance), NamedTextColor.GREEN))
             )
             infoLore.add(
-                Component.text("Pending: ", NamedTextColor.GRAY)
+                Component.text("計算中: ", NamedTextColor.GRAY)
                     .append(Component.text(TextFormat.formatCoin(state.pendingBalance), NamedTextColor.YELLOW))
             )
         }
@@ -179,7 +197,7 @@ class WalletAccountGui(
                 }
             )
         )
-        setItem(0, setMainItem) { event ->
+        setItem(2, setMainItem) { event ->
             val player = event.whoClicked as Player
             if (!isMain) {
                 preventParentOpen = true
@@ -188,15 +206,15 @@ class WalletAccountGui(
             }
         }
 
-        setItem(23, getPubKeyItem) { event ->
+        setItem(15, getPubKeyItem) { event ->
             val player = event.whoClicked as Player
             player.performCommand("cc account getPubKeyItem $accountIndex")
         }
 
         if (!hasPrivateKey) {
-            setItem(25, needPrivateKeyItem)
+            setItem(6, needPrivateKeyItem)
         } else {
-            setItem(25, getPrivateKeyItem) { event ->
+            setItem(6, getPrivateKeyItem) { event ->
                 val player = event.whoClicked as Player
                 player.performCommand("cc account getPrivateKeyItem $accountIndex")
             }
@@ -205,11 +223,41 @@ class WalletAccountGui(
         setItem(8, deleteItem) { event ->
             val player = event.whoClicked as Player
             preventParentOpen = true
-            player.performCommand("cc account delete ${account.publicKey}")
+            player.closeInventory()
+
+            player.sendMessage("========================================")
+            CommandSuggestHelper.send(
+                player = player,
+                title = "口座を忘れる",
+                command = "/cc account delete ${account.publicKey} ",
+                usage = "/cc account delete <pubKey>"
+            )
+            player.sendMessage("========================================")
+        }
+
+        setItem(0, mempoolInfoItem) { event ->
+            val player = event.whoClicked as Player
+            preventParentOpen = true
+            player.performCommand("cc info mempool $accountIndex")
             player.closeInventory()
         }
 
-        setItem(21, editMemoItem) { event ->
+        setItem(9, historyItem) { event ->
+            val player = event.whoClicked as Player
+            preventParentOpen = true
+            player.closeInventory()
+
+            player.sendMessage("========================================")
+            CommandSuggestHelper.send(
+                player = player,
+                title = "取引履歴を確認",
+                command = "/cc history $accountIndex ",
+                usage = "/cc history <index> [page]"
+            )
+            player.sendMessage("========================================")
+        }
+
+        setItem(13, editMemoItem) { event ->
             val player = event.whoClicked as Player
             preventParentOpen = true
             player.closeInventory()
@@ -225,11 +273,11 @@ class WalletAccountGui(
         }
 
         if (!hasPrivateKey) {
-            setItem(19, needPrivateKeyItem)
+            setItem(11, needPrivateKeyItem)
         } else if (!isMain) {
-            setItem(19, needMainForSendItem)
+            setItem(11, needMainForSendItem)
         } else {
-            setItem(19, createSendItem) { event ->
+            setItem(11, createSendItem) { event ->
                 val player = event.whoClicked as Player
                 preventParentOpen = true
                 player.closeInventory()

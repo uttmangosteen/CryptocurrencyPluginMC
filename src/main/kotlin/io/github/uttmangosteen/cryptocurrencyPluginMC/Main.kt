@@ -5,6 +5,7 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.command.CommandRateLimiter
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.MinerCommand
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.UserCommand
 import io.github.uttmangosteen.cryptocurrencyPluginMC.gui.Event
+import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.DatabaseMaintenanceService
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.MongoDatabaseProvider
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.MongoRepositories
 import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.MiningMachineService
@@ -23,6 +24,9 @@ class Main : JavaPlugin() {
         private set
 
     lateinit var repositories: MongoRepositories
+        private set
+
+    lateinit var databaseMaintenanceService: DatabaseMaintenanceService
         private set
 
     lateinit var pluginConfig: PluginConfig
@@ -48,6 +52,11 @@ class Main : JavaPlugin() {
             provider = mongoDatabaseProvider,
             logger = logger,
             miningDelayTicks = pluginConfig.miningMachineMiningDelayTicks
+        )
+        databaseMaintenanceService = DatabaseMaintenanceService(
+            provider = mongoDatabaseProvider,
+            miningDelayTicks = pluginConfig.miningMachineMiningDelayTicks,
+            logger = logger
         )
 
         server.pluginManager.registerEvents(Event(), this)
@@ -86,6 +95,42 @@ class Main : JavaPlugin() {
         getCommand("cryptocurrencyadmin")?.tabCompleter = adminCommand
     }
 
+    suspend fun reconnectDatabase() {
+        miningMachineService?.stop()
+        miningMachineService = null
+
+        if (::mongoDatabaseProvider.isInitialized) {
+            mongoDatabaseProvider.close()
+        }
+
+        reloadConfig()
+        pluginConfig = PluginConfig.load(config)
+        logger.setVerbose(pluginConfig.verboseLogging)
+
+        mongoDatabaseProvider = MongoDatabaseProvider(
+            pluginConfig.mongodbConnectionString,
+            pluginConfig.mongodbDatabase
+        )
+
+        repositories = MongoRepositories(
+            provider = mongoDatabaseProvider,
+            logger = logger,
+            miningDelayTicks = pluginConfig.miningMachineMiningDelayTicks
+        )
+
+        databaseMaintenanceService = DatabaseMaintenanceService(
+            provider = mongoDatabaseProvider,
+            miningDelayTicks = pluginConfig.miningMachineMiningDelayTicks,
+            logger = logger
+        )
+
+        repositories.setupAll()
+
+        runSync {
+            miningMachineService = MiningMachineService(this@Main).also { it.start() }
+        }
+    }
+
     fun launchAsync(block: suspend CoroutineScope.() -> Unit): Job {
         return pluginScope.launch(block = block)
     }
@@ -94,6 +139,16 @@ class Main : JavaPlugin() {
         server.scheduler.runTask(this, Runnable {
             block()
         })
+    }
+
+    fun restartMiningMachineService() {
+        miningMachineService?.stop()
+        miningMachineService = MiningMachineService(this).also { it.start() }
+    }
+
+    fun stopMiningMachineService() {
+        miningMachineService?.stop()
+        miningMachineService = null
     }
 
     override fun onDisable() {

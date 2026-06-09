@@ -1,8 +1,9 @@
 package io.github.uttmangosteen.cryptocurrencyPluginMC.command
 
+import io.github.uttmangosteen.cryptocurrencyPluginMC.Main
+import io.github.uttmangosteen.cryptocurrencyPluginMC.command.admin.DatabaseCommand
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.admin.EnableCommand
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.admin.GetGpuCommand
-import io.github.uttmangosteen.cryptocurrencyPluginMC.Main
 import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.gpu.GpuConfig
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
@@ -10,11 +11,12 @@ import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
 
 class AdminCommand(
-    private val plugin: Main,
+    plugin: Main,
     private val gpuConfig: GpuConfig
 ) : CommandExecutor, TabCompleter {
     private val enableCommand = EnableCommand(plugin)
     private val getGpuCommand = GetGpuCommand(plugin, gpuConfig)
+    private val databaseCommand = DatabaseCommand(plugin)
 
     override fun onCommand(
         sender: CommandSender,
@@ -35,21 +37,7 @@ class AdminCommand(
             }
 
             "database" -> {
-                if (args.size < 2) return true
-
-                when (args[1]) {
-                    "reconnect" -> {
-                        //TODO:
-                    }
-
-                    "flush" -> {
-                        //TODO:
-                    }
-
-                    "rebuild" -> {
-                        //TODO:
-                    }
-                }
+                databaseCommand.execute(sender, args)
             }
 
             else -> return true
@@ -73,19 +61,19 @@ class AdminCommand(
                 "database"
             ).filter { it.startsWith(args[0]) }
 
-            2 -> when (args[0]) {
-                "getGpu" -> gpuConfig.getTypes().filter { it.startsWith(args[1]) }
+            else -> when (args[0]) {
+                "getGpu" -> {
+                    if (args.size == 2) {
+                        gpuConfig.getTypes().filter { it.startsWith(args[1]) }
+                    } else {
+                        emptyList()
+                    }
+                }
 
-                "database" -> listOf(
-                    "reconnect",
-                    "flush",
-                    "rebuild",
-                ).filter { it.startsWith(args[1]) }
+                "database" -> databaseCommand.getTabCompletions(args)
 
                 else -> emptyList()
             }
-
-            else -> emptyList()
         }
     }
 }

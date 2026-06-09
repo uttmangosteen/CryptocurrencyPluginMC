@@ -68,10 +68,14 @@ commands:
       
       §f/ccop getGpu <gpuId> §7- GPUアイテム取得
       
-      §c§l× §f/ccop database reconnect §7- データベース再接続
-      §c§l× §f/ccop database flush §7- mempool等、消せる情報を消す(何かの移行時の圧縮用)
-      §c§l× §f/ccop database rebuild §7- blocksコレクションからUTXOやTxHistoryなどのcash再計算(flushからの復旧)
+      §f/ccop database reconnect §7- データベース再接続
+      
+      §f/ccop database flush confirm §7- mempool, utxos, transaction_historyを削除し、採掘機を停止
+      §f/ccop database rebuild confirm §7- blocksを信用してUTXOやTxHistoryなどのcache再計算
+      §f/ccop database verify confirm §7- blocksコレクションのチェーン整合性を検証
+      §f/ccop database prune confirm §7- 最初の不正ブロック以降を削除し、cacheを再構築
       §f§l===============================================
+
     permission: cryptocurrency.admin
 
 permissions:

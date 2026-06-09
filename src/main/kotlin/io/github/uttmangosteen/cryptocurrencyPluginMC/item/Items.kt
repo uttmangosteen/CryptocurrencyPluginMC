@@ -5,6 +5,7 @@ import net.kyori.adventure.text.format.TextDecoration
 import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
+import org.bukkit.inventory.ItemFlag
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataContainer
 import org.bukkit.plugin.java.JavaPlugin
@@ -33,6 +34,8 @@ object Items {
             editMeta { meta ->
                 if (name != null) meta.displayName(name.removeDefaultItalic())
                 if (lore != null) meta.lore(lore.map { it.removeDefaultItalic() })
+
+                meta.addItemFlags(*ItemFlag.entries.toTypedArray())
 
                 if (customModelData != null) {
                     val cmd = meta.customModelDataComponent

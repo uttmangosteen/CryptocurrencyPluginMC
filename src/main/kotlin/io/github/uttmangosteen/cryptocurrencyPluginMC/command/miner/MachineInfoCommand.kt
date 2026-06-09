@@ -81,7 +81,6 @@ class MachineInfoCommand(
         player.sendMessage("$prefix§7txMode: §f${machine.createBlockMode}")
         player.sendMessage("$prefix§7shareName: §f${machine.shareNameOnMined}")
         player.sendMessage("$prefix§7memo: §f${machine.memo}")
-        player.sendMessage("$prefix§7defaultMemo: §f${machine.defaultMemo}")
         player.sendMessage("$prefix§7rewardAccount: §8${machine.rewardAccountPubKey ?: "none"}")
         player.sendMessage("$prefix§f§l====================================")
     }

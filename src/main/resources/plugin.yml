@@ -45,8 +45,9 @@ commands:
       §f/ccmcn info <machineId> §7- 採掘機の情報を確認
       
       §c§l× §f/ccmcn open <machineId> §7- 採掘機を開く
-      §f/ccmcn gpu <set|take> <machineId> <slot> §7- 採掘機のGPU設置/取り外し
+      §f/ccmcn gpu <machineId> <slot> §7- 採掘機のGPU設置/取り外し
       §f/ccmcn user <add|delete> <machineId> <name> §7- 採掘機に触れるユーザーの追加/削除
+      §f/ccmcn user list <machineId> §7- 採掘機に触れるユーザー一覧
       §f/ccmcn toggle <machineId> §7- 採掘機の電源切り替え
       §f/ccmcn shareName <machineId> §7- 採掘成功時に、名前を共有するか切り替え
       

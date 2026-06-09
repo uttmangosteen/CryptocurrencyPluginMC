@@ -29,9 +29,9 @@ object GpuItems {
             name = Items.miniMessage(gpu.gpuName),
             lore = listOf(
                 Items.miniMessage(gpu.description),
-                Items.miniMessage("<gray>life: ${lifeColor}${gpu.life}"),
-                Items.miniMessage("<gray>breakChance: <yellow>${gpu.breakChance}"),
-                Items.miniMessage("<gray>power: <yellow>${gpu.power}")
+                Items.miniMessage("<gray>残り寿命: ${lifeColor}${gpu.life}"),
+                Items.miniMessage("<gray>耐久性: <yellow>${gpu.breakChance}"),
+                Items.miniMessage("<gray>計算速度: <yellow>${gpu.power}")
             ),
             customModelData = if (gpu.customModelData != 0f) gpu.customModelData else null
         ) { pdc ->

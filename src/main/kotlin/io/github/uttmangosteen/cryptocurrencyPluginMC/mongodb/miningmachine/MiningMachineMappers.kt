@@ -17,7 +17,6 @@ fun MiningMachine.toDocument(): Document {
         .append("status", status.name)
         .append("createBlockMode", createBlockMode.name)
         .append("rewardAccountPubKey", rewardAccountPubKey)
-        .append("defaultMemo", defaultMemo)
         .append("memo", memo)
         .append("shareNameOnMined", shareNameOnMined)
         .append("miningBlock", miningBlock?.toDocument())
@@ -49,7 +48,6 @@ fun Document.toMiningMachine(): MiningMachine {
             ?.let { runCatching { CreateBlockMode.valueOf(it) }.getOrNull() }
             ?: CreateBlockMode.NONE,
         rewardAccountPubKey = getString("rewardAccountPubKey"),
-        defaultMemo = getString("defaultMemo") ?: "",
         memo = getString("memo") ?: "",
         shareNameOnMined = getBoolean("shareNameOnMined") ?: false,
         miningBlock = miningBlockDocument?.toBlock(),

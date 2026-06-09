@@ -18,11 +18,6 @@ class MachineBlockCommand(
                 setRewardPubKey(player, machineId, index)
             }
 
-            "setDefaultMemo" -> {
-                val memo = args.drop(3).joinToString(" ")
-                setDefaultMemo(player, machineId, memo)
-            }
-
             "setMemo" -> {
                 val memo = args.drop(3).joinToString(" ")
                 setMemo(player, machineId, memo)
@@ -65,27 +60,6 @@ class MachineBlockCommand(
         }
     }
 
-    private fun setDefaultMemo(player: Player, machineId: String, memo: String) {
-        plugin.launchAsync {
-            val updated = plugin.miningMachineService?.modifyMachine(
-                machineId = machineId,
-                requesterUuid = player.uniqueId.toString(),
-                requireOwner = false,
-                bypassPermission = player.hasPermission("cryptocurrency.admin")
-            ) { machine ->
-                machine.setDefaultMemo(memo)
-            } ?: false
-
-            plugin.runSync {
-                if (updated) {
-                    player.sendMessage("$prefix§aデフォルトメモを設定しました: §f$memo")
-                } else {
-                    player.sendMessage("$prefix§cデフォルトメモの設定に失敗しました")
-                }
-            }
-        }
-    }
-
     private fun setMemo(player: Player, machineId: String, memo: String) {
         plugin.launchAsync {
             val updated = plugin.miningMachineService?.modifyMachine(
@@ -99,7 +73,7 @@ class MachineBlockCommand(
 
             plugin.runSync {
                 if (updated) {
-                    player.sendMessage("$prefix§a次回の採掘メモを設定しました: §f$memo")
+                    player.sendMessage("$prefix§a採掘メモを設定しました: §f$memo")
                 } else {
                     player.sendMessage("$prefix§c採掘メモの設定に失敗しました")
                 }
@@ -157,7 +131,6 @@ class MachineBlockCommand(
         return when (args.size) {
             2 -> listOf(
                 "setRewardPubKey",
-                "setDefaultMemo",
                 "setMemo",
                 "txMode",
                 "recreate"
@@ -167,7 +140,7 @@ class MachineBlockCommand(
 
             4 -> when (args[1]) {
                 "setRewardPubKey" -> listOf("[index]").filter { it.startsWith(args[3]) }
-                "setDefaultMemo", "setMemo" -> listOf("[memo]").filter { it.startsWith(args[3]) }
+                "setMemo" -> listOf("[memo]").filter { it.startsWith(args[3]) }
                 else -> emptyList()
             }
 

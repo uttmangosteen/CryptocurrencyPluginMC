@@ -14,9 +14,7 @@ data class MiningMachine(
     var createBlockMode: CreateBlockMode = CreateBlockMode.NONE,
     var rewardAccountPubKey: String? = null,
 
-    var defaultMemo: String = "",
     var memo: String = "",
-
     var shareNameOnMined: Boolean = false,
 
     var miningBlock: Block? = null,
@@ -37,7 +35,6 @@ data class MiningMachine(
         fun create(ownerUuid: String): MiningMachine {
             return MiningMachine(
                 userUuids = mutableListOf(ownerUuid),
-                defaultMemo = "",
                 memo = ""
             )
         }
@@ -198,15 +195,9 @@ data class MiningMachine(
         return true
     }
 
-    fun setDefaultMemo(value: String): Boolean {
-        defaultMemo = value
-        if (memo.isBlank()) memo = defaultMemo
-        isDirty = true
-        return true
-    }
-
     fun setMiningMemo(value: String): Boolean {
         memo = value
+        miningBlock = null
         isDirty = true
         return true
     }

@@ -7,6 +7,7 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.OutPoint
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.user.TxMessageFactory
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccInfo
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccWarning
+import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.MiningMachineUpdatedEvent
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
 import org.bukkit.Bukkit
@@ -84,6 +85,8 @@ class MiningMachineService(
         } else {
             activeMachines.remove(machine.id)
         }
+
+        notifyMachineUpdated(machine)
         return true
     }
 
@@ -94,6 +97,19 @@ class MiningMachineService(
     suspend fun getMachine(machineId: String): MiningMachine? {
         if (machineId.isBlank()) return null
         return activeMachines[machineId] ?: plugin.repositories.miningMachineRepo.get(machineId)
+    }
+
+    //GUI開いてる人に対する更新を呼ぶ
+    private fun notifyMachineUpdated(machine: MiningMachine) {
+        plugin.runSync {
+            Bukkit.getPluginManager().callEvent(
+                MiningMachineUpdatedEvent(
+                    machineId = machine.id,
+                    actorUuid = "",
+                    success = true
+                )
+            )
+        }
     }
 
     fun stop() {
@@ -168,11 +184,13 @@ class MiningMachineService(
         networkMiningPower: Long,
         latestBlock: Block
     ): Boolean {
+        var guiNeedsUpdate = false
         try {
             machine.refreshStatus()
             if (machine.status != MiningMachineStatus.MINING) {
                 plugin.repositories.miningMachineRepo.save(machine)
                 activeMachines.remove(machine.id)
+                guiNeedsUpdate = true
                 return false
             }
 
@@ -199,6 +217,7 @@ class MiningMachineService(
             machine.consumeGpuLife()
 
             val mined = tryMine(machine, miningBlock)
+            notifyMachineUpdated(machine)
 
             if (mined) {
                 val accepted = plugin.repositories.blockchainManager.acceptNewBlock(miningBlock)
@@ -206,11 +225,13 @@ class MiningMachineService(
                     notifyMined(machine, miningBlock)
                     machine.replaceMiningBlock(null)
                     machine.refreshStatus()
+                    notifyMachineUpdated(machine)
                     return true
                 } else {
                     machine.replaceMiningBlock(null)
                 }
                 machine.refreshStatus()
+                notifyMachineUpdated(machine)
             }
 
             return false
@@ -223,6 +244,10 @@ class MiningMachineService(
                 "machineId" to machine.id
             )
             return false
+        } finally {
+            if (guiNeedsUpdate) {
+                notifyMachineUpdated(machine)
+            }
         }
     }
 
@@ -272,14 +297,14 @@ class MiningMachineService(
                     val userPubKeys = wallet.accounts.map { it.publicKey }.toSet()
                     if (userPubKeys.isEmpty()) continue
 
+                    val relatedTxs = block.transactions.filter { tx ->
+                        tx.inputs.any { it.publicKey in userPubKeys } || tx.outputs.any { it.receiverPubKey in userPubKeys }
+                    }
+                    if (relatedTxs.isEmpty()) continue
+
                     player.sendMessage("$prefix§f§l========== §e§lTransaction Confirmed §f§l==========")
-                    block.transactions.forEach { tx ->
+                    relatedTxs.forEach { tx ->
                         player.sendMessage("$prefix§8§l-------------------------------------------------------")
-                        val related =
-                            tx.inputs.any { it.publicKey in userPubKeys } || tx.outputs.any { it.receiverPubKey in userPubKeys }
-
-                        if (!related) return@forEach
-
                         val inputUtxos = tx.inputs.mapNotNull { input ->
                             utxoMap[
                                 OutPoint(

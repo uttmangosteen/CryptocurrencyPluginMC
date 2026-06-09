@@ -121,7 +121,7 @@ class MachineSettingCommand(
             plugin.runSync {
                 if (updated) {
                     val status = if (enabled) "§aON" else "§cOFF"
-                    player.sendMessage("$prefix§a採掘成功時の名前共有: $status")
+                    player.sendMessage("$prefix§f採掘成功時の名前共有: $status")
                 } else {
                     player.sendMessage("$prefix§c名前共有設定の切り替えに失敗しました")
                 }

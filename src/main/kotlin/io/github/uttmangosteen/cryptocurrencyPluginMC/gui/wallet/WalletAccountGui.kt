@@ -95,10 +95,9 @@ class WalletAccountGui(
         )
         private val editMemoItem = Items.create(
             material = Material.WRITABLE_BOOK,
-            name = Component.text("メモを編集する", NamedTextColor.AQUA, TextDecoration.BOLD),
+            name = Component.text("メモを編集する", NamedTextColor.GOLD, TextDecoration.BOLD),
             lore = listOf(
                 Component.text("▶ クリックしてメモを編集", NamedTextColor.YELLOW),
-                Component.text("/cc account memo <index> [memo]", NamedTextColor.GRAY)
             )
         )
         private val historyItem = Items.create(
@@ -106,15 +105,15 @@ class WalletAccountGui(
             name = Component.text("取引履歴を確認", NamedTextColor.AQUA, TextDecoration.BOLD),
             lore = listOf(
                 Component.text("▶ クリックして取引履歴の案内を表示", NamedTextColor.YELLOW),
-                Component.text("証明された取引の確認はこちらから", NamedTextColor.YELLOW)
+                Component.text("証明された取引の確認はこちらから", NamedTextColor.GRAY)
             )
         )
         private val mempoolInfoItem = Items.create(
             material = Material.PAINTING,
-            name = Component.text("Mempoolの状況を確認", NamedTextColor.GOLD, TextDecoration.BOLD),
+            name = Component.text("Mempoolの状況を確認", NamedTextColor.AQUA, TextDecoration.BOLD),
             lore = listOf(
                 Component.text("▶ クリックしてMempoolを確認", NamedTextColor.YELLOW),
-                Component.text("送信した取引の確認はこちらから", NamedTextColor.YELLOW)
+                Component.text("送信した取引の確認はこちらから", NamedTextColor.GRAY)
             )
         )
     }

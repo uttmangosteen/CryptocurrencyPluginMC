@@ -5,6 +5,7 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.command.miner.MachineBlock
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.miner.MachineFuelCommand
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.miner.MachineGpuCommand
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.miner.MachineInfoCommand
+import io.github.uttmangosteen.cryptocurrencyPluginMC.command.miner.MachineOpenCommand
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.miner.MachineSettingCommand
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.miner.MachineUserCommand
 import org.bukkit.command.Command
@@ -19,6 +20,7 @@ class MinerCommand(
 ) : CommandExecutor, TabCompleter {
     private val lifecycleCommand = MachineSettingCommand(plugin)
     private val infoCommand = MachineInfoCommand(plugin)
+    private val openCommand = MachineOpenCommand(plugin)
     private val gpuCommand = MachineGpuCommand(plugin)
     private val userCommand = MachineUserCommand(plugin)
     private val fuelCommand = MachineFuelCommand(plugin)
@@ -43,7 +45,8 @@ class MinerCommand(
 
         when (args[0]) {
             "create", "remove", "toggle", "shareName" -> lifecycleCommand.execute(sender, args)
-            "info", "open" -> infoCommand.execute(sender, args)
+            "info" -> infoCommand.execute(sender, args)
+            "open" -> openCommand.execute(sender, args)
             "gpu" -> gpuCommand.execute(sender, args)
             "user" -> userCommand.execute(sender, args)
             "fuel" -> fuelCommand.execute(sender, args)

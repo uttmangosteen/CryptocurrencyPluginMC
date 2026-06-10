@@ -39,12 +39,9 @@ commands:
     aliases: [ ccmcn ] #CryptoCurrencyMaChiNe
     usage: |
       §f§l========== §8§lCryptocurrency Machine help §f§l==========
-      §f/ccmcn create §7- 採掘機を作成
-      §f/ccmcn remove <machineId> §7- 採掘機を撤去
-      
       §f/ccmcn info <machineId> §7- 採掘機の情報を確認
       
-      §c§l× §f/ccmcn open <machineId> §7- 採掘機を開く
+      §f/ccmcn open <machineId> §7- 採掘機を開く
       §f/ccmcn gpu <machineId> <slot> §7- 採掘機のGPU設置/取り外し
       §f/ccmcn user <add|delete> <machineId> <name> §7- 採掘機に触れるユーザーの追加/削除
       §f/ccmcn user list <machineId> §7- 採掘機に触れるユーザー一覧
@@ -54,8 +51,7 @@ commands:
       §f/ccmcn fuel <machineId> §7- 燃料投入GUIを開く
       
       §f/ccmcn block setRewardPubKey <machineId> [index] §7- 自分のwalletの公開鍵を設定
-      §f/ccmcn block setDefaultMemo <machineId> [memo] §7- 採掘ブロックのメモを設定しなかった場合のメモ設定
-      §f/ccmcn block setMemo <machineId> [memo] §7- 採掘中ブロックのメモ設定
+      §f/ccmcn block setMemo <machineId> [memo] §7- 採掘ブロックのメモ設定
       §f/ccmcn block txMode <machineId> §7- 採掘ブロックのトランザクションの集め方切り替え
       §f/ccmcn block recreate <machineId> §7-最新のmempoolに合わせてブロックの再構築
       §f§l=================================================
@@ -64,6 +60,9 @@ commands:
     aliases: [ ccop ]
     usage: |
       §f§l========== §8§lCryptocurrency Admin help §f§l==========
+      §f/ccop create <machineId> <name> §7- 指定ユーザーをオーナーとして採掘機を作成
+      §f/ccop remove <machineId> §7- 採掘機を撤去
+      
       §f/ccop <run|halt> §7- プラグインの停止/再開
       
       §f/ccop getGpu <gpuId> §7- GPUアイテム取得

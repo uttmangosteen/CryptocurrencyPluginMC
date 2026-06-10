@@ -32,8 +32,9 @@ data class MiningMachine(
         const val MAX_USERS = 4
         const val MAX_FUEL_AMOUNT = 999999
 
-        fun create(ownerUuid: String): MiningMachine {
+        fun create(machineId: String, ownerUuid: String): MiningMachine {
             return MiningMachine(
+                id = machineId,
                 userUuids = mutableListOf(ownerUuid),
                 memo = ""
             )

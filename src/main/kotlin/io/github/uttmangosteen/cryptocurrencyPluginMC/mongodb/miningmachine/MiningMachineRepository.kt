@@ -28,10 +28,15 @@ class MiningMachineRepository(
         logger.ccInfo(LogComponent.MINING_MACHINE_REPOSITORY, "setup completed")
     }
 
-    suspend fun create(ownerUuid: String): MiningMachine? {
+    suspend fun create(machineId: String, ownerUuid: String): MiningMachine? {
+        if (machineId.isBlank()) return null
         if (ownerUuid.isBlank()) return null
+        if (get(machineId) != null) return null
 
-        val machine = MiningMachine.create(ownerUuid)
+        val machine = MiningMachine.create(
+            machineId = machineId,
+            ownerUuid = ownerUuid
+        )
         val saved = save(machine)
         if (!saved) return null
 
@@ -108,15 +113,15 @@ class MiningMachineRepository(
 
     suspend fun delete(
         machineId: String,
-        requesterUuid: String,
+        requesterUuid: String? = null,
         bypassPermission: Boolean = false
     ): Boolean {
         if (machineId.isBlank()) return false
-        if (requesterUuid.isBlank()) return false
+        if (!bypassPermission && requesterUuid.isNullOrBlank()) return false
 
         return try {
             val machine = get(machineId) ?: return false
-            if (!bypassPermission && !machine.isOwner(requesterUuid)) return false
+            if (!bypassPermission && requesterUuid != null && !machine.isOwner(requesterUuid)) return false
 
             val result = collection.deleteOne(Filters.eq("_id", machineId))
             result.wasAcknowledged() && result.deletedCount == 1L

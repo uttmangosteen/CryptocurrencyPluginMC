@@ -10,13 +10,6 @@ class MachineSettingCommand(
 
     fun execute(player: Player, args: Array<out String>) {
         when (args[0]) {
-            "create" -> create(player)
-
-            "remove" -> {
-                val machineId = args.getOrNull(1) ?: return
-                remove(player, machineId)
-            }
-
             "toggle" -> {
                 val machineId = args.getOrNull(1) ?: return
                 toggle(player, machineId)
@@ -25,52 +18,6 @@ class MachineSettingCommand(
             "shareName" -> {
                 val machineId = args.getOrNull(1) ?: return
                 shareName(player, machineId)
-            }
-        }
-    }
-
-    private fun create(player: Player) {
-        plugin.launchAsync {
-            val machine = plugin.repositories.miningMachineRepo.create(player.uniqueId.toString())
-            plugin.runSync {
-                if (machine != null) {
-                    player.sendMessage("$prefix§a採掘機を作成しました")
-                    player.sendMessage("$prefix§7machineId: §f${machine.id}")
-                } else {
-                    player.sendMessage("$prefix§c採掘機の作成に失敗しました")
-                }
-            }
-        }
-    }
-
-    private fun remove(player: Player, machineId: String) {
-        plugin.launchAsync {
-            val uuid = player.uniqueId.toString()
-
-            // メモリにあったらhaltして消す
-            plugin.miningMachineService?.modifyMachine(
-                machineId = machineId,
-                requesterUuid = uuid,
-                requireOwner = true,
-                bypassPermission = player.hasPermission("cryptocurrency.admin")
-            ) { machine ->
-                machine.halt()
-                true
-            }
-
-            // DBから完全に削除
-            val deleted = plugin.repositories.miningMachineRepo.delete(
-                machineId = machineId,
-                requesterUuid = uuid,
-                bypassPermission = player.hasPermission("cryptocurrency.admin")
-            )
-
-            plugin.runSync {
-                if (deleted) {
-                    player.sendMessage("$prefix§a採掘機(§f$machineId§a)を削除しました")
-                } else {
-                    player.sendMessage("$prefix§c削除に失敗しました(存在しないかオーナーではありません)")
-                }
             }
         }
     }

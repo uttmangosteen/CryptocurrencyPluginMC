@@ -7,7 +7,6 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.OutPoint
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.user.TxMessageFactory
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccInfo
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccWarning
-import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.MiningMachineUpdatedEvent
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
 import org.bukkit.Bukkit
@@ -59,19 +58,24 @@ class MiningMachineService(
 
     suspend fun modifyMachine(
         machineId: String,
-        requesterUuid: String,
+        requesterUuid: String? = null,
         requireOwner: Boolean = false,
         bypassPermission: Boolean = false,
         block: (MiningMachine) -> Boolean
     ): Boolean {
-        if (machineId.isBlank() || requesterUuid.isBlank()) return false
+        if (machineId.isBlank()) return false
+        if (!bypassPermission && requesterUuid.isNullOrBlank()) return false
 
         // メモリ上に稼働中のマシンがあればそれを、無ければDBから取得
         val machine = activeMachines[machineId] ?: plugin.repositories.miningMachineRepo.get(machineId) ?: return false
 
-        // 権限チェック & ブロック更新有無
-        val allowed =
-            bypassPermission || if (requireOwner) machine.isOwner(requesterUuid) else machine.canAccess(requesterUuid)
+        val allowed = when {
+            bypassPermission -> true
+            requesterUuid == null -> false
+            requireOwner -> machine.isOwner(requesterUuid)
+            else -> machine.canAccess(requesterUuid)
+        }
+
         if (!allowed || !block(machine)) return false
 
         machine.refreshStatus()

@@ -4,6 +4,7 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.Main
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.admin.DatabaseCommand
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.admin.EnableCommand
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.admin.GetGpuCommand
+import io.github.uttmangosteen.cryptocurrencyPluginMC.command.admin.MachineCommand
 import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.gpu.GpuConfig
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
@@ -17,6 +18,7 @@ class AdminCommand(
     private val enableCommand = EnableCommand(plugin)
     private val getGpuCommand = GetGpuCommand(plugin, gpuConfig)
     private val databaseCommand = DatabaseCommand(plugin)
+    private val machineCommand = MachineCommand(plugin)
 
     override fun onCommand(
         sender: CommandSender,
@@ -28,6 +30,10 @@ class AdminCommand(
         if (args.isEmpty()) return false
 
         when (args[0]) {
+            "create", "remove" -> {
+                machineCommand.execute(args)
+            }
+
             "run", "halt" -> {
                 enableCommand.execute(sender, args)
             }
@@ -55,6 +61,8 @@ class AdminCommand(
 
         return when (args.size) {
             1 -> listOf(
+                "create",
+                "remove",
                 "run",
                 "halt",
                 "getGpu",
@@ -62,6 +70,18 @@ class AdminCommand(
             ).filter { it.startsWith(args[0]) }
 
             else -> when (args[0]) {
+                "create" -> {
+                    when (args.size) {
+                        2 -> listOf("<machineId>").filter { it.startsWith(args[1]) }
+                        3 -> listOf("<name>").filter { it.startsWith(args[2]) }
+                        else -> emptyList()
+                    }
+                }
+
+                "remove" -> {
+                    if (args.size == 2) listOf("<machineId>").filter { it.startsWith(args[1]) } else emptyList()
+                }
+
                 "getGpu" -> {
                     if (args.size == 2) {
                         gpuConfig.getTypes().filter { it.startsWith(args[1]) }

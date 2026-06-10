@@ -328,7 +328,7 @@ class SendCommand(
         )
     }
 
-    fun getTabCompletions(args: Array<out String>): List<String> {
+    fun getTabCompletions(args: Array<out String>): List<String>? {
         return when (args.size) {
             2 -> listOf("byName", "byPubKey", "list", "delete", "create")
                 .filter { it.startsWith(args[1]) }
@@ -341,7 +341,7 @@ class SendCommand(
             }
 
             4 -> when (args[1]) {
-                "byName" -> Bukkit.getOnlinePlayers().map { it.name }.filter { it.startsWith(args[3]) }
+                "byName" -> null
                 "byPubKey" -> listOf("[pubKey]").filter { it.startsWith(args[3]) }
                 "create" -> listOf("[memo]").filter { it.startsWith(args[3]) }
                 else -> emptyList()

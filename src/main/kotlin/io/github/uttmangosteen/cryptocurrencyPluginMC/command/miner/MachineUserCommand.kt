@@ -137,12 +137,12 @@ class MachineUserCommand(
         return Bukkit.getOfflinePlayer(uuid).name ?: uuidString
     }
 
-    fun getTabCompletions(args: Array<out String>): List<String> {
+    fun getTabCompletions(args: Array<out String>): List<String>? {
         return when (args.size) {
             2 -> listOf("add", "delete", "list").filter { it.startsWith(args[1]) }
             3 -> listOf("<machineId>").filter { it.startsWith(args[2]) }
             4 -> when (args[1].lowercase()) {
-                "add", "delete" -> Bukkit.getOnlinePlayers().map { it.name }.filter { it.startsWith(args[3]) }
+                "add", "delete" -> null
                 else -> emptyList()
             }
 

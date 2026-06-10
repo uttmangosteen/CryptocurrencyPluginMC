@@ -62,7 +62,7 @@ class MinerCommand(
         command: Command,
         alias: String,
         args: Array<out String>
-    ): List<String> {
+    ): List<String>? {
         if (!sender.hasPermission("cryptocurrency.miner")) return emptyList()
 
         return when (args.size) {

@@ -57,7 +57,7 @@ class UserCommand(
         command: Command,
         alias: String,
         args: Array<out String>
-    ): List<String> {
+    ): List<String>? {
         if (!sender.hasPermission("cryptocurrency.user")) return emptyList()
 
         return when (args.size) {

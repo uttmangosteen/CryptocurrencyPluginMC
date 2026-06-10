@@ -56,7 +56,7 @@ class AdminCommand(
         command: Command,
         alias: String,
         args: Array<out String>
-    ): List<String> {
+    ): List<String>? {
         if (!sender.hasPermission("cryptocurrency.admin")) return emptyList()
 
         return when (args.size) {
@@ -73,7 +73,7 @@ class AdminCommand(
                 "create" -> {
                     when (args.size) {
                         2 -> listOf("<machineId>").filter { it.startsWith(args[1]) }
-                        3 -> listOf("<name>").filter { it.startsWith(args[2]) }
+                        3 -> null
                         else -> emptyList()
                     }
                 }

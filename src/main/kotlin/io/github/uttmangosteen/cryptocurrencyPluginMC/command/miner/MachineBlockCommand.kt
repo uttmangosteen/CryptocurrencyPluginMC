@@ -1,6 +1,7 @@
 package io.github.uttmangosteen.cryptocurrencyPluginMC.command.miner
 
 import io.github.uttmangosteen.cryptocurrencyPluginMC.Main
+import org.bukkit.Sound
 import org.bukkit.entity.Player
 
 class MachineBlockCommand(
@@ -93,8 +94,14 @@ class MachineBlockCommand(
                 newMode = machine.toggleCreateBlockMode().name
                 true
             } ?: false
-
             plugin.runSync {
+                player.sendMessage("$prefix§c採掘機を停止しました")
+                player.playSound(
+                    player.location,
+                    Sound.BLOCK_STONE_BUTTON_CLICK_OFF,
+                    1.0f,
+                    0.5f
+                )
                 if (updated) {
                     player.sendMessage("$prefix§aTX収集モードを変更しました: §f$newMode")
                 } else {
@@ -120,6 +127,13 @@ class MachineBlockCommand(
             plugin.runSync {
                 if (updated) {
                     player.sendMessage("$prefix§a採掘ブロックを再構築待ちにしました")
+                    player.sendMessage("$prefix§c採掘機を停止しました")
+                    player.playSound(
+                        player.location,
+                        Sound.BLOCK_RESPAWN_ANCHOR_DEPLETE,
+                        1.0f,
+                        2.0f
+                    )
                 } else {
                     player.sendMessage("$prefix§c採掘ブロックの再構築に失敗しました")
                 }

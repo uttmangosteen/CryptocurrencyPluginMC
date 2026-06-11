@@ -65,7 +65,15 @@ class AccountCommand(
 
             plugin.runSync {
                 when (created) {
-                    true -> player.sendMessage("$prefix§a口座を作成しました")
+                    true -> {
+                        player.sendMessage("$prefix§a口座を作成しました")
+                        player.playSound(
+                            player.location,
+                            Sound.ITEM_BOOK_PAGE_TURN,
+                            1.0f,
+                            1.0f
+                        )
+                    }
                     false -> player.sendMessage("$prefix§c口座数が上限に達しています")
                     null -> player.sendMessage("$prefix§c口座の作成に失敗しました")
                 }
@@ -83,6 +91,12 @@ class AccountCommand(
             plugin.runSync {
                 if (deleted) {
                     player.sendMessage("$prefix§a口座を削除しました")
+                    player.playSound(
+                        player.location,
+                        Sound.BLOCK_RESPAWN_ANCHOR_DEPLETE,
+                        1.0f,
+                        2.0f
+                    )
                 } else {
                     player.sendMessage("$prefix§c口座の削除に失敗しました")
                 }
@@ -120,6 +134,12 @@ class AccountCommand(
             plugin.runSync {
                 if (switched) {
                     player.sendMessage("$prefix§aメイン口座を切り替えました")
+                    player.playSound(
+                        player.location,
+                        Sound.ENTITY_ITEM_FRAME_ROTATE_ITEM,
+                        1.0f,
+                        2.0f
+                    )
                 } else {
                     player.sendMessage("$prefix§cメイン口座の切り替えに失敗しました")
                 }
@@ -171,7 +191,12 @@ class AccountCommand(
                 )
                 val overflow = player.inventory.addItem(item)
                 overflow.values.forEach { player.world.dropItemNaturally(player.location, it) }
-                playWriteSound(player)
+                player.playSound(
+                    player.location,
+                    Sound.UI_CARTOGRAPHY_TABLE_TAKE_RESULT,
+                    1.0f,
+                    0.8f
+                )
                 player.sendMessage("$prefix§a公開鍵アイテムを取得しました")
             }
         }
@@ -214,7 +239,12 @@ class AccountCommand(
                 val overflowItems = player.inventory.addItem(item)
 
                 if (overflowItems.isEmpty()) {
-                    playWriteSound(player)
+                    player.playSound(
+                        player.location,
+                        Sound.UI_CARTOGRAPHY_TABLE_TAKE_RESULT,
+                        1.0f,
+                        0.8f
+                    )
                     player.sendMessage("$prefix§c秘密鍵付き公開鍵アイテムを取得しました　取扱注意")
                 } else {
                     player.inventory.addItem(ItemStack(Material.PAPER, 1))
@@ -229,15 +259,6 @@ class AccountCommand(
         if (!player.inventory.containsAtLeast(paper, 1)) return false
         player.inventory.removeItem(paper)
         return true
-    }
-
-    private fun playWriteSound(player: Player) {
-        player.playSound(
-            player.location,
-            Sound.UI_CARTOGRAPHY_TABLE_TAKE_RESULT,
-            1.0f,
-            0.8f
-        )
     }
 
     private fun register(player: Player, pubKey: String?) {
@@ -274,13 +295,18 @@ class AccountCommand(
             plugin.runSync {
                 when (registered) {
                     true -> {
+                        player.playSound(
+                            player.location,
+                            Sound.ITEM_BOOK_PAGE_TURN,
+                            1.0f,
+                            1.0f
+                        )
                         if (account.privateKey == null) {
                             player.sendMessage("$prefix§a監視用口座を登録しました")
                         } else {
                             player.sendMessage("$prefix§a秘密鍵付き口座を登録しました")
                         }
                     }
-
                     false -> player.sendMessage("$prefix§c口座数が上限に達しているか、同じ公開鍵が既に登録されています")
                     null -> player.sendMessage("$prefix§c口座の登録に失敗しました")
                 }

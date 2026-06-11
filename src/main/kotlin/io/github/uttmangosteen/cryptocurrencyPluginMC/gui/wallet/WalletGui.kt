@@ -93,11 +93,17 @@ class WalletGui(
 
             val isMain = index == 0
             val isWatchOnly = account.privateKey == null
-            val titleText = "口座(#${index})"
-            val memoText = account.memo.ifBlank { "no memo" }
 
             val lore = mutableListOf<Component>()
-            lore.add(Component.text(memoText, NamedTextColor.GRAY))
+            lore.add(
+                if (account.memo.isNotBlank()) Component.text(
+                    account.memo,
+                    NamedTextColor.YELLOW,
+                    TextDecoration.BOLD,
+                    TextDecoration.ITALIC
+                )
+                else Component.text("no memo", NamedTextColor.GRAY)
+            )
 
             var tagsComponent = Component.empty()
             if (isMain) tagsComponent = tagsComponent.append(Component.text("[Main] ", NamedTextColor.GREEN))
@@ -110,7 +116,7 @@ class WalletGui(
 
             val item = Items.create(
                 material = Material.PAPER,
-                name = Component.text(titleText, NamedTextColor.WHITE, TextDecoration.BOLD),
+                name = Component.text("口座(#${index})", NamedTextColor.WHITE, TextDecoration.BOLD),
                 lore = lore
             )
 

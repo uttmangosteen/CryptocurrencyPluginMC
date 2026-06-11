@@ -140,11 +140,16 @@ class WalletAccountGui(
         val isMain = accountIndex == 0
         val hasPrivateKey = account.privateKey != null
 
-        val titleText = "口座 #${accountIndex}"
-        val memoText = account.memo.ifBlank { "no memo" }
-
         val infoLore = mutableListOf<Component>()
-        infoLore.add(Component.text(memoText, NamedTextColor.GRAY))
+        infoLore.add(
+            if (account.memo.isNotBlank()) Component.text(
+                account.memo,
+                NamedTextColor.YELLOW,
+                TextDecoration.BOLD,
+                TextDecoration.ITALIC
+            )
+            else Component.text("no memo", NamedTextColor.GRAY)
+        )
         if (isMain) infoLore.add(Component.text("[Main]", NamedTextColor.GREEN))
         if (!hasPrivateKey) infoLore.add(Component.text("[Watch]", NamedTextColor.YELLOW))
         infoLore.add(Component.text("PublicKey:", NamedTextColor.GRAY))
@@ -178,7 +183,7 @@ class WalletAccountGui(
 
         val infoItem = Items.create(
             material = Material.PAPER,
-            name = Component.text(titleText, NamedTextColor.WHITE, TextDecoration.BOLD),
+            name = Component.text("口座 #${accountIndex}", NamedTextColor.WHITE, TextDecoration.BOLD),
             lore = infoLore
         )
         setItem(4, infoItem)

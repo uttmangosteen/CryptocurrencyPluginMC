@@ -2,6 +2,7 @@ package io.github.uttmangosteen.cryptocurrencyPluginMC.command.user
 
 import io.github.uttmangosteen.cryptocurrencyPluginMC.Main
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.OutPoint
+import org.bukkit.Sound
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
@@ -35,6 +36,12 @@ class InfoCommand(private val plugin: Main) {
                 }
                 player.sendMessage("$prefix§7mempool size: §6${mempoolSize} TXs")
                 player.sendMessage("$prefix§f§l=======================================")
+                player.playSound(
+                    player.location,
+                    Sound.ITEM_BOOK_PAGE_TURN,
+                    1.0f,
+                    1.0f
+                )
             }
         }
     }
@@ -101,6 +108,12 @@ class InfoCommand(private val plugin: Main) {
                 }
 
                 player.sendMessage("$prefix§f§l=========================================")
+                player.playSound(
+                    player.location,
+                    Sound.ITEM_BOOK_PAGE_TURN,
+                    1.0f,
+                    1.0f
+                )
             }
         }
     }

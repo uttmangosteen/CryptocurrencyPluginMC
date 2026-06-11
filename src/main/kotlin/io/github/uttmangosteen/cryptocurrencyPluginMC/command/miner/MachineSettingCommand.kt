@@ -1,6 +1,7 @@
 package io.github.uttmangosteen.cryptocurrencyPluginMC.command.miner
 
 import io.github.uttmangosteen.cryptocurrencyPluginMC.Main
+import org.bukkit.Sound
 import org.bukkit.entity.Player
 
 class MachineSettingCommand(
@@ -39,6 +40,13 @@ class MachineSettingCommand(
 
             plugin.runSync {
                 if (updated) {
+                    player.sendMessage("$prefix§c採掘機を停止しました")
+                    player.playSound(
+                        player.location,
+                        Sound.BLOCK_STONE_BUTTON_CLICK_OFF,
+                        1.0f,
+                        0.5f
+                    )
                     if (enabled) {
                         player.sendMessage("$prefix§a採掘機を起動しました")
                     } else {
@@ -69,6 +77,13 @@ class MachineSettingCommand(
                 if (updated) {
                     val status = if (enabled) "§aON" else "§cOFF"
                     player.sendMessage("$prefix§f採掘成功時の名前共有: $status")
+                    player.sendMessage("$prefix§c採掘機を停止しました")
+                    player.playSound(
+                        player.location,
+                        Sound.BLOCK_STONE_BUTTON_CLICK_OFF,
+                        1.0f,
+                        0.5f
+                    )
                 } else {
                     player.sendMessage("$prefix§c名前共有設定の切り替えに失敗しました")
                 }

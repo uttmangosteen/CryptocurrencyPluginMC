@@ -12,8 +12,6 @@ repositories {
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT")
 
-    compileOnly(fileTree("libs"))
-
     implementation("org.mongodb:mongodb-driver-kotlin-coroutine:5.6.5")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
 }

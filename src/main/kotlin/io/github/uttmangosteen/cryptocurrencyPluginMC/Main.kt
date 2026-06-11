@@ -19,7 +19,6 @@ import kotlinx.coroutines.launch
 import org.bukkit.plugin.java.JavaPlugin
 
 class Main : JavaPlugin() {
-
     lateinit var mongoDatabaseProvider: MongoDatabaseProvider
         private set
 

@@ -4,9 +4,7 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.Main
 import io.github.uttmangosteen.cryptocurrencyPluginMC.item.GpuItems
 import io.github.uttmangosteen.cryptocurrencyPluginMC.item.ItemKeys
 import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.gpu.Gpu
-import ltotj.minecraft.man10functionalequipment.api.Man10FunctionalEquipmentAPI
 import org.bukkit.entity.Player
-import java.util.UUID
 
 class MachineGpuCommand(
     private val plugin: Main

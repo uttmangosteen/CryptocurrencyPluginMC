@@ -70,7 +70,7 @@ class DatabaseMaintenanceService(
                 session,
                 Document(),
                 Document(
-                    "\$set",
+                    $$"$set",
                     Document("enabled", false)
                         .append("status", "DISABLED")
                         .append("miningBlock", null)

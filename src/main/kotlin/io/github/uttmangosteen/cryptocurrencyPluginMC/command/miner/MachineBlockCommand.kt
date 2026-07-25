@@ -153,7 +153,7 @@ class MachineBlockCommand(
             3 -> listOf("<machineId>").filter { it.startsWith(args[2]) }
 
             4 -> when (args[1]) {
-                "setRewardPubKey" -> listOf("[index]").filter { it.startsWith(args[3]) }
+                "setRewardPubKey" -> listOf("<index>").filter { it.startsWith(args[3]) }
                 "setMemo" -> listOf("[memo]").filter { it.startsWith(args[3]) }
                 else -> emptyList()
             }

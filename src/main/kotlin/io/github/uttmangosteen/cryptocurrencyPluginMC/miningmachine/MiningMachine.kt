@@ -2,6 +2,7 @@ package io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine
 
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.Block
 import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.gpu.Gpu
+import org.bukkit.Bukkit
 import java.util.UUID
 
 data class MiningMachine(
@@ -36,7 +37,7 @@ data class MiningMachine(
             return MiningMachine(
                 id = machineId,
                 userUuids = mutableListOf(ownerUuid),
-                memo = ""
+                memo = "MinedBy" + Bukkit.getOfflinePlayer(UUID.fromString(ownerUuid)).name
             )
         }
     }

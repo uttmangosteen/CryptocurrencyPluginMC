@@ -1,17 +1,17 @@
 gpus:
   madeon_op_100000:
     name: "<reset><white><bold>Madeon OP 100000"
-    description: "<gray>TEST用GPU"
-    material: IRON_NUGGET
-    custom-model-data: 2
+    description: "<gray>TEST用GPU <red>運営以外の所持は禁止されています"
+    material: GOLDEN_HOE
+    custom-model-data: 37
     life: 100
     break-chance: 0.01
     power: 1
   maforce_op_999999:
     name: "<reset><white><bold>MaForce OP 999999"
-    description: "<gray>TEST用GPU"
-    material: IRON_NUGGET
-    custom-model-data: 2
+    description: "<gray>TEST用GPU <red>運営以外の所持は禁止されています"
+    material: GOLDEN_HOE
+    custom-model-data: 37
     life: 10000
     break-chance: 0.001
     power: 10

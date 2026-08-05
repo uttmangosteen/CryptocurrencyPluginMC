@@ -4,6 +4,7 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.Main
 import io.github.uttmangosteen.cryptocurrencyPluginMC.item.GpuItems
 import io.github.uttmangosteen.cryptocurrencyPluginMC.item.ItemKeys
 import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.gpu.Gpu
+import org.bukkit.Sound
 import org.bukkit.entity.Player
 
 class MachineGpuCommand(
@@ -60,6 +61,15 @@ class MachineGpuCommand(
             overflow.values.forEach { player.world.dropItemNaturally(player.location, it) }
 
             player.sendMessage("$prefix§aGPUをslot $slot から取り外しました")
+            player.playSound(
+                player.location,
+                Sound.ITEM_LEAD_BREAK,
+                1.0f,
+                0.7f
+            )
+
+            //man10FunctionalEquipmentの表示更新
+            plugin.server.dispatchCommand(plugin.server.consoleSender, "mfe display flag $machineId $slot false")
         }
     }
 
@@ -88,6 +98,14 @@ class MachineGpuCommand(
                 plugin.runSync {
                     if (updated) {
                         player.sendMessage("$prefix§aGPUをslot $slot にセットしました")
+                        player.playSound(
+                            player.location,
+                            Sound.ITEM_LEAD_BREAK,
+                            1.0f,
+                            0.7f
+                        )
+                        //man10FunctionalEquipmentの表示更新
+                        plugin.server.dispatchCommand(plugin.server.consoleSender, "mfe display flag $machineId $slot true")
                     } else {
                         val refundItem = GpuItems.create(gpuToSet, gpuKeys)
                         val overflow = player.inventory.addItem(refundItem)

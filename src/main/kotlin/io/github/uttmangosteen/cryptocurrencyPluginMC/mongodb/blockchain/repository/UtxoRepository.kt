@@ -129,25 +129,6 @@ class UtxoRepository(
         }
     }
 
-    //mempoolからtransaction消すときtransaction内のutxoロック解除
-    suspend fun unlock(transaction: Transaction): Boolean {
-        return try {
-            val result = collection.updateMany(
-                Filters.eq("lockedByTxId", transaction.txHash),
-                Updates.unset("lockedByTxId")
-            )
-            result.wasAcknowledged()
-        } catch (e: Exception) {
-            logger.ccWarning(
-                LogComponent.UTXO_REPOSITORY,
-                "failed to unlock utxos for transaction",
-                e,
-                "txId" to transaction.txHash
-            )
-            false
-        }
-    }
-
     //acceptNewBlock時実行
     suspend fun unlockByTransactionIds(
         session: ClientSession,

@@ -20,10 +20,12 @@ import org.bson.Document
 import java.util.logging.Logger
 
 class DatabaseMaintenanceService(
-    private val provider: MongoDatabaseProvider,
+    provider: MongoDatabaseProvider,
     private val miningDelayTicks: Int,
     private val logger: Logger
 ) {
+    private val transactionRunner = MongoTransactionRunner(provider, logger)
+
     private val database = provider.database
 
     private val blocks = database.getCollection<Document>("blocks")
@@ -32,27 +34,14 @@ class DatabaseMaintenanceService(
     private val transactionHistory = database.getCollection<Document>("transaction_history")
     private val miningMachines = database.getCollection<Document>("mining_machines")
 
-    // =========================================================================
-    // Helper Methods for Refactoring
-    // =========================================================================
-
     private suspend fun <T> withTransaction(
         errorMessage: String,
         block: suspend (ClientSession) -> T
     ): T? {
-        val session = provider.startSession()
-        return try {
-            session.startTransaction()
-            val result = block(session)
-            session.commitTransaction()
-            result
-        } catch (e: Exception) {
-            session.abortTransaction()
-            logger.ccWarning(LogComponent.DATABASE, errorMessage, e)
-            null
-        } finally {
-            session.close()
-        }
+        return transactionRunner.run(
+            operation = errorMessage,
+            block = { session -> MongoTransactionOutcome.Commit(block(session)) }
+        )
     }
 
     private suspend fun clearAndInsertCaches(
@@ -114,10 +103,6 @@ class DatabaseMaintenanceService(
             }
         }
     }
-
-    // =========================================================================
-    // Main Service Methods
-    // =========================================================================
 
     suspend fun flushCaches(): Boolean {
         val success = withTransaction("database cache flush failed") { session ->
@@ -414,10 +399,6 @@ class DatabaseMaintenanceService(
 
         return ChainVerifyResult.Valid
     }
-
-    // =========================================================================
-    // Sealed Classes (Unchanged)
-    // =========================================================================
 
     private sealed class ChainVerifyResult {
         data object Valid : ChainVerifyResult()

@@ -21,6 +21,13 @@ class MongoRepositories(
     val historyRepo = TransactionHistoryRepository(provider.database, logger)
     val mempoolRepo = MempoolRepository(provider.database, logger)
 
+    val transactionSubmissionManager = TransactionSubmissionManager(
+        provider = provider,
+        utxoRepo = utxoRepo,
+        mempoolRepo = mempoolRepo,
+        logger = logger
+    )
+
     val miningMachineRepo = MiningMachineRepository(provider.database, logger)
 
     val blockchainManager = BlockchainManager(

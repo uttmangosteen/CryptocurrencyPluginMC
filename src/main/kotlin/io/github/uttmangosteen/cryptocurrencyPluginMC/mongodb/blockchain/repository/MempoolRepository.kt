@@ -55,9 +55,9 @@ class MempoolRepository(
         logger.ccInfo(LogComponent.MEMPOOL_REPOSITORY, "setup completed")
     }
 
-    suspend fun save(entity: MempoolEntry): Boolean {
+    suspend fun save(session: ClientSession, entity: MempoolEntry): Boolean {
         return try {
-            val result = collection.insertOne(entity.toDocument())
+            val result = collection.insertOne(session, entity.toDocument())
             result.wasAcknowledged()
         } catch (e: Exception) {
             logger.ccWarning(

@@ -98,7 +98,7 @@ class UtxoRepository(
 
 
     //送金作成時Transactionが使用するutxoをロック
-    suspend fun lock(transaction: Transaction): Boolean {
+    suspend fun lock(session: ClientSession, transaction: Transaction): Boolean {
         if (transaction.isCoinbase || transaction.inputs.isEmpty()) return true
 
         val outPoints = transaction.toSpentOutPoints()
@@ -106,6 +106,7 @@ class UtxoRepository(
 
         return try {
             val result = collection.updateMany(
+                session,
                 Filters.and(
                     Filters.`in`("_id", outPointIds),
                     Filters.or(

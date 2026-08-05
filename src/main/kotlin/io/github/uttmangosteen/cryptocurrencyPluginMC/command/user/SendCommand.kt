@@ -8,7 +8,7 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.transaction.Sig
 import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.transaction.Transaction
 import io.github.uttmangosteen.cryptocurrencyPluginMC.item.ItemKeys
 import io.github.uttmangosteen.cryptocurrencyPluginMC.item.KeyItems
-import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.model.MempoolEntry
+import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.TransactionSubmissionResult
 import io.github.uttmangosteen.cryptocurrencyPluginMC.wallet.Account
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
@@ -201,27 +201,20 @@ class SendCommand(
                 return@launchAsync
             }
 
-            val locked = plugin.repositories.utxoRepo.lock(tx)
-
-            if (!locked) {
-                plugin.runSync {
-                    player.sendMessage("$prefix§c使用するUTXOのロックに失敗しました")
-                }
-                return@launchAsync
-            }
-
-            val saved = plugin.repositories.mempoolRepo.save(
-                MempoolEntry(
-                    transaction = tx,
-                    fee = fee
-                )
+            val submitted = plugin.repositories.transactionSubmissionManager.submit(
+                transaction = tx,
+                fee = fee
             )
 
-            if (!saved) {
-                plugin.repositories.utxoRepo.unlock(tx)
-
+            if (submitted != TransactionSubmissionResult.SUCCESS) {
                 plugin.runSync {
-                    player.sendMessage("$prefix§cTransactionのmempool登録に失敗しました")
+                    val message = when (submitted) {
+                        TransactionSubmissionResult.UTXO_LOCK_FAILED -> "使用するUTXOのロックに失敗しました"
+                        TransactionSubmissionResult.MEMPOOL_SAVE_FAILED -> "Transactionのmempool登録に失敗しました"
+                        TransactionSubmissionResult.DATABASE_ERROR -> "Transaction登録中にDBエラーが発生しました"
+                        TransactionSubmissionResult.SUCCESS -> error("unreachable")
+                    }
+                    player.sendMessage("$prefix§c$message")
                 }
                 return@launchAsync
             }

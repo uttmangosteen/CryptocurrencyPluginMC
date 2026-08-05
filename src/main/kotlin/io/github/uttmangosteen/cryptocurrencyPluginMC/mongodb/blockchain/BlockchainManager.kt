@@ -10,14 +10,17 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.transaction.Sig
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccInfo
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccWarning
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.MongoDatabaseProvider
+import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.MongoTransactionOutcome
+import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.MongoTransactionRunner
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.repository.BlockRepository
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.repository.MempoolRepository
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.repository.UtxoRepository
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.repository.TransactionHistoryRepository
+import com.mongodb.kotlin.client.coroutine.ClientSession
 import java.util.logging.Logger
 
 class BlockchainManager(
-    private val provider: MongoDatabaseProvider,
+    provider: MongoDatabaseProvider,
     private val blockRepo: BlockRepository,
     private val utxoRepo: UtxoRepository,
     private val historyRepo: TransactionHistoryRepository,
@@ -25,146 +28,172 @@ class BlockchainManager(
     private val miningDelayTicks: Int,
     private val logger: Logger
 ) {
+    private val transactionRunner = MongoTransactionRunner(provider, logger)
+
     // blockchain積み上げ、使ったutxo変換、確定分history記述、確定txをmempoolから削除
     suspend fun acceptNewBlock(block: Block): Boolean {
-        val session = provider.startSession()
-        return try {
-            session.startTransaction()
-
-            val latestBlock = blockRepo.getLatestBlock(session) ?: return false
-            val expectedDifficulty = DifficultyPolicy.calculateExpectedDifficulty(
-                networkMiningPower = block.networkMiningPower,
-                miningDelayTicks = miningDelayTicks
-            )
-
-            if (!block.isValid(latestBlock, expectedDifficulty)) return false
-
-            val allInputOutPoints = block.transactions
-                .filter { !it.isCoinbase }
-                .flatMap { tx ->
-                    tx.inputs.map { input ->
-                        OutPoint(
-                            txHash = input.prevTxHash,
-                            outputIndex = input.outputIndex
-                        )
-                    }
+        val result = transactionRunner.run<BlockAcceptanceResult>(
+            operation = "failed to accept new block",
+            block = { session ->
+                val details = acceptNewBlockInTransaction(session, block)
+                if (details != null) {
+                    MongoTransactionOutcome.Commit(BlockAcceptanceResult.Accepted(details))
+                } else {
+                    MongoTransactionOutcome.Abort(BlockAcceptanceResult.Rejected)
                 }
+            },
+            onFailure = { error ->
+                val isWriteConflict = error is MongoCommandException && error.errorCode == 112
+                if (isWriteConflict) {
+                    logger.ccInfo(
+                        LogComponent.DATABASE,
+                        "write conflict detected while accepting block",
+                        "height" to block.height
+                    )
+                } else {
+                    logger.ccWarning(
+                        LogComponent.DATABASE,
+                        "failed to accept new block",
+                        error,
+                        "height" to block.height
+                    )
+                }
+            }
+        ) ?: return false
 
-            val resolvedInputUtxos = utxoRepo.findUtxos(
-                session = session,
-                outPoints = allInputOutPoints
-            )
+        val accepted = result as? BlockAcceptanceResult.Accepted ?: return false
+        logger.ccInfo(
+            LogComponent.DATABASE,
+            "successfully accepted new block",
+            "height" to block.height,
+            "txCount" to block.transactions.size,
+            "totalFees" to accepted.details.totalFees,
+            "coinbaseAmount" to accepted.details.coinbaseAmount,
+            "mintedReward" to accepted.details.mintedReward,
+            "totalChainSupply" to block.totalChainSupply,
+            "networkMiningPower" to block.networkMiningPower,
+            "difficulty" to block.difficulty
+        )
+        return true
+    }
 
-            if (resolvedInputUtxos.size != allInputOutPoints.distinct().size) return false
+    private suspend fun acceptNewBlockInTransaction(
+        session: ClientSession,
+        block: Block
+    ): AcceptedBlockDetails? {
+        val latestBlock = blockRepo.getLatestBlock(session) ?: return null
+        val expectedDifficulty = DifficultyPolicy.calculateExpectedDifficulty(
+            networkMiningPower = block.networkMiningPower,
+            miningDelayTicks = miningDelayTicks
+        )
 
-            var totalFees = 0L
+        if (!block.isValid(latestBlock, expectedDifficulty)) return null
 
-            for (i in 1 until block.transactions.size) {
-                val tx = block.transactions[i]
-                var inputAmountSum = 0L
-
-                for (input in tx.inputs) {
-                    if (Signer.normalizePublicKey(input.publicKey) == null) return false
-
-                    val outPoint = OutPoint(
+        val allInputOutPoints = block.transactions
+            .filter { !it.isCoinbase }
+            .flatMap { tx ->
+                tx.inputs.map { input ->
+                    OutPoint(
                         txHash = input.prevTxHash,
                         outputIndex = input.outputIndex
                     )
-
-                    val utxo = resolvedInputUtxos[outPoint] ?: return false
-                    if (input.publicKey != utxo.receiverPubKey) return false
-                    inputAmountSum = Math.addExact(inputAmountSum, utxo.amount)
                 }
-
-                for (output in tx.outputs) {
-                    if (Signer.normalizePublicKey(output.receiverPubKey) == null) return false
-                }
-
-                val outputAmountSum = tx.outputs.fold(0L) { sum, output ->
-                    Math.addExact(sum, output.amount)
-                }
-
-                if (inputAmountSum < outputAmountSum) return false
-
-                val txFee = inputAmountSum - outputAmountSum
-                totalFees = Math.addExact(totalFees, txFee)
             }
 
-            val coinbaseTx = block.transactions[0]
-            val coinbaseOutput = coinbaseTx.outputs.singleOrNull() ?: return false
+        val resolvedInputUtxos = utxoRepo.findUtxos(
+            session = session,
+            outPoints = allInputOutPoints
+        )
 
-            if (Signer.normalizePublicKey(coinbaseOutput.receiverPubKey) == null) return false
+        if (resolvedInputUtxos.size != allInputOutPoints.distinct().size) return null
 
-            val mintedReward = CoinbasePolicy.calculateMintedReward(
-                blockHeight = block.height,
-                currentSupply = latestBlock.totalChainSupply
-            )
+        var totalFees = 0L
 
-            val expectedCoinbaseAmount = CoinbasePolicy.calculateCoinbaseAmount(
-                blockHeight = block.height,
-                currentSupply = latestBlock.totalChainSupply,
-                totalFees = totalFees
-            )
+        for (i in 1 until block.transactions.size) {
+            val tx = block.transactions[i]
+            var inputAmountSum = 0L
 
-            if (coinbaseOutput.amount != expectedCoinbaseAmount) return false
+            for (input in tx.inputs) {
+                if (Signer.normalizePublicKey(input.publicKey) == null) return null
 
-            val expectedTotalChainSupply = Math.addExact(latestBlock.totalChainSupply, mintedReward)
-            if (block.totalChainSupply != expectedTotalChainSupply) return false
-
-            val blockSaved = blockRepo.saveBlock(session, block)
-            if (!blockSaved) return false
-
-            val utxoApplied = utxoRepo.applyTransactions(session, block.transactions)
-            if (!utxoApplied) return false
-
-            val historyWritten = historyRepo.writeHistory(
-                session = session,
-                transactions = block.transactions,
-                resolvedInputUtxos = resolvedInputUtxos,
-                height = block.height,
-                blockTimestamp = block.timestamp
-            )
-            if (!historyWritten) return false
-
-            val mempoolCleared = mempoolRepo.delete(session, block)
-            if (!mempoolCleared) return false
-
-            session.commitTransaction()
-
-            logger.ccInfo(
-                LogComponent.DATABASE,
-                "successfully accepted new block",
-                "height" to block.height,
-                "txCount" to block.transactions.size,
-                "totalFees" to totalFees,
-                "coinbaseAmount" to coinbaseOutput.amount,
-                "mintedReward" to mintedReward,
-                "totalChainSupply" to block.totalChainSupply,
-                "networkMiningPower" to block.networkMiningPower,
-                "difficulty" to block.difficulty
-            )
-            true
-        } catch (e: Exception) {
-            session.abortTransaction()
-
-            val isWriteConflict = e is MongoCommandException && e.errorCode == 112
-            if (isWriteConflict) {
-                logger.ccInfo(
-                    LogComponent.DATABASE,
-                    "write conflict detected while accepting block",
-                    "height" to block.height
+                val outPoint = OutPoint(
+                    txHash = input.prevTxHash,
+                    outputIndex = input.outputIndex
                 )
-            } else {
-                logger.ccWarning(
-                    LogComponent.DATABASE,
-                    "failed to accept new block",
-                    e,
-                    "height" to block.height
-                )
+
+                val utxo = resolvedInputUtxos[outPoint] ?: return null
+                if (input.publicKey != utxo.receiverPubKey) return null
+                inputAmountSum = Math.addExact(inputAmountSum, utxo.amount)
             }
-            false
-        } finally {
-            session.close()
+
+            for ((_, receiverPubKey) in tx.outputs) {
+                if (Signer.normalizePublicKey(receiverPubKey) == null) return null
+            }
+
+            val outputAmountSum = tx.outputs.fold(0L) { sum, output ->
+                Math.addExact(sum, output.amount)
+            }
+
+            if (inputAmountSum < outputAmountSum) return null
+
+            val txFee = inputAmountSum - outputAmountSum
+            totalFees = Math.addExact(totalFees, txFee)
         }
+
+        val coinbaseTx = block.transactions[0]
+        val coinbaseOutput = coinbaseTx.outputs.singleOrNull() ?: return null
+
+        if (Signer.normalizePublicKey(coinbaseOutput.receiverPubKey) == null) return null
+
+        val mintedReward = CoinbasePolicy.calculateMintedReward(
+            blockHeight = block.height,
+            currentSupply = latestBlock.totalChainSupply
+        )
+
+        val expectedCoinbaseAmount = CoinbasePolicy.calculateCoinbaseAmount(
+            blockHeight = block.height,
+            currentSupply = latestBlock.totalChainSupply,
+            totalFees = totalFees
+        )
+
+        if (coinbaseOutput.amount != expectedCoinbaseAmount) return null
+
+        val expectedTotalChainSupply = Math.addExact(latestBlock.totalChainSupply, mintedReward)
+        if (block.totalChainSupply != expectedTotalChainSupply) return null
+
+        val blockSaved = blockRepo.saveBlock(session, block)
+        if (!blockSaved) return null
+
+        val utxoApplied = utxoRepo.applyTransactions(session, block.transactions)
+        if (!utxoApplied) return null
+
+        val historyWritten = historyRepo.writeHistory(
+            session = session,
+            transactions = block.transactions,
+            resolvedInputUtxos = resolvedInputUtxos,
+            height = block.height,
+            blockTimestamp = block.timestamp
+        )
+        if (!historyWritten) return null
+
+        val mempoolCleared = mempoolRepo.delete(session, block)
+        if (!mempoolCleared) return null
+
+        return AcceptedBlockDetails(
+            totalFees = totalFees,
+            coinbaseAmount = coinbaseOutput.amount,
+            mintedReward = mintedReward
+        )
     }
+
+    private sealed interface BlockAcceptanceResult {
+        data class Accepted(val details: AcceptedBlockDetails) : BlockAcceptanceResult
+        data object Rejected : BlockAcceptanceResult
+    }
+
+    private data class AcceptedBlockDetails(
+        val totalFees: Long,
+        val coinbaseAmount: Long,
+        val mintedReward: Long
+    )
 }

@@ -62,6 +62,7 @@ class BlockchainManager(
         ) ?: return false
 
         val accepted = result as? BlockAcceptanceResult.Accepted ?: return false
+        mempoolRepo.invalidateMiningSelections()
         logger.ccInfo(
             LogComponent.DATABASE,
             "successfully accepted new block",

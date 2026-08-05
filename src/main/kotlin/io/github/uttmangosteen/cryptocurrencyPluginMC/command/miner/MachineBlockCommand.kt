@@ -124,6 +124,10 @@ class MachineBlockCommand(
                 true
             } ?: false
 
+            if (updated) {
+                plugin.repositories.mempoolRepo.invalidateMiningSelections()
+            }
+
             plugin.runSync {
                 if (updated) {
                     player.sendMessage("$prefix§a採掘ブロックを再構築待ちにしました")

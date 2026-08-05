@@ -170,7 +170,7 @@ class MiningMachineService(
             }
 
             if (machinesToSave.isNotEmpty()) {
-                val saved = plugin.repositories.miningMachineRepo.saveAll(machinesToSave)
+                val saved = plugin.repositories.miningMachineRepo.saveMiningProgressAll(machinesToSave)
                 if (saved) machinesToSave.forEach { it.isDirty = false }
             }
         }

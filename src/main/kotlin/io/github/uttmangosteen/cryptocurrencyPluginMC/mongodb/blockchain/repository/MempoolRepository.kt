@@ -18,6 +18,7 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.toTrans
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import org.bson.Document
+import java.util.concurrent.atomic.AtomicLong
 import java.util.logging.Logger
 
 class MempoolRepository(
@@ -25,6 +26,13 @@ class MempoolRepository(
     private val logger: Logger
 ) {
     private val collection = database.getCollection<Document>("mempool")
+    private val miningSelectionRevision = AtomicLong()
+
+    fun miningSelectionRevision(): Long = miningSelectionRevision.get()
+
+    fun invalidateMiningSelections() {
+        miningSelectionRevision.incrementAndGet()
+    }
 
     suspend fun setup() {
         // CreateBlockMode.FEE_SORT用

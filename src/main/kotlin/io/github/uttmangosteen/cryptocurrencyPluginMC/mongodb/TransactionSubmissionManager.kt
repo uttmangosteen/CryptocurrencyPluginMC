@@ -14,15 +14,15 @@ enum class TransactionSubmissionResult {
 }
 
 class TransactionSubmissionManager(
-    private val provider: MongoDatabaseProvider,
+    provider: MongoDatabaseProvider,
     private val utxoRepo: UtxoRepository,
     private val mempoolRepo: MempoolRepository,
-    private val logger: Logger
+    logger: Logger
 ) {
     private val transactionRunner = MongoTransactionRunner(provider, logger)
 
     suspend fun submit(transaction: Transaction, fee: Long): TransactionSubmissionResult {
-        return transactionRunner.run(
+        val result = transactionRunner.run(
             operation = "failed to submit transaction",
             block = { session ->
                 if (!utxoRepo.lock(session, transaction)) {
@@ -36,6 +36,11 @@ class TransactionSubmissionManager(
 
                 MongoTransactionOutcome.Commit(TransactionSubmissionResult.SUCCESS)
             }
-        ) ?: TransactionSubmissionResult.DATABASE_ERROR
+        ) ?: return TransactionSubmissionResult.DATABASE_ERROR
+
+        if (result == TransactionSubmissionResult.SUCCESS) {
+            mempoolRepo.invalidateMiningSelections()
+        }
+        return result
     }
 }

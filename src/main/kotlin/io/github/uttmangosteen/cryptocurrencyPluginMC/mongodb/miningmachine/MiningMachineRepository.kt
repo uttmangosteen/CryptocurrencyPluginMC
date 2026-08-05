@@ -4,6 +4,9 @@ import com.mongodb.client.model.Filters
 import com.mongodb.client.model.Indexes
 import com.mongodb.client.model.ReplaceOneModel
 import com.mongodb.client.model.ReplaceOptions
+import com.mongodb.client.model.UpdateOneModel
+import com.mongodb.client.model.Updates
+import com.mongodb.client.model.WriteModel
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import io.github.uttmangosteen.cryptocurrencyPluginMC.LogComponent
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccInfo
@@ -86,6 +89,35 @@ class MiningMachineRepository(
             logger.ccWarning(
                 LogComponent.MINING_MACHINE_REPOSITORY,
                 "failed to bulk save mining machines",
+                e,
+                "machineCount" to machines.size
+            )
+            false
+        }
+    }
+
+    suspend fun saveMiningProgressAll(machines: List<MiningMachine>): Boolean {
+        return machines.isEmpty() || try {
+            val requests: List<WriteModel<Document>> = machines.map { machine ->
+                machine.normalizeGpuSlots()
+                machine.refreshStatus()
+
+                UpdateOneModel<Document>(
+                    Filters.eq("_id", machine.id),
+                    Updates.combine(
+                        Updates.set("enabled", machine.enabled),
+                        Updates.set("status", machine.status.name),
+                        Updates.set("fuelAmount", machine.fuelAmount),
+                        Updates.set("gpuSlots", machine.gpuSlots.map { gpu -> gpu?.toDocument() })
+                    )
+                )
+            }
+            val result = collection.bulkWrite(requests)
+            result.wasAcknowledged()
+        } catch (e: Exception) {
+            logger.ccWarning(
+                LogComponent.MINING_MACHINE_REPOSITORY,
+                "failed to save mining machine progress",
                 e,
                 "machineCount" to machines.size
             )

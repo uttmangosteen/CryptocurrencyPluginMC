@@ -14,6 +14,9 @@ class BlockFactory(
 ) {
     private val limit = plugin.pluginConfig.mempoolLimitPerBlock
 
+    private var cachedMempoolRevision = Long.MIN_VALUE
+    private val transactionSelections = mutableMapOf<SelectionKey, TransactionSelection>()
+
     suspend fun createMiningBlock(
         latestBlock: Block,
         networkMiningPower: Long,
@@ -21,12 +24,9 @@ class BlockFactory(
     ): Block? {
         val rewardAccountPubKey = machine.rewardAccountPubKey ?: return null
 
-        val txEntries = mempoolRepository.getTxForMining(machine.createBlockMode, rewardAccountPubKey, limit)
-        val transactions = txEntries.map { it.transaction }.toMutableList()
-
-        val totalFee = txEntries.fold(0L) { sum, entry ->
-            Math.addExact(sum, entry.fee)
-        }
+        val selection = getTransactionSelection(machine.createBlockMode, rewardAccountPubKey)
+        val transactions = ArrayList<Transaction>(selection.transactions.size + 1)
+        transactions.addAll(selection.transactions)
 
         val blockHeight = latestBlock.height + 1
 
@@ -38,7 +38,7 @@ class BlockFactory(
         val totalReward = CoinbasePolicy.calculateCoinbaseAmount(
             blockHeight = blockHeight,
             currentSupply = latestBlock.totalChainSupply,
-            totalFees = totalFee
+            totalFees = selection.totalFee
         )
 
         val totalChainSupply = Math.addExact(latestBlock.totalChainSupply, mintedReward)
@@ -64,5 +64,47 @@ class BlockFactory(
             nonce = ThreadLocalRandom.current().nextLong(),
             hash = null
         )
+    }
+
+    private suspend fun getTransactionSelection(
+        mode: CreateBlockMode,
+        minerPubKey: String
+    ): TransactionSelection {
+        if (mode == CreateBlockMode.NONE) return TransactionSelection.EMPTY
+
+        val mempoolRevision = mempoolRepository.miningSelectionRevision()
+        if (cachedMempoolRevision != mempoolRevision) {
+            transactionSelections.clear()
+            cachedMempoolRevision = mempoolRevision
+        }
+
+        val key = SelectionKey(
+            mode = mode,
+            minerPubKey = when (mode) {
+                CreateBlockMode.FEE_SORT -> null
+                else -> minerPubKey
+            }
+        )
+        transactionSelections[key]?.let { return it }
+
+        val entries = mempoolRepository.getTxForMining(mode, minerPubKey, limit)
+        return TransactionSelection(
+            transactions = entries.map { it.transaction },
+            totalFee = entries.fold(0L) { sum, entry -> Math.addExact(sum, entry.fee) }
+        ).also { transactionSelections[key] = it }
+    }
+
+    private data class SelectionKey(
+        val mode: CreateBlockMode,
+        val minerPubKey: String?
+    )
+
+    private data class TransactionSelection(
+        val transactions: List<Transaction>,
+        val totalFee: Long
+    ) {
+        companion object {
+            val EMPTY = TransactionSelection(emptyList(), 0L)
+        }
     }
 }

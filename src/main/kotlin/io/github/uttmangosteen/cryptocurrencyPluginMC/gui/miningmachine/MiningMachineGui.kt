@@ -36,6 +36,11 @@ class MiningMachineGui(
         update()
     }
 
+    override fun open(player: Player) {
+        super.open(player)
+        MiningMachineGuiRegistry.register(machineId, player.uniqueId)
+    }
+
     companion object {
         private val gpuPosIndex = listOf(3, 4, 5, 14, 23, 22, 21, 12)
 
@@ -350,6 +355,7 @@ class MiningMachineGui(
     )
 
     override fun onClose(e: InventoryCloseEvent): Boolean {
+        MiningMachineGuiRegistry.unregister(machineId, e.player.uniqueId)
         return preventParentOpen
     }
 }

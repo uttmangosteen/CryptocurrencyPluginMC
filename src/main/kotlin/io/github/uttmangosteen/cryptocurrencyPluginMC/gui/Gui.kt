@@ -9,7 +9,7 @@ import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
 
-abstract class Gui(rows: Int, val title: Component) : InventoryHolder {
+abstract class Gui(rows: Int, title: Component) : InventoryHolder {
     val size: Int = rows.coerceIn(1, 6) * 9
     private val inventory: Inventory = Bukkit.createInventory(this, size, title)
     private val actions = mutableMapOf<Int, (InventoryClickEvent) -> Unit>()
@@ -29,7 +29,7 @@ abstract class Gui(rows: Int, val title: Component) : InventoryHolder {
         }
     }
 
-    fun open(player: Player) {
+    open fun open(player: Player) {
         player.openInventory(inventory)
     }
 

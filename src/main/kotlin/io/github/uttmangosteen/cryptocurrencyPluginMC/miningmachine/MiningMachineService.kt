@@ -7,6 +7,7 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.blockchain.OutPoint
 import io.github.uttmangosteen.cryptocurrencyPluginMC.command.user.TxMessageFactory
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccInfo
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccWarning
+import io.github.uttmangosteen.cryptocurrencyPluginMC.gui.miningmachine.MiningMachineGuiRegistry
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
 import org.bukkit.Bukkit
@@ -105,15 +106,7 @@ class MiningMachineService(
 
     //GUI開いてる人に対する更新を呼ぶ
     private fun notifyMachineUpdated(machine: MiningMachine) {
-        plugin.runSync {
-            Bukkit.getPluginManager().callEvent(
-                MiningMachineUpdatedEvent(
-                    machineId = machine.id,
-                    actorUuid = "",
-                    success = true
-                )
-            )
-        }
+        MiningMachineGuiRegistry.requestRefresh(plugin, machine.id)
     }
 
     fun stop() {

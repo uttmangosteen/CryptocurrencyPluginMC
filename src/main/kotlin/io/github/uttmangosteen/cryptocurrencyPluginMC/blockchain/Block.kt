@@ -107,10 +107,10 @@ data class Block(
     fun tryMine(times: Int = 1): Boolean {
         if (times <= 0) return false
 
-        val digest = localDigest.get()
-
-        val nonceBytes = ByteArray(8)
-        val hashResult = ByteArray(32)
+        val workspace = localSha256Workspace.get()
+        val digest = workspace.digest
+        val nonceBytes = workspace.nonceBytes
+        val hashResult = workspace.hashBytes
         var currentNonce = this.nonce
 
         repeat(times) {
@@ -120,7 +120,7 @@ data class Block(
             currentNonce.writeTo(nonceBytes)
 
             digest.update(nonceBytes)
-            digest.digest(hashResult, 0, 32)
+            digest.digest(hashResult, 0, SHA_256_HASH_BYTES)
 
             if (isMined(hashResult, targetBytes)) {
                 this.nonce = currentNonce
@@ -136,15 +136,16 @@ data class Block(
 
 
     private fun calculateHash(targetNonce: Long): ByteArray {
-        val digest = localDigest.get()
+        val workspace = localSha256Workspace.get()
+        val digest = workspace.digest
         digest.reset()
         digest.update(headerBytes)
 
-        val nonceBytes = ByteArray(8)
-        targetNonce.writeTo(nonceBytes)
+        targetNonce.writeTo(workspace.nonceBytes)
 
-        digest.update(nonceBytes)
-        return digest.digest()
+        digest.update(workspace.nonceBytes)
+        digest.digest(workspace.hashBytes, 0, SHA_256_HASH_BYTES)
+        return workspace.hashBytes
     }
 
     //Block自身でできるチェックしか含まれていない点に注意

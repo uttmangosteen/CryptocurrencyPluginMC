@@ -1,9 +1,6 @@
 package io.github.uttmangosteen.cryptocurrencyPluginMC.gui
 
 import io.github.uttmangosteen.cryptocurrencyPluginMC.Main
-import io.github.uttmangosteen.cryptocurrencyPluginMC.gui.miningmachine.MiningMachineGui
-import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.MiningMachineUpdatedEvent
-import org.bukkit.Bukkit
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.inventory.InventoryClickEvent
@@ -33,18 +30,6 @@ class Event : Listener {
                 plugin.server.scheduler.runTaskLater(plugin, Runnable {
                     parentOpener.invoke()
                 }, 1L)
-            }
-        }
-    }
-
-    @EventHandler
-    fun onMiningMachineUpdated(e: MiningMachineUpdatedEvent) {
-        if (!e.success) return
-
-        for (player in Bukkit.getOnlinePlayers()) {
-            val holder = player.openInventory.topInventory.holder
-            if (holder is MiningMachineGui && holder.machineId == e.machineId) {
-                holder.loadMachine()
             }
         }
     }

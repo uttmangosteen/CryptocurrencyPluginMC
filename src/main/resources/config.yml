@@ -9,6 +9,8 @@ plugin:
 
 blockchain:
   mempool-limit-per-block: 10
+  # 0で起動時の期限切れTX掃除を無効化
+  mempool-transaction-ttl-hours: 24
 
 mining-machine:
   delay-ticks: 20

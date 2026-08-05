@@ -149,6 +149,30 @@ class UtxoRepository(
     }
 
     //acceptNewBlock時実行
+    suspend fun unlockByTransactionIds(
+        session: ClientSession,
+        transactionIds: Collection<String>
+    ): Boolean {
+        if (transactionIds.isEmpty()) return true
+
+        return try {
+            val result = collection.updateMany(
+                session,
+                Filters.`in`("lockedByTxId", transactionIds),
+                Updates.unset("lockedByTxId")
+            )
+            result.wasAcknowledged()
+        } catch (e: Exception) {
+            logger.ccWarning(
+                LogComponent.UTXO_REPOSITORY,
+                "failed to unlock expired mempool transaction utxos",
+                e,
+                "transactionCount" to transactionIds.size
+            )
+            false
+        }
+    }
+
     suspend fun applyTransactions(session: ClientSession, transactions: List<Transaction>): Boolean {
         if (transactions.isEmpty()) return true
 

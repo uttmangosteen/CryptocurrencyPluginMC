@@ -28,6 +28,13 @@ class MongoRepositories(
         logger = logger
     )
 
+    val mempoolExpirationService = MempoolExpirationService(
+        provider = provider,
+        mempoolRepo = mempoolRepo,
+        utxoRepo = utxoRepo,
+        logger = logger
+    )
+
     val miningMachineRepo = MiningMachineRepository(provider.database, logger)
 
     val blockchainManager = BlockchainManager(

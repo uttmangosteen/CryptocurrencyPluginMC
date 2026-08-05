@@ -61,6 +61,9 @@ class Main : JavaPlugin() {
         pluginScope.launch {
             try {
                 repositories.setupAll()
+                repositories.mempoolExpirationService.expireOnStartup(
+                    pluginConfig.mempoolTransactionTtlMillis
+                )
                 server.scheduler.runTask(this@Main, Runnable {
                     registerCommands(gpuConfig)
                     miningMachineService = MiningMachineService(this@Main).also { it.start() }

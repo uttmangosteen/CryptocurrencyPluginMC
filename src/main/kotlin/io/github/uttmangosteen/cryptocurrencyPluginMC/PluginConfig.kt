@@ -12,10 +12,16 @@ data class PluginConfig(
     val commandRateLimitMillis: Long,
 
     val mempoolLimitPerBlock: Int,
+    val mempoolTransactionTtlHours: Long,
 
     val miningMachineMiningDelayTicks: Int,
     val miningMachineSaveIntervalMiningTicks: Int,
 ) {
+    val mempoolTransactionTtlMillis: Long
+        get() = mempoolTransactionTtlHours
+            .coerceAtMost(Long.MAX_VALUE / MILLIS_PER_HOUR)
+            .times(MILLIS_PER_HOUR)
+
     companion object {
         private const val DEFAULT_MONGODB_CONNECTION_STRING = "mongodb://127.0.0.1:27017/?replicaSet=rs0"
         private const val DEFAULT_MONGODB_DATABASE = "cryptocurrency"
@@ -25,6 +31,8 @@ data class PluginConfig(
         private const val DEFAULT_COMMAND_RATE_LIMIT_MILLIS = 500L
 
         private const val DEFAULT_MEMPOOL_LIMIT_PER_BLOCK = 100
+        private const val DEFAULT_MEMPOOL_TRANSACTION_TTL_HOURS = 24L
+        private const val MILLIS_PER_HOUR = 60L * 60L * 1000L
 
         private const val DEFAULT_MINING_MACHINE_DELAY_TICKS = 20
         private const val DEFAULT_MINING_MACHINE_SAVE_INTERVAL_MINING_TICKS = 60
@@ -47,6 +55,10 @@ data class PluginConfig(
                 mempoolLimitPerBlock = config.safeInt(
                     "blockchain.mempool-limit-per-block",
                     DEFAULT_MEMPOOL_LIMIT_PER_BLOCK
+                ),
+                mempoolTransactionTtlHours = config.safeLong(
+                    "blockchain.mempool-transaction-ttl-hours",
+                    DEFAULT_MEMPOOL_TRANSACTION_TTL_HOURS
                 ),
 
                 miningMachineMiningDelayTicks = config.safeInt(

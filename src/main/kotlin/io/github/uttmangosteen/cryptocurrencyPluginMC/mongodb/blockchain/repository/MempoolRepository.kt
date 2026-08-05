@@ -35,6 +35,10 @@ class MempoolRepository(
     }
 
     suspend fun setup() {
+        collection.createIndex(
+            Indexes.ascending("timestamp")
+        )
+
         // CreateBlockMode.FEE_SORT用
         collection.createIndex(
             Indexes.descending("fee")
@@ -73,6 +77,49 @@ class MempoolRepository(
                 "failed to save mempool tx",
                 e,
                 "txHash" to entity.txHash
+            )
+            false
+        }
+    }
+
+    suspend fun getExpiredBefore(session: ClientSession, expiresBefore: Long): List<MempoolEntry> {
+        return try {
+            collection.find(session, Filters.lte("timestamp", expiresBefore))
+                .map { it.toTransactionEntity() }
+                .toList()
+        } catch (e: Exception) {
+            logger.ccWarning(
+                LogComponent.MEMPOOL_REPOSITORY,
+                "failed to get expired mempool transactions",
+                e,
+                "expiresBefore" to expiresBefore
+            )
+            emptyList()
+        }
+    }
+
+    suspend fun deleteExpired(
+        session: ClientSession,
+        transactionHashes: Collection<String>,
+        expiresBefore: Long
+    ): Boolean {
+        if (transactionHashes.isEmpty()) return true
+
+        return try {
+            val result = collection.deleteMany(
+                session,
+                Filters.and(
+                    Filters.`in`("_id", transactionHashes),
+                    Filters.lte("timestamp", expiresBefore)
+                )
+            )
+            result.wasAcknowledged() && result.deletedCount == transactionHashes.size.toLong()
+        } catch (e: Exception) {
+            logger.ccWarning(
+                LogComponent.MEMPOOL_REPOSITORY,
+                "failed to delete expired mempool transactions",
+                e,
+                "transactionCount" to transactionHashes.size
             )
             false
         }

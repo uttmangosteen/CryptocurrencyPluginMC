@@ -12,7 +12,8 @@ enum class LogComponent(val label: String) {
     BLOCK_REPOSITORY("BlockRepository"),
     MINING_MACHINE_REPOSITORY("MiningMachineRepository"),
     TRANSACTION_HISTORY_REPOSITORY("TransactionHistoryRepository"),
-    UTXO_REPOSITORY("UtxoRepository")
+    UTXO_REPOSITORY("UtxoRepository"),
+    MINING_MACHINE("MiningMachine")
 }
 
 private val verboseEnabled: MutableSet<Logger> = Collections.synchronizedSet(
@@ -44,6 +45,14 @@ fun Logger.ccWarning(
     vararg params: Pair<String, Any?>
 ) {
     ccLog(Level.WARNING, component, message, cause, *params)
+}
+
+fun Logger.ccWarning(
+    component: LogComponent,
+    message: String,
+    vararg params: Pair<String, Any?>
+) {
+    ccLog(Level.WARNING, component, message, null, *params)
 }
 
 //重大エラー

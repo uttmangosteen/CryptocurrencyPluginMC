@@ -109,9 +109,9 @@ class MachineGpuCommand(
             player.sendMessage("$prefix§aGPUをslot $slot から取り外しました")
             player.playSound(
                 player.location,
-                Sound.ITEM_LEAD_BREAK,
+                Sound.UI_LOOM_TAKE_RESULT,
                 1.0f,
-                0.7f
+                2.0f
             )
 
             //man10FunctionalEquipmentの表示更新
@@ -178,9 +178,9 @@ class MachineGpuCommand(
                         player.sendMessage("$prefix§aGPUをslot $slot にセットしました")
                         player.playSound(
                             player.location,
-                            Sound.ITEM_LEAD_BREAK,
+                            Sound.BLOCK_IRON_DOOR_OPEN,
                             1.0f,
-                            0.7f
+                            0.5f
                         )
                         //man10FunctionalEquipmentの表示更新
                         val displayUpdated = plugin.server.dispatchCommand(

@@ -5,12 +5,10 @@ mongodb:
 plugin:
   prefix: "§f§l[§7§lC§8§lC§f§l] "
   enable: true
-  verbose-logging: true
   command-rate-limit-ms: 500
 
 blockchain:
   mempool-limit-per-block: 10
-
 
 mining-machine:
   delay-ticks: 20

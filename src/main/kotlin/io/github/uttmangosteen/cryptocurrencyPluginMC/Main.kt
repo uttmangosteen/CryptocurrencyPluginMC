@@ -41,8 +41,6 @@ class Main : JavaPlugin() {
         pluginConfig = PluginConfig.load(config)
         val gpuConfig = GpuConfig.load(this)
 
-        logger.setVerbose(pluginConfig.verboseLogging)
-
         mongoDatabaseProvider = MongoDatabaseProvider(
             pluginConfig.mongodbConnectionString,
             pluginConfig.mongodbDatabase
@@ -104,8 +102,6 @@ class Main : JavaPlugin() {
 
         reloadConfig()
         pluginConfig = PluginConfig.load(config)
-        logger.setVerbose(pluginConfig.verboseLogging)
-
         mongoDatabaseProvider = MongoDatabaseProvider(
             pluginConfig.mongodbConnectionString,
             pluginConfig.mongodbDatabase

@@ -8,7 +8,6 @@ data class PluginConfig(
 
     val prefix: String,
     var enable: Boolean,
-    val verboseLogging: Boolean,
 
     val commandRateLimitMillis: Long,
 
@@ -23,7 +22,6 @@ data class PluginConfig(
 
         private const val DEFAULT_PREFIX = "§f[§aCryptocurrency§f] "
         private const val DEFAULT_ENABLE = true
-        private const val DEFAULT_VERBOSE_LOGGING = false
         private const val DEFAULT_COMMAND_RATE_LIMIT_MILLIS = 500L
 
         private const val DEFAULT_MEMPOOL_LIMIT_PER_BLOCK = 100
@@ -41,7 +39,6 @@ data class PluginConfig(
 
                 prefix = config.safeString("plugin.prefix", DEFAULT_PREFIX),
                 enable = config.getBoolean("plugin.enable", DEFAULT_ENABLE),
-                verboseLogging = config.getBoolean("plugin.verbose-logging", DEFAULT_VERBOSE_LOGGING),
                 commandRateLimitMillis = config.safeLong(
                     "plugin.command-rate-limit-ms",
                     DEFAULT_COMMAND_RATE_LIMIT_MILLIS

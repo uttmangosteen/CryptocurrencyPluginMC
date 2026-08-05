@@ -1,7 +1,5 @@
 package io.github.uttmangosteen.cryptocurrencyPluginMC
 
-import java.util.Collections
-import java.util.WeakHashMap
 import java.util.logging.Level
 import java.util.logging.Logger
 
@@ -16,17 +14,7 @@ enum class LogComponent(val label: String) {
     MINING_MACHINE("MiningMachine")
 }
 
-private val verboseEnabled: MutableSet<Logger> = Collections.synchronizedSet(
-    Collections.newSetFromMap(WeakHashMap<Logger, Boolean>())
-)
-
-fun Logger.setVerbose(enabled: Boolean) {
-    if (enabled) {
-        verboseEnabled.add(this)
-    } else {
-        verboseEnabled.remove(this)
-    }
-}
+private const val MAX_LOGGED_BYTE_ARRAY_BYTES = 64
 
 //通常ログ
 fun Logger.ccInfo(
@@ -72,6 +60,8 @@ private fun Logger.ccLog(
     cause: Throwable?,
     vararg params: Pair<String, Any?>
 ) {
+    if (!isLoggable(level)) return
+
     val formattedMessage = buildString {
         append("[")
         append(component.label)
@@ -83,7 +73,9 @@ private fun Logger.ccLog(
             append(" ")
             append(key.sanitizeLogKey())
             append("=")
+            append('"')
             append(value.formatLogValue())
+            append('"')
         }
     }
 
@@ -99,20 +91,59 @@ private fun Logger.ccLog(
 private fun Any?.formatLogValue(): String {
     return when (this) {
         null -> "null"
-        is ByteArray -> toHexString()
+        is ByteArray -> formatByteArray()
         is Throwable -> "${this::class.simpleName}:${message.orEmpty().sanitizeLogValue()}"
-        else -> toString().sanitizeLogValue()
+        else -> runCatching { toString() }
+            .getOrElse { "<toString failed: ${it::class.simpleName}>" }
+            .sanitizeLogValue()
     }
+}
+
+private fun ByteArray.formatByteArray(): String {
+    if (size <= MAX_LOGGED_BYTE_ARRAY_BYTES) return toHexString()
+
+    return copyOf(MAX_LOGGED_BYTE_ARRAY_BYTES).toHexString() + "...(bytes=$size)"
 }
 
 // ログのキー名から英数字・_・-.以外を _ に置換する (ログ注入対策)
 private fun String.sanitizeLogKey(): String {
-    return replace(Regex("[^A-Za-z0-9_.-]"), "_")
+    return buildString(length) {
+        for (char in this@sanitizeLogKey) {
+            if (char.isAsciiLogKeyCharacter()) {
+                append(char)
+            } else {
+                append('_')
+            }
+        }
+    }.ifEmpty { "_" }
+}
+
+private fun Char.isAsciiLogKeyCharacter(): Boolean {
+    return this in 'A'..'Z' ||
+        this in 'a'..'z' ||
+        this in '0'..'9' ||
+        this == '_' || this == '.' || this == '-'
 }
 
 // ログの値に含まれる改行・タブをエスケープする (ログ注入対策)
 private fun String.sanitizeLogValue(): String {
-    return replace("\r", "\\r")
-        .replace("\n", "\\n")
-        .replace("\t", "\\t")
+    return buildString(length) {
+        for (char in this@sanitizeLogValue) {
+            when (char) {
+                '\\' -> append("\\\\")
+                '"' -> append("\\\"")
+                '\r' -> append("\\r")
+                '\n' -> append("\\n")
+                '\t' -> append("\\t")
+                else -> {
+                    if (Character.isISOControl(char)) {
+                        append("\\u")
+                        append(char.code.toString(16).padStart(4, '0'))
+                    } else {
+                        append(char)
+                    }
+                }
+            }
+        }
+    }
 }

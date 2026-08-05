@@ -180,7 +180,7 @@ class SendCommand(
         plugin.launchAsync {
             val account = plugin.repositories.walletRepo.getMainAccount(player.uniqueId.toString())
 
-            if (account == null || account.privateKey == null) {
+            if (account?.privateKey == null) {
                 plugin.runSync {
                     player.sendMessage("$prefix§c秘密鍵付きのメイン口座がありません")
                 }

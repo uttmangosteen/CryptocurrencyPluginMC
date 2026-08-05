@@ -183,10 +183,10 @@ data class Block(
             if (tx.isCoinbase) return false
             if (!tx.isValid()) return false
 
-            for (input in tx.inputs) {
+            for ((prevTxHash, outputIndex) in tx.inputs) {
                 val outpoint = OutPoint(
-                    txHash = input.prevTxHash,
-                    outputIndex = input.outputIndex
+                    txHash = prevTxHash,
+                    outputIndex = outputIndex
                 )
                 //同じブロック内でのutxo2重使用?
                 if (!spentOutpoints.add(outpoint)) return false

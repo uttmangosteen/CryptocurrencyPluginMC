@@ -34,15 +34,15 @@ data class Transaction(
 
             buffer.put(if (isCoinbase) 1.toByte() else 0.toByte())
 
-            for (input in inputs) {
-                buffer.put(input.prevTxHash.hexToByteArray())
-                buffer.putInt(input.outputIndex)
-                buffer.put(input.publicKey.hexToByteArray())
+            for ((prevTxHash, outputIndex, _, publicKey) in inputs) {
+                buffer.put(prevTxHash.hexToByteArray())
+                buffer.putInt(outputIndex)
+                buffer.put(publicKey.hexToByteArray())
             }
 
-            for (output in outputs) {
-                buffer.putLong(output.amount)
-                buffer.put(output.receiverPubKey.hexToByteArray())
+            for ((amount, receiverPubKey) in outputs) {
+                buffer.putLong(amount)
+                buffer.put(receiverPubKey.hexToByteArray())
             }
 
             buffer.putLong(timestamp)

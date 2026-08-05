@@ -120,9 +120,9 @@ private fun String.sanitizeLogKey(): String {
 
 private fun Char.isAsciiLogKeyCharacter(): Boolean {
     return this in 'A'..'Z' ||
-        this in 'a'..'z' ||
-        this in '0'..'9' ||
-        this == '_' || this == '.' || this == '-'
+            this in 'a'..'z' ||
+            this in '0'..'9' ||
+            this == '_' || this == '.' || this == '-'
 }
 
 // ログの値に含まれる改行・タブをエスケープする (ログ注入対策)

@@ -73,14 +73,13 @@ class DatabaseCommand(
     private fun flush(sender: CommandSender) {
         sender.sendMessage("$prefix§eDBキャッシュを削除しています...")
 
-        plugin.stopMiningMachineService()
-
         plugin.launchAsync {
+            plugin.stopMiningMachineService()
             val success = plugin.databaseMaintenanceService.flushCaches()
 
             plugin.runSync {
                 if (success) {
-                    plugin.restartMiningMachineService()
+                    plugin.startMiningMachineService()
                     sender.sendMessage("$prefix§aDBキャッシュを削除しました")
                     sender.sendMessage("$prefix§7削除対象: mempool, utxos, transaction_history")
                     sender.sendMessage("$prefix§7全採掘機は停止し、miningBlockをクリアしました")
@@ -95,15 +94,14 @@ class DatabaseCommand(
         sender.sendMessage("$prefix§eblocks からDBキャッシュを再構築しています...")
         sender.sendMessage("$prefix§7この操作では blocks の厳密検証は行いません")
 
-        plugin.stopMiningMachineService()
-
         plugin.launchAsync {
+            plugin.stopMiningMachineService()
             val result = plugin.databaseMaintenanceService.rebuildCachesFromBlocks()
 
             plugin.runSync {
                 when (result) {
                     is DatabaseMaintenanceService.RebuildResult.Success -> {
-                        plugin.restartMiningMachineService()
+                        plugin.startMiningMachineService()
                         sender.sendMessage("$prefix§aDBキャッシュを再構築しました")
                         sender.sendMessage("$prefix§7blocks: §f${result.blockCount}")
                         sender.sendMessage("$prefix§7utxos: §f${result.utxoCount}")
@@ -147,21 +145,20 @@ class DatabaseCommand(
     private fun prune(sender: CommandSender) {
         sender.sendMessage("$prefix§e不正ブロック以降を刈り取り、DBキャッシュを再構築しています...")
 
-        plugin.stopMiningMachineService()
-
         plugin.launchAsync {
+            plugin.stopMiningMachineService()
             val result = plugin.databaseMaintenanceService.pruneInvalidChainAndRebuild()
 
             plugin.runSync {
                 when (result) {
                     is DatabaseMaintenanceService.PruneResult.NoInvalidBlock -> {
-                        plugin.restartMiningMachineService()
+                        plugin.startMiningMachineService()
                         sender.sendMessage("$prefix§a不正ブロックは見つかりませんでした")
                         sender.sendMessage("$prefix§7DBキャッシュは再構築済みです")
                     }
 
                     is DatabaseMaintenanceService.PruneResult.Pruned -> {
-                        plugin.restartMiningMachineService()
+                        plugin.startMiningMachineService()
                         sender.sendMessage("$prefix§a不正ブロック以降を削除しました")
                         sender.sendMessage("$prefix§7prunedFromHeight: §f${result.prunedFromHeight}")
                         sender.sendMessage("$prefix§7deletedBlocks: §f${result.deletedBlocks}")

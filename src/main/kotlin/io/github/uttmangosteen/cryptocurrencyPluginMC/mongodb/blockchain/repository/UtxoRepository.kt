@@ -153,9 +153,7 @@ class UtxoRepository(
         session: ClientSession,
         transactionIds: Collection<String>
     ): Boolean {
-        if (transactionIds.isEmpty()) return true
-
-        return try {
+        return transactionIds.isEmpty() || try {
             val result = collection.updateMany(
                 session,
                 Filters.`in`("lockedByTxId", transactionIds),

@@ -337,15 +337,15 @@ class DatabaseMaintenanceService(
                 }
 
                 var inputAmount = 0L
-                for (input in tx.inputs) {
-                    if (Signer.normalizePublicKey(input.publicKey) == null) {
+                for ((prevTxHash, outputIndex, _, publicKey) in tx.inputs) {
+                    if (Signer.normalizePublicKey(publicKey) == null) {
                         return ChainVerifyResult.Invalid(invalidHeight = block.height, message = "入力公開鍵が不正です")
                     }
 
-                    val utxo = resolvedInputUtxos[OutPoint(txHash = input.prevTxHash, outputIndex = input.outputIndex)]
+                    val utxo = resolvedInputUtxos[OutPoint(txHash = prevTxHash, outputIndex = outputIndex)]
                         ?: return ChainVerifyResult.Invalid(invalidHeight = block.height, message = "入力UTXOが見つかりません")
 
-                    if (input.publicKey != utxo.receiverPubKey) {
+                    if (publicKey != utxo.receiverPubKey) {
                         return ChainVerifyResult.Invalid(invalidHeight = block.height, message = "UTXO所有者と入力公開鍵が一致しません")
                     }
 

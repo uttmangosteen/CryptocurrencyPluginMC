@@ -10,12 +10,14 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.MongoDatabaseProvi
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.MongoRepositories
 import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.MiningMachineService
 import io.github.uttmangosteen.cryptocurrencyPluginMC.miningmachine.gpu.GpuConfig
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.bukkit.plugin.java.JavaPlugin
 
 class Main : JavaPlugin() {
@@ -34,7 +36,8 @@ class Main : JavaPlugin() {
     var miningMachineService: MiningMachineService? = null
         private set
 
-    private val pluginScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val pluginJob = SupervisorJob()
+    private val pluginScope = CoroutineScope(Dispatchers.IO + pluginJob)
 
     override fun onEnable() {
         saveDefaultConfig()
@@ -66,10 +69,12 @@ class Main : JavaPlugin() {
                 )
                 server.scheduler.runTask(this@Main, Runnable {
                     registerCommands(gpuConfig)
-                    miningMachineService = MiningMachineService(this@Main).also { it.start() }
+                    startMiningMachineService()
                     logger.ccInfo(LogComponent.DATABASE, "setup completed")
                 })
 
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 server.scheduler.runTask(this@Main, Runnable {
                     logger.ccSevere(LogComponent.DATABASE, "initialization failed", e)
@@ -96,8 +101,7 @@ class Main : JavaPlugin() {
     }
 
     suspend fun reconnectDatabase() {
-        miningMachineService?.stop()
-        miningMachineService = null
+        stopMiningMachineService()
 
         if (::mongoDatabaseProvider.isInitialized) {
             mongoDatabaseProvider.close()
@@ -125,7 +129,7 @@ class Main : JavaPlugin() {
         repositories.setupAll()
 
         runSync {
-            miningMachineService = MiningMachineService(this@Main).also { it.start() }
+            startMiningMachineService()
         }
     }
 
@@ -139,19 +143,22 @@ class Main : JavaPlugin() {
         })
     }
 
-    fun restartMiningMachineService() {
-        miningMachineService?.stop()
+    fun startMiningMachineService() {
+        if (miningMachineService != null) return
         miningMachineService = MiningMachineService(this).also { it.start() }
     }
 
-    fun stopMiningMachineService() {
-        miningMachineService?.stop()
+    suspend fun stopMiningMachineService() {
+        val service = miningMachineService ?: return
         miningMachineService = null
+        service.stop()
     }
 
     override fun onDisable() {
-        miningMachineService?.stop()
-        pluginScope.cancel()
+        runBlocking {
+            stopMiningMachineService()
+            pluginJob.cancelAndJoin()
+        }
 
         if (::mongoDatabaseProvider.isInitialized) {
             mongoDatabaseProvider.close()

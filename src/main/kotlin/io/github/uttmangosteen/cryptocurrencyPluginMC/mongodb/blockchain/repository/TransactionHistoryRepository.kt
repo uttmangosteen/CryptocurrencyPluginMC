@@ -39,9 +39,7 @@ class TransactionHistoryRepository(
         height: Int,
         blockTimestamp: Long
     ): Boolean {
-        if (transactions.isEmpty()) return true
-
-        return try {
+        return transactions.isEmpty() || try {
             val documents = transactions.map { tx ->
                 val inputUtxos = tx.inputs.mapNotNull { input ->
                     resolvedInputUtxos[

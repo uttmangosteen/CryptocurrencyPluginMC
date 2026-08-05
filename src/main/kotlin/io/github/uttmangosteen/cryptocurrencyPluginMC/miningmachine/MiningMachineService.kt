@@ -8,8 +8,11 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.command.user.TxMessageFact
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccInfo
 import io.github.uttmangosteen.cryptocurrencyPluginMC.ccWarning
 import io.github.uttmangosteen.cryptocurrencyPluginMC.gui.miningmachine.MiningMachineGuiRegistry
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.bukkit.Bukkit
 import org.bukkit.Sound
 import org.bukkit.scheduler.BukkitTask
@@ -18,9 +21,17 @@ import java.util.concurrent.ConcurrentHashMap
 class MiningMachineService(
     private val plugin: Main
 ) {
+    private val lifecycleLock = Any()
+    private val modificationMutex = Mutex()
+    private val notificationJobs = ConcurrentHashMap.newKeySet<Job>()
+
     private var task: BukkitTask? = null
+    private var startupJob: Job? = null
     private var runningJob: Job? = null
     private var miningTickCount: Int = 0
+
+    @Volatile
+    private var stopping = false
 
     private val activeMachines = ConcurrentHashMap<String, MiningMachine>()
 
@@ -35,26 +46,35 @@ class MiningMachineService(
     private val txMessageFactory = TxMessageFactory()
 
     fun start() {
-        if (task != null) return
+        synchronized(lifecycleLock) {
+            if (task != null || stopping) return
 
-        plugin.launchAsync {
-            val machines = plugin.repositories.miningMachineRepo.getRunnableMachines()
-            machines.forEach { activeMachines[it.id] = it }
-        }
-
-        task = Bukkit.getScheduler().runTaskTimer(
-            plugin,
-            Runnable {
-                if (!plugin.pluginConfig.enable) return@Runnable
-                if (runningJob?.isActive == true) return@Runnable
-
-                runningJob = plugin.launchAsync {
-                    tick()
+            startupJob = plugin.launchAsync {
+                val machines = plugin.repositories.miningMachineRepo.getRunnableMachines()
+                for (machine in machines) {
+                    if (stopping) return@launchAsync
+                    activeMachines[machine.id] = machine
                 }
-            },
-            plugin.pluginConfig.miningMachineMiningDelayTicks.toLong(),
-            plugin.pluginConfig.miningMachineMiningDelayTicks.toLong()
-        )
+            }
+
+            task = Bukkit.getScheduler().runTaskTimer(
+                plugin,
+                Runnable { scheduleTick() },
+                plugin.pluginConfig.miningMachineMiningDelayTicks.toLong(),
+                plugin.pluginConfig.miningMachineMiningDelayTicks.toLong()
+            )
+        }
+    }
+
+    private fun scheduleTick() {
+        synchronized(lifecycleLock) {
+            if (stopping || !plugin.pluginConfig.enable) return
+            if (runningJob?.isActive == true) return
+
+            runningJob = plugin.launchAsync {
+                tick()
+            }
+        }
     }
 
     suspend fun modifyMachine(
@@ -63,12 +83,15 @@ class MiningMachineService(
         requireOwner: Boolean = false,
         bypassPermission: Boolean = false,
         block: (MiningMachine) -> Boolean
-    ): Boolean {
-        if (machineId.isBlank()) return false
-        if (!bypassPermission && requesterUuid.isNullOrBlank()) return false
+    ): Boolean = modificationMutex.withLock {
+        if (stopping || machineId.isBlank()) return@withLock false
+        if (!bypassPermission && requesterUuid.isNullOrBlank()) return@withLock false
 
         // メモリ上に稼働中のマシンがあればそれを、無ければDBから取得
-        val machine = activeMachines[machineId] ?: plugin.repositories.miningMachineRepo.get(machineId) ?: return false
+        val machine = activeMachines[machineId] ?: plugin.repositories.miningMachineRepo.get(machineId)
+            ?: return@withLock false
+
+        if (stopping) return@withLock false
 
         val allowed = when {
             bypassPermission -> true
@@ -77,10 +100,10 @@ class MiningMachineService(
             else -> machine.canAccess(requesterUuid)
         }
 
-        if (!allowed || !block(machine)) return false
+        if (!allowed || !block(machine)) return@withLock false
 
         machine.refreshStatus()
-        if (!plugin.repositories.miningMachineRepo.save(machine)) return false
+        if (!plugin.repositories.miningMachineRepo.save(machine)) return@withLock false
         machine.isDirty = false
         if (machine.status == MiningMachineStatus.MINING) {
             val wasActive = activeMachines.containsKey(machine.id)
@@ -92,7 +115,7 @@ class MiningMachineService(
         }
 
         notifyMachineUpdated(machine)
-        return true
+        true
     }
 
     private fun clearActiveMiningBlocks() {
@@ -100,24 +123,37 @@ class MiningMachineService(
     }
 
     suspend fun getMachine(machineId: String): MiningMachine? {
-        if (machineId.isBlank()) return null
+        if (stopping || machineId.isBlank()) return null
         return activeMachines[machineId] ?: plugin.repositories.miningMachineRepo.get(machineId)
     }
 
     //GUI開いてる人に対する更新を呼ぶ
     private fun notifyMachineUpdated(machine: MiningMachine) {
+        if (stopping) return
         MiningMachineGuiRegistry.requestRefresh(plugin, machine.id)
     }
 
-    fun stop() {
-        task?.cancel()
-        task = null
-        runningJob?.cancel()
-        runningJob = null
+    suspend fun stop() {
+        val jobs = synchronized(lifecycleLock) {
+            if (stopping) return
 
-        val machinesToSave = ArrayList<MiningMachine>()
-        for (machine in activeMachines.values) {
-            if (machine.isDirty) machinesToSave.add(machine)
+            stopping = true
+            task?.cancel()
+            task = null
+
+            buildSet {
+                startupJob?.let(::add)
+                runningJob?.let(::add)
+                addAll(notificationJobs)
+            }
+        }
+
+        jobs.forEach { job -> job.cancel() }
+        jobs.joinAll()
+
+        val machinesToSave = modificationMutex.withLock {
+            activeMachines.values.filterTo(ArrayList<MiningMachine>()) { machine -> machine.isDirty }
+                .also { activeMachines.clear() }
         }
 
         if (machinesToSave.isNotEmpty()) {
@@ -126,16 +162,13 @@ class MiningMachineService(
                 "saving ${machinesToSave.size} active mining machines to database on plugin stop"
             )
 
-            // メインスレッド
-            runBlocking {
-                val saved = plugin.repositories.miningMachineRepo.saveAll(machinesToSave)
-                if (saved) machinesToSave.forEach { it.isDirty = false }
-            }
-            activeMachines.clear()
+            val saved = plugin.repositories.miningMachineRepo.saveAll(machinesToSave)
+            if (saved) machinesToSave.forEach { it.isDirty = false }
         }
     }
 
     private suspend fun tick() {
+        if (stopping) return
         if (activeMachines.isEmpty()) return
 
         val runnableMachines = activeMachines.values.filter { machine ->
@@ -156,6 +189,7 @@ class MiningMachineService(
         val latestBlock = plugin.repositories.blockRepo.getLatestBlock() ?: return
 
         for (machine in activeMachines.values) {
+            if (stopping) return
             val mined = processMachine(machine, networkMiningPower, latestBlock)
             if (mined) {
                 clearActiveMiningBlocks()
@@ -183,6 +217,7 @@ class MiningMachineService(
     ): Boolean {
         var guiNeedsUpdate = false
         try {
+            if (stopping) return false
             machine.refreshStatus()
             if (machine.status != MiningMachineStatus.MINING) {
                 plugin.repositories.miningMachineRepo.save(machine)
@@ -233,6 +268,8 @@ class MiningMachineService(
 
             return false
 
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             plugin.logger.ccWarning(
                 LogComponent.MINING_MACHINE_REPOSITORY,
@@ -254,9 +291,18 @@ class MiningMachineService(
         return block.tryMine(power)
     }
 
+    private fun launchTrackedNotification(block: suspend () -> Unit) {
+        val job = synchronized(lifecycleLock) {
+            if (stopping) null
+            else plugin.launchAsync { block() }.also { notificationJobs.add(it) }
+        }
+        job?.invokeOnCompletion { notificationJobs.remove(job) }
+    }
+
     private fun notifyMined(machine: MiningMachine, block: Block) {
         val prefix = plugin.pluginConfig.prefix
         plugin.runSync {
+            if (stopping) return@runSync
             val ownerUuid = machine.ownerUuid ?: return@runSync
             val owner = Bukkit.getOfflinePlayer(java.util.UUID.fromString(ownerUuid))
             val minerName = if (machine.shareNameOnMined) "${owner.name}" else "§k00000000"
@@ -267,9 +313,10 @@ class MiningMachineService(
                 player.sendMessage(message)
                 player.playSound(player.location, Sound.BLOCK_NOTE_BLOCK_BIT, 1f, 2f)
             }
-            plugin.launchAsync {
+            launchTrackedNotification {
+                if (stopping) return@launchTrackedNotification
                 val onlinePlayers = Bukkit.getOnlinePlayers().toList()
-                if (onlinePlayers.isEmpty()) return@launchAsync
+                if (onlinePlayers.isEmpty()) return@launchTrackedNotification
 
                 val onlineUuids = onlinePlayers.map { it.uniqueId.toString() }
                 val wallets = plugin.repositories.walletRepo.getWallets(onlineUuids)

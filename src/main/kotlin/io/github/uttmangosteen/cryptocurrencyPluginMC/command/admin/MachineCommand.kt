@@ -9,16 +9,13 @@ class MachineCommand(
     fun execute(args: Array<out String>) {
         val machineId = args.getOrNull(1) ?: return
 
-
         when (args[0]) {
             "create" -> {
                 val ownerName = args.getOrNull(2) ?: return
                 create(machineId, ownerName)
             }
 
-            "remove" -> {
-                remove(machineId)
-            }
+            "remove" -> remove(machineId)
 
             else -> return
         }

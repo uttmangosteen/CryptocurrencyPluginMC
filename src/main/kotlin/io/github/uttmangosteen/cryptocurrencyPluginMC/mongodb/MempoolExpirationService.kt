@@ -6,12 +6,6 @@ import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.reposit
 import io.github.uttmangosteen.cryptocurrencyPluginMC.mongodb.blockchain.repository.UtxoRepository
 import java.util.logging.Logger
 
-/**
- * Removes expired transactions from the mempool on startup only.
- *
- * Expiration is a mempool policy, not a consensus rule: an existing candidate
- * block remains valid when its inputs are still unspent.
- */
 class MempoolExpirationService(
     provider: MongoDatabaseProvider,
     private val mempoolRepo: MempoolRepository,

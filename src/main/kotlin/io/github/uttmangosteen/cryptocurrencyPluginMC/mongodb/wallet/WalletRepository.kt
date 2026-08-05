@@ -29,8 +29,7 @@ class WalletRepository(
     suspend fun updateWallet(ownerUUID: String, block: (Wallet) -> Boolean): Boolean {
         val wallet = getWallet(ownerUUID) ?: return false
         val shouldSave = block(wallet)
-        if (!shouldSave) return false
-        return save(wallet)
+        return shouldSave && save(wallet)
     }
 
     suspend fun getWallet(ownerUUID: String): Wallet? {

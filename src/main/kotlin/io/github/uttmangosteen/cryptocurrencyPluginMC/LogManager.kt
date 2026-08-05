@@ -65,16 +65,6 @@ fun Logger.ccSevere(
     ccLog(Level.SEVERE, component, message, cause, *params)
 }
 
-//デバック用ログ
-fun Logger.ccVerbose(
-    component: LogComponent,
-    message: String,
-    vararg params: Pair<String, Any?>
-) {
-    if (this !in verboseEnabled) return
-    ccLog(Level.INFO, component, message, null, *params)
-}
-
 private fun Logger.ccLog(
     level: Level,
     component: LogComponent,
